@@ -96,7 +96,7 @@ async function loadAdminStats() {
 }
 
 async function loadSupplyRequests() {
-    const res = await fetch(`${API}/admin/stats?token=${currentToken}`);
+    const res = await fetch(`${API}/admin/supplies?token=${currentToken}`);
     const data = await res.json();
     
     const list = document.getElementById('supplyList');
