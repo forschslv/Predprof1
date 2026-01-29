@@ -1,4 +1,4 @@
-const API = "http://127.0.0.1:8000";
+constAPI = "http://127.0.0.1:8000";
 let isRegister = false;
 let currentToken = localStorage.getItem('token');
 let currentRole = localStorage.getItem('role');
@@ -13,7 +13,7 @@ if (currentToken) {
             if (payload.sub === 'null') {
                 localStorage.removeItem('token');
                 localStorage.removeItem('role');
-                currentToken = null;
+                currentToken =null;
                 currentRole = null;
             }
         }
@@ -34,7 +34,7 @@ function toggleReg() {
     isRegister = !isRegister;
     document.getElementById('authTitle').innerText = isRegister ? "Регистрация" : "Вход";
     document.getElementById('authBtn').innerText = isRegister ? "Создать аккаунт" : "Войти";
-    document.getElementById('toggleText').innerText = isRegister ? "Уже есть аккаунт? Войти" : "Нет аккаунта? Зарегистрироваться";
+document.getElementById('toggleText').innerText = isRegister ? "Уже есть аккаунт? Войти" : "Нет аккаунта? Зарегистрироваться";
     
     document.getElementById('roleSelect').classList.toggle('hidden', !isRegister);
     document.getElementById('allergies').classList.toggle('hidden', !isRegister);
@@ -51,7 +51,7 @@ async function handleAuth() {
     const endpoint = isRegister ? "/register" : "/login";
     const body = isRegister 
         ? { username, password, role, allergies, dietary_preferences }
-        : { username, password };
+: { username, password };
 
     try {
         const res = await fetch(API + endpoint, {
@@ -61,7 +61,7 @@ async function handleAuth() {
         });
         const data = await res.json();
         
-        if (!res.ok) throw new Error(data.detail || "Ошибка");
+        if (!res.ok) thrownew Error(data.detail || "Ошибка");
 
         if (isRegister) {
             alert("Регистрация успешна! Теперь войдите.");
@@ -70,7 +70,7 @@ async function handleAuth() {
             localStorage.setItem('token', data.access_token);
             localStorage.setItem('role', data.role);
             currentToken = data.access_token;
-            currentRole = data.role;
+currentRole = data.role;
             showDashboard();
         }
     } catch (e) {
@@ -100,7 +100,7 @@ async function showDashboard() {
 async function loadStudentData() {
     document.getElementById('studentPanel').classList.remove('hidden');
     await loadProfile();
-    await loadNotifications();
+   await loadNotifications();
     await loadMenu();
     await showOrders('active');
 }
@@ -122,7 +122,7 @@ async function loadProfile() {
     }
 }
 
-async function loadNotifications() {
+async functionloadNotifications() {
     const res = await fetch(`${API}/notifications?token=${currentToken}`);
     const notifications = await res.json();
     
@@ -147,7 +147,7 @@ async function markNotificationRead(id) {
 
 async function loadMenu() {
     const res = await fetch(`${API}/menu`);
-    const menu = await res.json();
+const menu = await res.json();
     
     // Get user's received orders to enable reviews for those items
     const ordersRes = await fetch(`${API}/my_orders?token=${currentToken}`);
@@ -206,7 +206,7 @@ async function showOrders(type) {
     div.innerHTML = filteredOrders.map(o => `
         <div class="order-item">
             <div>
-                <b>Заказ #${o.id}</b> - ${o.item_name}
+                <b>Заказ #${o.id}</b>- ${o.item_name}
                 <br><small>${new Date(o.created_at).toLocaleString()}</small>
                 ${o.is_received ? '<br><small style="color:var(--accent-cyan);">Получен</small>' : ''}
             </div>
@@ -218,7 +218,7 @@ async function showOrders(type) {
     `).join('');
 }
 
-async function receiveOrder(id, btn) {
+asyncfunction receiveOrder(id, btn) {
     const res = await fetch(`${API}/receive/${id}?token=${currentToken}`, { method: "PUT" });
     if (res.ok) {
         btn.parentElement.parentElement.remove();
@@ -237,7 +237,7 @@ function showSubscriptionModal() {
 
 async function topupBalance() {
     const amount = parseFloat(document.getElementById('topupAmount').value);
-    if (!amount || amount < 10) {
+    if (!amount ||amount < 10) {
         alert("Минимальная сумма 10₽");
         return;
     }
@@ -245,7 +245,7 @@ async function topupBalance() {
     const res = await fetch(`${API}/topup_balance?token=${currentToken}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount })
+body: JSON.stringify({ amount })
     });
     
     if (res.ok) {
@@ -278,7 +278,7 @@ function closeModal(modalId) {
 }
 
 function showEditProfileModal() {
-    // Create modal if it doesn't exist
+    // Create modal if it doesn'texist
     let profileModal = document.getElementById('profileModal');
     if (!profileModal) {
         profileModal = document.createElement('div');
@@ -289,7 +289,7 @@ function showEditProfileModal() {
                 <span class="close" onclick="closeModal('profileModal')">&times;</span>
                 <h3>Изменить профиль</h3>
                 <label>Аллергии:</label>
-                <input type="text" id="editAllergies" placeholder="Аллергии (если есть)">
+                <input type="text" id="editAllergies" placeholder="Аллергии (еслиесть)">
                 <label>Пищевые предпочтения:</label>
                 <input type="text" id="editDietaryPrefs" placeholder="Пищевые предпочтения">
                 <button onclick="saveProfileChanges()">Сохранить изменения</button>
@@ -306,7 +306,7 @@ function showEditProfileModal() {
 
 async function loadCurrentProfileData() {
     const res = await fetch(`${API}/my_profile?token=${currentToken}`);
-    const profile = await res.json();
+    const profile =await res.json();
     
     document.getElementById('editAllergies').value = profile.allergies || '';
     document.getElementById('editDietaryPrefs').value = profile.dietary_preferences || '';
@@ -342,13 +342,13 @@ async function loadCookData() {
 
 async function loadDishInventory() {
     const res = await fetch(`${API}/cook/dishes?token=${currentToken}`);
-    const items = await res.json();
+   const items = await res.json();
     
     const list = document.getElementById('dishInventory');
     list.innerHTML = items.map(item => `
         <div class="inventory-item">
             <b>${item.name}</b> (${item.category === 'breakfast' ? 'Завтрак' : 'Обед'})
-            <div class="button-group">
+           <div class="button-group">
                 <input type="number" id="qty-${item.id}" value="${item.quantity}" style="width:80px;">
                 <button onclick="updateDishQuantity(${item.id})">Обновить</button>
             </div>
@@ -373,8 +373,7 @@ async function updateDishQuantity(itemId) {
 async function loadProductInventory() {
     const res = await fetch(`${API}/cook/inventory?token=${currentToken}`);
     const items = await res.json();
-    
-    const list = document.getElementById('productInventory');
+const list = document.getElementById('productInventory');
     if (items.length === 0) {
         list.innerHTML = '<p>Склад пуст</p>';
         return;
@@ -396,7 +395,7 @@ async function addInventoryItem() {
     const quantity = parseFloat(document.getElementById('invItemQuantity').value);
     const unit = document.getElementById('invItemUnit').value;
     
-    if (!name || !quantity || !unit) {
+   if (!name || !quantity || !unit) {
         alert("Заполните все поля");
         return;
     }
@@ -404,7 +403,7 @@ async function addInventoryItem() {
     const res = await fetch(`${API}/cook/inventory?token=${currentToken}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, quantity, unit })
+body: JSON.stringify({ name, quantity, unit })
     });
     
     if (res.ok) {
@@ -421,7 +420,7 @@ async function updateInventoryItem(id) {
     const res = await fetch(`${API}/cook/inventory/${id}?token=${currentToken}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quantity: qty })
+body: JSON.stringify({ quantity: qty })
     });
     
     if (res.ok) {
@@ -466,14 +465,14 @@ async function loadMenuItemsList() {
     const items = await res.json();
     
     const list = document.getElementById('menuItemsList');
-    list.innerHTML = items.map(item => `
+    list.innerHTML= items.map(item => `
         <div class="menu-item">
             <div>
                 <b>${item.name}</b> - ${item.price}₽ (${item.category})
                 <br><small>${item.description || 'Нет описания'}</small>
             </div>
             <div>
-                <button onclick="deleteMenuItem(${item.id})" class="danger" style="width:auto;">Удалить</button>
+               <button onclick="deleteMenuItem(${item.id})" class="danger" style="width:auto;">Удалить</button>
             </div>
         </div>
     `).join('');
@@ -486,7 +485,7 @@ async function createMenuItem() {
     const desc = document.getElementById('newDishDesc').value;
     const qty = parseInt(document.getElementById('newDishQuantity').value);
     
-    if (!name || !price || !desc) {
+    if (!name || !price || !desc){
         alert("Заполните все поля");
         return;
     }
@@ -524,13 +523,13 @@ async function loadAdminStats() {
     const data = await res.json();
     
     document.getElementById('statsContent').innerHTML = `
-        <div class="stats-box">Продано обедов: <b>${data.total_sales}</b></div>
+       <div class="stats-box">Продано обедов: <b>${data.total_sales}</b></div>
         <div class="stats-box">Выручка: <b>${data.revenue.toFixed(2)}₽</b></div>
     `;
 }
 
 async function loadSupplyRequests() {
-    const res = await fetch(`${API}/admin/stats?token=${currentToken}`);
+   const res = await fetch(`${API}/admin/stats?token=${currentToken}`);
     const data = await res.json();
     
     const list = document.getElementById('supplyList');
@@ -551,7 +550,7 @@ async function loadSupplyRequests() {
 }
 
 async function approveSupply(id) {
-    const res = await fetch(`${API}/admin/approve_supply/${id}?token=${currentToken}`, { method: "PUT" });
+    const res =await fetch(`${API}/admin/approve_supply/${id}?token=${currentToken}`, { method: "PUT" });
     if (res.ok) {
         alert("Заявка одобрена!");
         loadAdminStats();
@@ -560,7 +559,7 @@ async function approveSupply(id) {
 }
 
 async function generateReport() {
-    const startDate = document.getElementById('reportStartDate').value;
+    const startDate =document.getElementById('reportStartDate').value;
     const endDate = document.getElementById('reportEndDate').value;
     
     if (!startDate || !endDate) {
@@ -578,12 +577,12 @@ async function generateReport() {
     
     const div = document.getElementById('reportResult');
     div.innerHTML = `
-        <h4>Отчет за период: ${report.period}</h4>
+        <h4>Отчет за период:${report.period}</h4>
         <p>Всего заказов: <b>${report.total_orders}</b></p>
         <p>Общая выручка: <b>${report.total_revenue.toFixed(2)}₽</b></p>
         <table>
             <tr>
-                <th>Дата</th>
+               <th>Дата</th>
                 <th>Ученик</th>
                 <th>Блюдо</th>
                 <th>Цена</th>
@@ -596,7 +595,7 @@ async function generateReport() {
                     <td>${r.item_name}</td>
                     <td>${r.price}₽</td>
                     <td>${r.is_received ? 'Получен' : 'Не получен'}</td>
-                </tr>
+               </tr>
             `).join('')}
         </table>
     `;
@@ -611,7 +610,7 @@ function showReviewModal(itemId) {
     // Create modal if it doesn't exist
     let reviewModal = document.getElementById('reviewModal');
     if (!reviewModal) {
-        reviewModal = document.createElement('div');
+       reviewModal = document.createElement('div');
         reviewModal.id = 'reviewModal';
         reviewModal.className = 'modal';
         reviewModal.innerHTML = `
@@ -622,7 +621,7 @@ function showReviewModal(itemId) {
                 <select id="reviewRating">
                     <option value="1">1 - Плохо</option>
                     <option value="2">2 - Удовлетворительно</option>
-                    <option value="3">3 - Хорошо</option>
+                    <option value="3">3 -Хорошо</option>
                     <option value="4">4 - Очень хорошо</option>
                     <option value="5">5 - Отлично</option>
                 </select>
@@ -640,7 +639,7 @@ function showReviewModal(itemId) {
 }
 
 async function submitReview() {
-    const rating = parseInt(document.getElementById('reviewRating').value);
+    constrating = parseInt(document.getElementById('reviewRating').value);
     const comment = document.getElementById('reviewComment').value;
     
     if (!window.currentReviewItemId) {
