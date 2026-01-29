@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Повар - Система заказа питания</title>
+    <link rel="stylesheet" href="../cafeteria_styles.css">
+</head>
+
+<body>
+<div class="container">
+    <h1>Система заказа питания в столовой 🍽️</h1>
+
+    <div id="dashboardSection">
+        <h2 id="welcomeMsg"></h2>
+        
+        <!-- COOK PANEL -->
+        <div id="cookPanel" class="hidden">
+            <h3>🍽️ Управление глобальным меню</h3>
+            <div id="globalMenuControls">
+                <div class="filter-section">
+                    <select id="dishTypeFilter">
+                        <option value="">Все типы блюд</option>
+                        <option value="MAIN">Второе горячее блюдо</option>
+                        <option value="GARNISH">Гарнир</option>
+                        <option value="PREPARED">Готовое кулинарное блюдо</option>
+                        <option value="DRINK">Напиток</option>
+                        <option value="SALAD">Салат</option>
+                        <option value="SOUP">Суп</option>
+                        <option value="BREAD">Хлеб</option>
+                    </select>
+                    <button onclick="filterDishes()">Фильтровать</button>
+                </div>
+                
+                <div class="inventory-item">
+                    <input type="text" id="newDishName" placeholder="Название блюда">
+                    <input type="text" id="newDishShortName" placeholder="Краткое название">
+                    <select id="newDishType">
+                        <option value="MAIN">Второе горячее блюдо</option>
+                        <option value="GARNISH">Гарнир</option>
+                        <option value="PREPARED">Готовое кулинарное блюдо</option>
+                        <option value="DRINK">Напиток</option>
+                        <option value="SALAD">Салат</option>
+                        <option value="SOUP">Суп</option>
+                        <option value="BREAD">Хлеб</option>
+                    </select>
+                    <textarea id="newDishComposition" placeholder="Состав блюда"></textarea>
+                    <input type="number" id="newDishQuantityGrams" placeholder="Количество (грамм)">
+                    <input type="number" id="newDishPriceRub" placeholder="Цена (руб.)" step="0.01">
+                    <input type="text" id="newDishBarcode" placeholder="Штрих-код (необязательно)">
+                    <input type="text" id="newDishPeriod" placeholder="Период (необязательно)">
+                    
+                    <div class="button-group">
+                        <button onclick="createDish()">Добавить блюдо</button>
+                        <button onclick="uploadMenuFile(false)" class="secondary">Загрузить собственное меню</button>
+                        <button onclick="uploadMenuFile(true)" class="secondary">Загрузить меню поставщика</button>
+                    </div>
+                </div>
+                
+                <div id="dishesList"></div>
+            </div>
+            
+            <h3>📅 Формирование меню на модуль</h3>
+            <div id="moduleMenuSetup">
+                <div class="filter-section">
+                    <label>День недели:
+                        <select id="dayOfWeekSelect">
+                            <option value="0">Понедельник</option>
+                            <option value="1">Вторник</option>
+                            <option value="2">Среда</option>
+                            <option value="3">Четверг</option>
+                            <option value="4">Пятница</option>
+                            <option value="5">Суббота</option>
+                        </select>
+                    </label>
+                    <button onclick="loadDishesForDay()">Загрузить блюда для дня</button>
+                </div>
+                
+                <div id="dayMenuSetup">
+                    <!-- Day menu setup will be loaded here -->
+                </div>
+                
+                <div class="button-group">
+                    <button onclick="saveModuleMenu()">Сохранить меню на модуль</button>
+                    <button onclick="exportModuleMenu()" class="secondary">Экспортировать в JSON</button>
+                </div>
+            </div>
+        </div>
+        
+        <button class="logout" onclick="logout()">Выйти</button>
+    </div>
+</div>
+
+<script src="../app.js"></script>
+<script src="cook.js"></script>
+<script src="../dish_types.js"></script>
+
+</body>
+</html>

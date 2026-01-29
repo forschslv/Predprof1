@@ -206,7 +206,9 @@ async function loadStudentData() {
     document.getElementById('profileEmail').innerText = currentUser.email;
     document.getElementById('profileStatus').innerText = currentUser.status;
     document.getElementById('profileClass').innerText = "10А"; // Would come from backend
-    document.getElementById('profileTeacher').innerText = "Иванова М.П."; // Would come from backend// Load module menu
+    document.getElementById('profileTeacher').innerText = "Иванова М.П."; // Would come from backend
+    
+// Load module menu
     await loadModuleMenu();
     
     // Load orders
@@ -712,9 +714,7 @@ name,
         
         if (response.ok) {
             alert("Блюдо успешно добавлено!");
-            loadGlobalMenu(); // Refresh the list
-            
-            // Clear form
+            loadGlobalMenu(); // Refresh the list// Clear form
             document.getElementById('newDishName').value = '';
             document.getElementById('newDishShortName').value = '';
             document.getElementById('newDishComposition').value = '';
@@ -968,6 +968,7 @@ function downloadReport() {
     window.open(`${API_BASE}/admin/reports/docx?date_query=${reportDate}`, '_blank');
 }
 
+//LOGOUT FUNCTION
 function logout() {
     localStorage.clear();
     currentToken = null;
