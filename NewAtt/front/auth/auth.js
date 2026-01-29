@@ -1,5 +1,5 @@
 try {
-    const API_BASE = "http://10.92.59.143:8000";
+    const API_BASE = "http://localhost:8000";
 } catch (e) {
     console.error("Error initializing API_BASE:", e);
 }
