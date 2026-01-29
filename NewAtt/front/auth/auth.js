@@ -1,5 +1,8 @@
-const API_BASE = "http://10.92.59.143:8000";
-
+try {
+    const API_BASE = "http://10.92.59.143:8000";
+} catch (e) {
+    console.error("Error initializing API_BASE:", e);
+}
 async function toggleReg() {
     isRegister = !isRegister;
     document.getElementById('authTitle').innerText = isRegister ? "Регистрация" : "Вход";
