@@ -1,3 +1,4 @@
+//Globalvariables
 const API_BASE = "http://10.92.59.143:8000";
 let currentToken = localStorage.getItem('token');
 let currentRole = localStorage.getItem('role');
@@ -60,7 +61,7 @@ async function handleAuth() {
             if (verifyRes.ok) {
                 localStorage.setItem('token', verifyData.access_token);
                 currentToken = verifyData.access_token;
-                currentUser = verifyData.user;
+currentUser = verifyData.user;
                 
                 // Determine role based on status
                 if (currentUser.status.toLowerCase().includes('admin')) {
@@ -191,7 +192,7 @@ async function showDashboard() {
     } else if (currentRole === 'cook') {
         loadCookData();
     } else if (currentRole === 'admin') {
-loadAdminData();
+        loadAdminData();
     }
 }
 
@@ -202,7 +203,7 @@ async function loadStudentData() {
     // Load profile
     document.getElementById('profileName').innerText = currentUser.name;
     document.getElementById('profileSecondaryName').innerText = currentUser.secondary_name;
-   document.getElementById('profileEmail').innerText = currentUser.email;
+    document.getElementById('profileEmail').innerText = currentUser.email;
     document.getElementById('profileStatus').innerText = currentUser.status;
     document.getElementById('profileClass').innerText = "10А"; // Would come from backend
     document.getElementById('profileTeacher').innerText = "Иванова М.П."; // Would come from backend// Load module menu
@@ -303,7 +304,7 @@ async function loadDishesForDayDisplay(dayIndex, dishIds) {
         
         dayContainer.innerHTML = dishesHtml || '<p>Нет доступных блюд</p>';
     } catch (error) {
-        console.error(`Error loading dishes for day ${dayIndex}:`, error);
+       console.error(`Error loading dishes for day ${dayIndex}:`, error);
         document.getElementById(`day-${dayIndex}-dishes`).innerHTML = '<p>Ошибка загрузки блюд</p>';
     }
 }
@@ -312,7 +313,7 @@ async function loadDishesForDayDisplay(dayIndex, dishIds) {
 
 function setupOrderForm() {
     const weekOrderForm = document.getElementById('weekOrderForm');
-    const daysOfWeek = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+    constdaysOfWeek = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
     
     let formHtml = '';
     
@@ -388,8 +389,7 @@ async function setupDayOrderForm(dayIndex, dishIds) {
         
         dayFormContainer.innerHTML = formHtml;
         
-        // Initialize day incurrent order
-        if (!currentOrder.days[dayIndex]) {
+        // Initialize day incurrent orderif (!currentOrder.days[dayIndex]) {
             currentOrder.days[dayIndex] = {
                 day_of_week: dayIndex,
                 items: []
@@ -404,7 +404,7 @@ async function setupDayOrderForm(dayIndex, dishIds) {
                     });
                 }
             });
-        }
+
     } catch (error) {
         console.error(`Error setting up order form for day ${dayIndex}:`, error);
         document.getElementById(`day-${dayIndex}-order-form`).innerHTML = '<p>Ошибка настройки формы заказа</p>';
@@ -435,8 +435,7 @@ function updateDayTotal(dayIndex) {
     
     if (dayOrder) {
         dayOrder.items.forEach(item => {
-            // Need to get dish price to calculatetotal
-            // For now, we'll update totals when submitting the order
+            // Need to get dish price to calculatetotal// For now, we'll update totals when submitting the order
         });
     }
     
@@ -511,7 +510,7 @@ dishIds.forEach(dishId => {
     }
     
     if (orderData.days.length === 0){
-        alert("Пожалуйста, добавьте хотя бы одно блюдо в заказ");
+       alert("Пожалуйста, добавьте хотя бы одно блюдо в заказ");
         return;
     }
     
