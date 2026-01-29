@@ -23,6 +23,7 @@ class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
+    email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     role = Column(String)  # 'student', 'cook','admin'
     allergies = Column(String, default="")
@@ -106,6 +107,13 @@ def ensure_database_schema():
     
     # Check and add missing columns if needed
     with engine.connect() as conn:
+        # Check if email column exists in users
+        result = conn.execute(text("""
+            SELECT name FROM pragma_table_info('users') WHERE name='email';
+        """))
+        if not result.fetchone():
+            conn.execute(text("ALTER TABLE users ADD COLUMN email TEXT;"))
+        
         # Check if dietary_preferences column exists in users
         result = conn.execute(text("""
             SELECT name FROM pragma_table_info('users') WHERE name='dietary_preferences';
@@ -160,6 +168,7 @@ def ensure_database_schema():
 # --- PYDANTIC SCHEMAS ---
 class UserRegister(BaseModel):
     username: str
+    email: str
     password: str
     role: str
     allergies: Optional[str] = ""
@@ -236,11 +245,14 @@ app.add_middleware(
 def register(user: UserRegister, db: Session = Depends(get_db)):
     if db.query(User).filter(User.username == user.username).first():
         raise HTTPException(400, "User already exists")
+    if db.query(User).filter(User.email == user.email).first():
+        raise HTTPException(400, "Email already exists")
     # Truncate password to 72 bytes for bcrypt compatibility
     password_to_hash = user.password[:72] if len(user.password) > 72 else user.password
     hashed = pwd_context.hash(password_to_hash)
     new_user = User(
         username=user.username,
+        email=user.email,
         hashed_password=hashed,
         role=user.role,
         allergies=user.allergies,

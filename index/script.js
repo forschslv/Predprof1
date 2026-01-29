@@ -39,10 +39,12 @@ function toggleReg() {
     document.getElementById('roleSelect').classList.toggle('hidden', !isRegister);
     document.getElementById('allergies').classList.toggle('hidden', !isRegister);
     document.getElementById('dietary_preferences').classList.toggle('hidden', !isRegister);
+    document.getElementById('email').classList.toggle('hidden', !isRegister);
 }
 
 async function handleAuth() {
     const username = document.getElementById('username').value;
+    const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     const role = document.getElementById('roleSelect').value;
     const allergies = document.getElementById('allergies').value;
@@ -50,7 +52,7 @@ async function handleAuth() {
 
     const endpoint = isRegister ? "/register" : "/login";
     const body = isRegister 
-        ? { username, password, role, allergies, dietary_preferences }
+        ? { username, email, password, role, allergies, dietary_preferences }
         : { username, password };
 
     try {
