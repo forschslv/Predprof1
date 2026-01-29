@@ -173,7 +173,7 @@ def get_db():
 def create_token(data: dict):
     return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
 
-async def get_current_user(token: str, db: Session):
+def get_current_user(token: str, db: Session):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username = payload.get("sub")
@@ -256,7 +256,7 @@ def get_menu_item(item_id: int, db: Session = Depends(get_db)):
 # 3. УЧЕНИК
 @app.post("/buy/{item_id}")
 async def buy_food(item_id: int, token: str, db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
+    user = get_current_user(token, db)
     if user.role != "student":
         raise HTTPException(403, "Only students can buy food")
     
@@ -293,7 +293,7 @@ async def buy_food(item_id: int, token: str, db: Session = Depends(get_db)):
 
 @app.put("/receive/{order_id}")
 async def receive_food(order_id: int, token: str, db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
+    user = get_current_user(token, db)
     order = db.query(Order).filter(Order.id == order_id, Order.user_id == user.id).first()
     if not order:
         raise HTTPException(404, "Order not found")
@@ -305,7 +305,7 @@ async def receive_food(order_id: int, token: str, db: Session = Depends(get_db))
 
 @app.get("/my_orders")
 async def get_my_orders(token: str, db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
+    user = get_current_user(token, db)
     orders = db.query(Order).filter(Order.user_id == user.id).order_by(Order.created_at.desc()).all()
     return [{
         "id": o.id,
@@ -317,7 +317,7 @@ async def get_my_orders(token: str, db: Session = Depends(get_db)):
 
 @app.post("/topup_balance")
 async def topup_balance(token: str, data: BalanceTopup, db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
+    user = get_current_user(token, db)
     user.balance += data.amount
     db.commit()
     create_notification(db, user.id, f"Баланс пополнен на {data.amount}₽")
@@ -325,7 +325,7 @@ async def topup_balance(token: str, data: BalanceTopup, db: Session = Depends(ge
 
 @app.post("/buy_subscription")
 async def buy_subscription(token: str, meals_count: int = Query(..., ge=5), db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
+    user = get_current_user(token, db)
     if user.role != "student":
         raise HTTPException(403, "Only students can buy subscriptions")
     
@@ -353,7 +353,7 @@ async def buy_subscription(token: str, meals_count: int = Query(..., ge=5), db: 
 
 @app.post("/review/{item_id}")
 async def add_review(item_id: int, token: str, review: ReviewCreate, db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
+    user = get_current_user(token, db)
     if user.role != "student":
         raise HTTPException(403, "Only students can leave reviews")
     
@@ -392,7 +392,7 @@ def get_reviews(item_id: int, db: Session = Depends(get_db)):
 
 @app.get("/my_profile")
 async def get_profile(token: str, db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
+    user = get_current_user(token, db)
     subscription = db.query(Subscription).filter(
         Subscription.user_id == user.id,
         Subscription.meals_remaining > 0,
@@ -412,7 +412,7 @@ async def get_profile(token: str, db: Session = Depends(get_db)):
 
 @app.put("/update_profile")
 async def update_profile(token: str, allergies: Optional[str] = None, dietary_preferences: Optional[str] = None, db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
+    user = get_current_user(token, db)
     if allergies is not None:
         user.allergies = allergies
     if dietary_preferences is not None:
@@ -423,7 +423,7 @@ async def update_profile(token: str, allergies: Optional[str] = None, dietary_pr
 # 4. ПОВАР
 @app.post("/supply")
 async def request_supply(token: str, req: SupplyCreate, db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
+    user = get_current_user(token, db)
     if user.role != "cook":
         raise HTTPException(403, "Only cooks can request supplies")
     
@@ -439,7 +439,7 @@ async def request_supply(token: str, req: SupplyCreate, db: Session = Depends(ge
 
 @app.get("/cook/dishes")
 async def get_dish_inventory(token: str, db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
+    user = get_current_user(token, db)
     if user.role != "cook":
         raise HTTPException(403, "Only cooks can access this")
     items = db.query(MenuItem).filter(MenuItem.category.in_(["breakfast", "lunch"])).all()
@@ -452,7 +452,7 @@ async def get_dish_inventory(token: str, db: Session = Depends(get_db)):
 
 @app.put("/cook/dishes/{item_id}/quantity")
 async def update_dish_quantity(item_id: int, token: str, quantity: int, db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
+    user = get_current_user(token, db)
     if user.role != "cook":
         raise HTTPException(403, "Only cooks can update dish quantities")
     
@@ -466,14 +466,14 @@ async def update_dish_quantity(item_id: int, token: str, quantity: int, db: Sess
 
 @app.get("/cook/inventory")
 async def get_inventory(token: str, db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
+    user = get_current_user(token, db)
     if user.role != "cook":
         raise HTTPException(403, "Only cooks can access inventory")
     return db.query(Inventory).all()
 
 @app.post("/cook/inventory")
 async def add_inventory_item(token: str, name: str, quantity: float, unit: str, db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
+    user = get_current_user(token, db)
     if user.role != "cook":
         raise HTTPException(403, "Only cooks can manage inventory")
     
@@ -489,7 +489,7 @@ async def add_inventory_item(token: str, name: str, quantity: float, unit: str, 
 
 @app.put("/cook/inventory/{item_id}")
 async def update_inventory_item(item_id: int, token: str, quantity: float, db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
+    user = get_current_user(token, db)
     if user.role != "cook":
         raise HTTPException(403, "Only cooks can update inventory")
     
@@ -504,7 +504,7 @@ async def update_inventory_item(item_id: int, token: str, quantity: float, db: S
 # 5. АДМИН
 @app.get("/admin/stats")
 async def get_stats(token: str, db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
+    user = get_current_user(token, db)
     if user.role != "admin":
         raise HTTPException(403, "Admins only")
     
@@ -528,7 +528,7 @@ async def get_stats(token: str, db: Session = Depends(get_db)):
 
 @app.put("/admin/approve_supply/{req_id}")
 async def approve_supply(req_id: int, token: str, db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
+    user = get_current_user(token, db)
     if user.role != "admin":
         raise HTTPException(403, "Admins only")
     
@@ -547,7 +547,7 @@ async def approve_supply(req_id: int, token: str, db: Session = Depends(get_db))
 
 @app.post("/admin/menu")
 async def create_menu_item(token: str, item: MenuItemCreate, db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
+    user = get_current_user(token, db)
     if user.role != "admin":
         raise HTTPException(403, "Admins only")
     
@@ -559,7 +559,7 @@ async def create_menu_item(token: str, item: MenuItemCreate, db: Session = Depen
 
 @app.put("/admin/menu/{item_id}")
 async def update_menu_item(item_id: int, token: str, item: MenuItemCreate, db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
+    user = get_current_user(token, db)
     if user.role != "admin":
         raise HTTPException(403, "Admins only")
     
@@ -575,7 +575,7 @@ async def update_menu_item(item_id: int, token: str, item: MenuItemCreate, db: S
 
 @app.delete("/admin/menu/{item_id}")
 async def delete_menu_item(item_id: int, token: str, db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
+    user = get_current_user(token, db)
     if user.role != "admin":
         raise HTTPException(403, "Admins only")
     
@@ -589,7 +589,7 @@ async def delete_menu_item(item_id: int, token: str, db: Session = Depends(get_d
 
 @app.get("/admin/reports")
 async def get_reports(token: str, start_date: str, end_date: str, db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
+    user = get_current_user(token, db)
     if user.role != "admin":
         raise HTTPException(403, "Admins only")
     
@@ -629,7 +629,7 @@ async def get_reports(token: str, start_date: str, end_date: str, db: Session = 
 # 6. УВЕДОМЛЕНИЯ
 @app.get("/notifications")
 async def get_notifications(token: str, db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
+    user = get_current_user(token, db)
     notifications = db.query(Notification).filter(
         (Notification.user_id == user.id) | (Notification.user_id == 0)
     ).order_by(Notification.created_at.desc()).limit(20).all()
@@ -643,7 +643,7 @@ async def get_notifications(token: str, db: Session = Depends(get_db)):
 
 @app.put("/notifications/{notification_id}/read")
 async def mark_notification_read(notification_id: int, token: str, db: Session = Depends(get_db)):
-    user = await get_current_user(token, db)
+    user = get_current_user(token, db)
     notification = db.query(Notification).filter(
         Notification.id == notification_id,
         Notification.user_id.in_([user.id, 0])
