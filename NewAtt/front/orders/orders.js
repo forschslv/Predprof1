@@ -271,16 +271,74 @@ function calculateDayTotal(dayIndex) {
     let total = 0;
     const dishIds = window.moduleMenu[dayIndex]?.dish_ids || [];
     
+    // Get prices and quantities to calculate total
     dishIds.forEach(dishId => {
         const qtyInput = document.getElementById(`qty-${dayIndex}-${dishId}`);
         if (qtyInput) {
             const quantity = parseInt(qtyInput.value) || 0;
-            // In a real app, we'd store dish prices, but for now we'll fetch them when needed
-            // This is simplified for the demo
+            
+            // Fetch dish price and add to total
+            fetch(`${window.API_BASE}/menu/${dishId}`, {
+                headers: {
+                    'Authorization': `Bearer ${window.currentToken}`
+                }
+            })
+            .then(response => response.json())
+            .then(dish => {
+                if (dish && dish.price_rub) {
+                    total += dish.price_rub * quantity;
+                }
+            })
+            .catch(error => {
+                console.error(`Error fetching dish ${dishId} for total calculation:`, error);
+            });
         }
     });
     
-    // This is a simplified calculation - in a real app we'd have the dish prices cached
+    return total;
+}
+
+// Enhanced function to calculate total with proper async handling
+async function calculateTotalWithPrices() {
+    let total = 0;
+    const dishPromises = [];
+    
+    for (let dayIndex = 0; dayIndex < 6; dayIndex++) {
+        const dishIds = window.moduleMenu[dayIndex]?.dish_ids || [];
+        
+        dishIds.forEach(dishId => {
+            const qtyInput = document.getElementById(`qty-${dayIndex}-${dishId}`);
+            if (qtyInput) {
+                const quantity = parseInt(qtyInput.value) || 0;
+
+                if (quantity > 0) {
+                    // Create a promise to fetch dish price
+                    const dishPromise = fetch(`${window.API_BASE}/menu/${dishId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${window.currentToken}`
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(dish => {
+                        if (dish && dish.price_rub) {
+                            return dish.price_rub * quantity;
+                        }
+                        return 0;
+                    })
+                    .catch(error => {
+                        console.error(`Error fetching dish ${dishId}:`, error);
+                        return 0;
+                    });
+
+                    dishPromises.push(dishPromise);
+                }
+            }});
+        }
+
+
+    const prices = await Promise.all(dishPromises);
+    total = prices.reduce((sum, price) => sum + price, 0);
+    
     return total;
 }
 
@@ -341,11 +399,13 @@ async function submitOrder() {
         const result = await response.json();
         
         if (response.ok) {
-            alert(`Заказ успешно создан! Номер заказа: ${result.id}, общая сумма: ${result.total_amount}₽`);
+            // Calculate the total amount from the order
+            const totalAmount = await calculateTotalWithPrices();
+            alert(`Заказ успешно создан! Номер заказа: ${result.id}, общая сумма: ${totalAmount}₽`);
             
             // Show payment modal
             const totalOrderAmount = document.getElementById('totalOrderAmount');
-            if (totalOrderAmount) totalOrderAmount.textContent = `${result.total_amount}₽`;
+            if (totalOrderAmount) totalOrderAmount.textContent = `${totalAmount}₽`;
             const paymentModal = document.getElementById('paymentModal');
             if (paymentModal) paymentModal.style.display = 'block';
         } else {
@@ -370,13 +430,32 @@ async function confirmPayment() {
         return;
     }
     
-    // In a real app, we would upload the payment proof file
-    // For now, we'll just show a success message
-    alert("Оплата подтверждена!");
-    closeModal('paymentModal');
+    // Send payment confirmation to server
+    const formData = new FormData();
+    formData.append('file', paymentProof.files[0]);
     
-    // Reload orders
-    await loadMyOrders();
+    try {
+        const response = await fetch(`${window.API_BASE}/orders/${orderId}/pay`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${window.currentToken}`
+            },
+            body: formData
+        });
+        
+        if (response.ok) {
+            alert("Оплата подтверждена!");
+            closeModal('paymentModal');
+            
+            // Reload orders
+            await loadMyOrders();
+        } else {
+            const result = await response.json();
+            alert(result.detail || "Ошибка подтверждения оплаты");
+        }
+    } catch (error) {
+        alert("Ошибка подтверждения оплаты: " + error.message);
+    }
 }
 
 async function loadMyOrders() {
