@@ -6,7 +6,7 @@ let currentUser = null;
 // Check if user is logged in and has admin role
 if (!currentToken || currentRole !== 'admin') {
     alert('Доступ запрещен. Только администраторы могут просматривать эту страницу.');
-    window.location.href = 'main.html';
+    window.location.href = '../index/main.html';
 }
 
 // Load admin data on page load
@@ -170,5 +170,5 @@ async function generateReport() {
 
 function logout() {
     localStorage.clear();
-    window.location.href = 'main.html';
+    window.location.href = '../index/main.html';
 }

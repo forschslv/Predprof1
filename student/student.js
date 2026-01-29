@@ -6,7 +6,7 @@ let currentUser = null;
 // Check if user is logged in and has student role
 if (!currentToken || currentRole !== 'student') {
     alert('Доступ запрещен. Только ученики могут просматривать эту страницу.');
-    window.location.href = 'main.html';
+    window.location.href = '../index/main.html';
 }
 
 // Load student data on page load
@@ -195,5 +195,5 @@ function closeModal(modalId) {
 
 function logout() {
     localStorage.clear();
-    window.location.href = 'main.html';
+    window.location.href = '../index/main.html';
 }

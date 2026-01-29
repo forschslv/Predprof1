@@ -6,7 +6,7 @@ let currentUser = null;
 // Check if user is logged in and has cook role
 if (!currentToken || currentRole !== 'cook') {
     alert('Доступ запрещен. Только повара могут просматривать эту страницу.');
-    window.location.href = 'main.html';
+    window.location.href = '../index/main.html';
 }
 
 // Load cook data on page load
@@ -141,5 +141,5 @@ async function sendSupplyRequest() {
 
 function logout() {
     localStorage.clear();
-    window.location.href = 'main.html';
+    window.location.href = '../index/main.html';
 }
