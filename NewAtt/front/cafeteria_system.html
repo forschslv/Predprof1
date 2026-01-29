@@ -13,8 +13,9 @@
     <!-- AUTHENTICATION SECTION -->
     <div id="authSection">
         <h2 id="authTitle">Вход</h2>
-        <input type="text" id="username" placeholder="Имя пользователя">
+        <input type="text" id="username" placeholder="Имя пользователя" class="hidden">
         <input type="email" id="email" placeholder="Email">
+        <input type="text" id="confirmCode" placeholder="Код подтверждения">
         
         <button onclick="handleAuth()" id="authBtn">Войти</button>
         <p onclick="toggleReg()" id="toggleText">

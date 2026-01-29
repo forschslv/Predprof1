@@ -10,6 +10,10 @@ let isRegister = false;
 // Initialize the app
 if (currentToken) {
     showDashboard();
+} else {
+    // Set up login form by default
+    document.getElementById('username').classList.add('hidden');
+    document.getElementById('confirmCode').classList.remove('hidden');
 }
 
 function toggleReg() {
@@ -20,103 +24,111 @@ function toggleReg() {
     
     const usernameField = document.getElementById('username');
     const emailField = document.getElementById('email');
+    const confirmCodeField = document.getElementById('confirmCode');
     
     if (isRegister) {
-        // Registration: show both username and email fields
+        // Registration: show username, email, and code fields
         usernameField.classList.remove('hidden');
         emailField.classList.remove('hidden');
+        confirmCodeField.classList.remove('hidden');
         usernameField.placeholder = "Имя пользователя";
     } else {
-        // Login: only show email field, hide username
+        // Login: show email and code fields
         usernameField.classList.add('hidden');
         emailField.classList.remove('hidden');
+        confirmCodeField.classList.remove('hidden');
     }
 }
 
 async function handleAuth() {
     const username = document.getElementById('username').value;
     const email = document.getElementById('email').value;
+    const confirmCode = document.getElementById('confirmCode').value;
     
-    if (isRegister) {
-        // Registration flow - send verification code first
+    // If code field is filled, try to verify directly
+    if (confirmCode.trim() !== "") {
+        // Verify the code directly
         try {
-            const registerRes = await fetch(`${API_BASE}/register`, {
+            const verifyRes = await fetch(`${API_BASE}/verify-code`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    name: username,
-                    secondary_name: "User",
-                    email: email,
-                    status: "student"
-                })
+                body: JSON.stringify({ email, code: confirmCode })
             });
             
-            const registerData = await registerRes.json();
+            const verifyData = await verifyRes.json();
             
-            if (registerRes.ok) {
-                alert("Код подтверждения отправлен на ваш email. Пожалуйста, введите его.");
+            if (verifyRes.ok) {
+                localStorage.setItem('token', verifyData.access_token);
+                currentToken = verifyData.access_token;
+                currentUser = verifyData.user;
                 
-                // Hide the main auth form fields
-                document.getElementById('username').classList.add('hidden');
-                document.getElementById('email').classList.add('hidden');
-                document.getElementById('authBtn').classList.add('hidden');
-                document.getElementById('toggleText').classList.add('hidden');
+                // Determine role based on status
+                if (currentUser.status.toLowerCase().includes('admin')) {
+                    currentRole = 'admin';
+                } else if (currentUser.status.toLowerCase().includes('cook')) {
+                    currentRole = 'cook';
+                } else {
+                    currentRole = 'student';
+                }
+                localStorage.setItem('role', currentRole);
                 
-                // Show verification code input
-                const verificationDiv = document.createElement('div');
-                verificationDiv.id = 'verificationSection';
-                verificationDiv.innerHTML = `
-                    <input type="email" id="verifyEmail" placeholder="Email" value="${email}" readonly>
-                    <input type="text" id="verifyCode" placeholder="Код подтверждения">
-                    <button onclick="verifyCode()">Подтвердить</button>
-                `;
-                document.getElementById('authSection').appendChild(verificationDiv);
+                showDashboard();
             } else {
-                alert(registerData.detail || "Ошибка регистрации");
+                alert(verifyData.detail || "Неверный код подтверждения");
             }
         } catch (error) {
-            alert("Ошибка регистрации: " + error.message);
+            alert("Ошибка проверки кода: " + error.message);
         }
     } else {
-        // Login flow - request verification code
+        // Request code to be sent
         try {
-            // For login, we'll request a verification code to be sent to the email
-            const loginRes = await fetch(`${API_BASE}/register`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    name: "temp", // Not used for login
-                    secondary_name: "temp",
-                    email: email,
-                    status: "login" // Indicate this is a login attempt
-                })
-            });
-            
-            const loginData = await loginRes.json();
-            
-            if (loginRes.ok) {
-                alert("Код подтверждения отправлен на ваш email. Пожалуйста, введите его.");
+            if (isRegister) {
+                // Registration flow - send verification code
+                const registerRes = await fetch(`${API_BASE}/register`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        name: username,
+                        secondary_name: "User",
+                        email: email,
+                        status: "student"
+                    })
+                });
                 
-                // Hide the main auth form fields
-                document.getElementById('username').classList.add('hidden');
-                document.getElementById('email').classList.add('hidden');
-                document.getElementById('authBtn').classList.add('hidden');
-                document.getElementById('toggleText').classList.add('hidden');
+                const registerData = await registerRes.json();
                 
-                // Show verification code input
-                const verificationDiv = document.createElement('div');
-                verificationDiv.id = 'verificationSection';
-                verificationDiv.innerHTML = `
-                    <input type="email" id="verifyEmail" placeholder="Email" value="${email}" readonly>
-                    <input type="text" id="verifyCode" placeholder="Код подтверждения">
-                    <button onclick="verifyCode()">Войти</button>
-                `;
-                document.getElementById('authSection').appendChild(verificationDiv);
+                if (registerRes.ok) {
+                    alert("Код подтверждения отправлен на ваш email. Пожалуйста, введите его.");
+                } else {
+                    alert(registerData.detail || "Ошибка регистрации");
+                }
             } else {
-                alert(loginData.detail || "Ошибка входа");
+                // Login flow - request verification code
+                const loginRes = await fetch(`${API_BASE}/register`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        name: "temp", // Not used for login
+                        secondary_name: "temp",
+                        email: email,
+                        status: "login" // Indicate this is a login attempt
+                    })
+                });
+                
+                const loginData = await loginRes.json();
+                
+                if (loginRes.ok) {
+                    alert("Код подтверждения отправлен на ваш email. Пожалуйста, введите его.");
+                } else {
+                    alert(loginData.detail || "Ошибка входа");
+                }
             }
         } catch (error) {
-            alert("Ошибка входа: " + error.message);
+            if (isRegister) {
+                alert("Ошибка регистрации: " + error.message);
+            } else {
+                alert("Ошибка входа: " + error.message);
+            }
         }
     }
 }
@@ -155,9 +167,6 @@ async function verifyCode() {
             // Show back the auth fields for next logout
             document.getElementById('username').classList.remove('hidden');
             document.getElementById('email').classList.remove('hidden');
-            document.getElementById('password').classList.remove('hidden');
-            document.getElementById('status').classList.remove('hidden');
-            document.getElementById('roleSelect').classList.remove('hidden');
             document.getElementById('authBtn').classList.remove('hidden');
             document.getElementById('toggleText').classList.remove('hidden');
             
@@ -978,12 +987,14 @@ function logout() {
     // Show all auth fields again if they were hidden
     document.getElementById('username').classList.remove('hidden');
     document.getElementById('email').classList.remove('hidden');
+    document.getElementById('confirmCode').classList.remove('hidden');
     document.getElementById('authBtn').classList.remove('hidden');
     document.getElementById('toggleText').classList.remove('hidden');
     
     // Reset auth form
     document.getElementById('username').value = '';
     document.getElementById('email').value = '';
+    document.getElementById('confirmCode').value = '';
 
     isRegister = false;
     document.getElementById('authTitle').innerText = 'Вход';
@@ -992,6 +1003,7 @@ function logout() {
     
     // Reset fields to login mode
     document.getElementById('username').classList.add('hidden'); // Login mode hides username
+    document.getElementById('confirmCode').classList.remove('hidden'); // Show code field
     document.getElementById('username').placeholder = 'Имя пользователя';
     document.getElementById('email').classList.remove('hidden');
 }
