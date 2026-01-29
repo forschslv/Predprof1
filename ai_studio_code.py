@@ -161,7 +161,7 @@ class BalanceTopup(BaseModel):
     amount: float
 
 # --- AUTH UTILS ---
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 def get_db():
     db = SessionLocal()
@@ -208,7 +208,9 @@ app.add_middleware(
 def register(user: UserRegister, db: Session = Depends(get_db)):
     if db.query(User).filter(User.username == user.username).first():
         raise HTTPException(400, "User already exists")
-    hashed = pwd_context.hash(user.password)
+    # Truncate password to 72 bytes for bcrypt compatibility
+    password_to_hash = user.password[:72] if len(user.password) > 72 else user.password
+    hashed = pwd_context.hash(password_to_hash)
     new_user = User(
         username=user.username,
         hashed_password=hashed,
@@ -223,7 +225,9 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
 @app.post("/login")
 def login(user: UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.username == user.username).first()
-    if not db_user or not pwd_context.verify(user.password, db_user.hashed_password):
+    # Truncate password to 72 bytes for bcrypt compatibility during verification
+    password_to_verify = user.password[:72] if len(user.password) > 72 else user.password
+    if not db_user or not pwd_context.verify(password_to_verify, db_user.hashed_password):
         raise HTTPException(400, "Invalid credentials")
     token = create_token({"sub": db_user.username, "role": db_user.role})
     return {"access_token": token, "role": db_user.role}
@@ -654,4 +658,4 @@ async def mark_notification_read(notification_id: int, token: str, db: Session =
 if __name__ == "__main__":
     import uvicorn
     ensure_database_schema()  # Ensure database schema is up to date
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)  # Не трогать порт
