@@ -106,26 +106,54 @@ def ensure_database_schema():
     
     # Check and add missing columns if needed
     with engine.connect() as conn:
-        # Check if dietary_preferences column exists
+        # Check if dietary_preferences column exists in users
         result = conn.execute(text("""
             SELECT name FROM pragma_table_info('users') WHERE name='dietary_preferences';
         """))
         if not result.fetchone():
             conn.execute(text("ALTER TABLE users ADD COLUMN dietary_preferences TEXT DEFAULT '';"))
         
-        # Check if allergies column exists  
+        # Check if allergies column exists in users
         result = conn.execute(text("""
             SELECT name FROM pragma_table_info('users') WHERE name='allergies';
         """))
         if not result.fetchone():
             conn.execute(text("ALTER TABLE users ADD COLUMN allergies TEXT DEFAULT '';"))
         
-        # Check if balance column exists
+        # Check if balance column exists in users
         result = conn.execute(text("""
             SELECT name FROM pragma_table_info('users') WHERE name='balance';
         """))
         if not result.fetchone():
             conn.execute(text("ALTER TABLE users ADD COLUMN balance REAL DEFAULT 0.0;"))
+        
+        # Check if meals_remaining column exists in subscriptions
+        result = conn.execute(text("""
+            SELECT name FROM pragma_table_info('subscriptions') WHERE name='meals_remaining';
+        """))
+        if not result.fetchone():
+            conn.execute(text("ALTER TABLE subscriptions ADD COLUMN meals_remaining INTEGER;"))
+        
+        # Check if total_meals column exists in subscriptions
+        result = conn.execute(text("""
+            SELECT name FROM pragma_table_info('subscriptions') WHERE name='total_meals';
+        """))
+        if not result.fetchone():
+            conn.execute(text("ALTER TABLE subscriptions ADD COLUMN total_meals INTEGER;"))
+        
+        # Check if created_at column exists in subscriptions
+        result = conn.execute(text("""
+            SELECT name FROM pragma_table_info('subscriptions') WHERE name='created_at';
+        """))
+        if not result.fetchone():
+            conn.execute(text("ALTER TABLE subscriptions ADD COLUMN created_at DATETIME;"))
+        
+        # Check if expires_at column exists in subscriptions
+        result = conn.execute(text("""
+            SELECT name FROM pragma_table_info('subscriptions') WHERE name='expires_at';
+        """))
+        if not result.fetchone():
+            conn.execute(text("ALTER TABLE subscriptions ADD COLUMN expires_at DATETIME;"))
         
         conn.commit()
 
