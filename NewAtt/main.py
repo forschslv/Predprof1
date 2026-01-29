@@ -14,6 +14,7 @@ load_dotenv()
 
 import uvicorn
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile, status
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -57,6 +58,21 @@ app = FastAPI(
     title="Canteen API",
     dependencies=[Depends(security_scheme)]
 )
+
+# Configure CORS middleware to allow requests from frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:63342",  # JetBrains IDE builtin server
+        "http://127.0.0.1:8000",    # Local backend
+        "http://localhost:8000",    # Local backend alternative
+        "http://10.92.59.143:8000", # Specific IP mentioned in error
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.add_middleware(JWTAuthMiddleware)
 
 
