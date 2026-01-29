@@ -1,0 +1,48 @@
+/* Additional styles specific to registration page if needed */
+/* Inherits most styles from main.css */
+
+.auth-fields {
+    margin-bottom: 15px;
+}
+
+.login-fields {
+    margin-bottom: 15px;
+}
+
+#authSection input, #authSection select {
+    margin: 8px 0;
+}
+
+#verificationSection input {
+    margin: 8px 0;
+}
+
+#verificationSection {
+    text-align: center;
+}
+
+#verificationMessage {
+    margin-bottom: 20px;
+    color: var(--accent-cyan);
+}
+
+#backToAuth {
+    text-align: center;
+    color: var(--accent-cyan);
+    cursor: pointer;
+    margin-top: 15px;
+    font-size: 0.95em;
+    transition: all 0.3s ease;
+}
+
+#backToAuth:hover {
+    color: var(--accent-purple);
+    text-decoration: underline;
+}
+
+/* Ensure the container is centered */
+.container {
+    max-width: 500px;
+    margin: 2rem auto;
+    padding: 30px;
+}

@@ -477,7 +477,7 @@ async def request_supply(token: str, req: SupplyCreate, db: Session = Depends(ge
     
     return {"msg": "Supply request submitted"}
 
-@app.get("/cook/dishes")
+@app.get("old/cook/dishes")
 async def get_dish_inventory(token: str, db: Session = Depends(get_db)):
     user = get_current_user(token, db)
     if user.role != "cook":
@@ -490,7 +490,7 @@ async def get_dish_inventory(token: str, db: Session = Depends(get_db)):
         "category": item.category
     } for item in items]
 
-@app.put("/cook/dishes/{item_id}/quantity")
+@app.put("old/cook/dishes/{item_id}/quantity")
 async def update_dish_quantity(item_id: int, token: str, quantity: int, db: Session = Depends(get_db)):
     user = get_current_user(token, db)
     if user.role != "cook":
@@ -504,14 +504,14 @@ async def update_dish_quantity(item_id: int, token: str, quantity: int, db: Sess
     db.commit()
     return {"msg": "Quantity updated successfully"}
 
-@app.get("/cook/inventory")
+@app.get("old/cook/inventory")
 async def get_inventory(token: str, db: Session = Depends(get_db)):
     user = get_current_user(token, db)
     if user.role != "cook":
         raise HTTPException(403, "Only cooks can access inventory")
     return db.query(Inventory).all()
 
-@app.post("/cook/inventory")
+@app.post("old/cook/inventory")
 async def add_inventory_item(token: str, name: str, quantity: float, unit: str, db: Session = Depends(get_db)):
     user = get_current_user(token, db)
     if user.role != "cook":
@@ -527,7 +527,7 @@ async def add_inventory_item(token: str, name: str, quantity: float, unit: str, 
     db.commit()
     return {"msg": "Inventory item updated"}
 
-@app.put("/cook/inventory/{item_id}")
+@app.put("old/cook/inventory/{item_id}")
 async def update_inventory_item(item_id: int, token: str, quantity: float, db: Session = Depends(get_db)):
     user = get_current_user(token, db)
     if user.role != "cook":
@@ -542,7 +542,7 @@ async def update_inventory_item(item_id: int, token: str, quantity: float, db: S
     return {"msg": "Inventory updated"}
 
 # 5. АДМИН
-@app.get("/admin/stats")
+@app.get("old/admin/stats")
 async def get_stats(token: str, db: Session = Depends(get_db)):
     user = get_current_user(token, db)
     if user.role != "admin":
@@ -566,7 +566,7 @@ async def get_stats(token: str, db: Session = Depends(get_db)):
         } for req in pending_supplies]
    }
 
-@app.put("/admin/approve_supply/{req_id}")
+@app.put("old/admin/approve_supply/{req_id}")
 async def approve_supply(req_id: int, token: str, db: Session = Depends(get_db)):
     user = get_current_user(token, db)
     if user.role != "admin":
@@ -585,7 +585,7 @@ async def approve_supply(req_id: int, token: str, db: Session = Depends(get_db))
     create_notification(db, req.cook_id, f"Ваша заявка на {req.item_name} одобрена")
     return {"msg": "Supply request approved"}
 
-@app.post("/admin/menu")
+@app.post("old/admin/menu")
 async def create_menu_item(token: str, item: MenuItemCreate, db: Session = Depends(get_db)):
     user = get_current_user(token, db)
     if user.role != "admin":
@@ -597,7 +597,7 @@ async def create_menu_item(token: str, item: MenuItemCreate, db: Session = Depen
     create_notification(db, 0, f"Добавлено новое блюдо: {item.name}")
     return {"msg": "Menu item created", "id": new_item.id}
 
-@app.put("/admin/menu/{item_id}")
+@app.put("old/admin/menu/{item_id}")
 async def update_menu_item(item_id: int, token: str, item: MenuItemCreate, db: Session = Depends(get_db)):
     user = get_current_user(token, db)
     if user.role != "admin":
@@ -613,7 +613,7 @@ async def update_menu_item(item_id: int, token: str, item: MenuItemCreate, db: S
     db.commit()
     return {"msg": "Menu item updated"}
 
-@app.delete("/admin/menu/{item_id}")
+@app.delete("old/admin/menu/{item_id}")
 async def delete_menu_item(item_id: int, token: str, db: Session = Depends(get_db)):
     user = get_current_user(token, db)
     if user.role != "admin":
@@ -627,7 +627,7 @@ async def delete_menu_item(item_id: int, token: str, db: Session = Depends(get_d
     db.commit()
     return {"msg": "Menu item deleted"}
 
-@app.get("/admin/reports")
+@app.get("old/admin/reports")
 async def get_reports(token: str, start_date: str, end_date: str, db: Session = Depends(get_db)):
     user = get_current_user(token, db)
     if user.role != "admin":
