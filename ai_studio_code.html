@@ -562,6 +562,28 @@
     let currentRole = localStorage.getItem('role');
     let currentUser = null;
 
+    // Clear invalid tokens (tokens with 'null' as username)
+    if (currentToken) {
+        try {
+            const tokenParts = currentToken.split('.');
+            if (tokenParts.length === 3) {
+                const payload = JSON.parse(atob(tokenParts[1]));
+                if (payload.sub === 'null') {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('role');
+                    currentToken = null;
+                    currentRole = null;
+                }
+            }
+        } catch (e) {
+            console.error('Error parsing token:', e);
+            localStorage.removeItem('token');
+            localStorage.removeItem('role');
+            currentToken = null;
+            currentRole = null;
+        }
+    }
+
     if (currentToken) {
         showDashboard();
     }
