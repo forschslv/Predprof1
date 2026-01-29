@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Школьная Столовая</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #0f0f23;
+            --bg-glass: rgba(20, 20, 40, 0.6);
+            --accent-cyan: #00d4ff;
+            --accent-purple: #8b5cf6;
+            --accent-blue: #3b82f6;
+            --text-primary: #f0f9ff;
+            --text-secondary: #94a3b8;
+            --border-color: rgba(139, 92, 246, 0.2);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            background-attachment: fixed;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--bg-glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-cyan));
+            z-index: 10;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 30px;
+            letter-spacing: -0.5px;
+            position: relative;
+        }
+        
+        h1::after {
+            content: '🍱';
+            position: absolute;
+            right: -50px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2rem;
+        }
+        
+        h2, h3 {
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+            border-radius: 3px;
+        }
+        
+        h3 {
+            font-size: 1.3rem;
+            margin-top: 25px;
+        }
+        
+        input, select, button, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            margin: 8px 0;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+        
+        input:focus, select:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+        }
+        
+        input[type="text"], input[type="password"], input[type="number"], select {
+            height: 45px;
+        }
+        
+        button {
+            background: linear-gradient(45deg, var(--accent-blue), var(--accent-purple));
+            border: none;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            height: 45px;
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
+        }
+        
+        button:hover::before {
+            left: 100%;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button.logout {
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+            margin-top: 25px;
+        }
+        
+        button.secondary {
+            background: linear-gradient(45deg, var(--accent-purple), #a855f7);
+        }
+        
+        button.danger {
+            background: linear-gradient(45deg, #f59e0b, #d97706);
+        }
+        
+        .hidden { display: none !important; }
+        
+        .menu-item, .review-item, .notification-item, .profile-box, .balance-box, 
+        .subscription-box, .stats-box, .request-item, .order-item, .inventory-item, 
+        .filter-section, .inventory-item {
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 15px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+        
+        .menu-item:hover, .order-item:hover, .inventory-item:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-glow);
+            border-color: var(--accent-cyan);
+        }
+        
+        .price {
+            font-weight: 700;
+            color: var(--accent-cyan);
+            font-size: 1.1rem;
+        }
+        
+        .notification-item {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: rgba(59, 130, 246, 0.3);
+            cursor: pointer;
+        }
+        
+        .notification-item.unread {
+            background: rgba(139, 92, 246, 0.1);
+            border-color: var(--accent-purple);
+            position: relative;
+        }
+        
+        .notification-item.unread::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 8px;
+            height: 8px;
+            background: var(--accent-cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-cyan);
+        }
+        
+        .profile-box, .balance-box, .subscription-box {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+            border-color: var(--accent-purple);
+            padding: 20px;
+        }
+        
+        .stats-box {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: var(--accent-cyan);
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .request-item {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: #f59e0b;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .button-group button {
+            flex: 1;
+            padding: 10px;
+            font-size: 0.9em;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+        
+        .close {
+            color: var(--text-secondary);
+            float: right;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .close:hover {
+            color: var(--accent-cyan);
+            text-shadow: 0 0 10px var(--accent-cyan);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        th, td {
+            border: none;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue));
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        tr:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .filter-section {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .filter-section input, .filter-section select {
+            width: auto;
+            margin-right: 10px;
+            margin-bottom: 0;
+        }
+        
+        #toggleText {
+            text-align: center;
+            color: var(--accent-cyan);
+            cursor: pointer;
+            margin-top: 15px;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+        }
+        
+        #toggleText:hover {
+            color: var(--accent-purple);
+            text-decoration: underline;
+        }
+        
+        #welcomeMsg {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: rgba(139, 92, 246, 0.1);
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+        }
+        
+        /* Анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .container > div {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        /* Скроллбар */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-purple);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-cyan);
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            h1::after {
+                display: none;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Школьная Столовая</h1>
+
+    <!-- АВТОРИЗАЦИЯ -->
+    <div id="authSection">
+        <h2 id="authTitle">Вход</h2>
+        <input type="text" id="username" placeholder="Логин">
+        <input type="password" id="password" placeholder="Пароль">
+        <select id="roleSelect" class="hidden">
+            <option value="student">Ученик</option>
+            <option value="cook">Повар</option>
+            <option value="admin">Администратор</option>
+        </select>
+        <input type="text" id="allergies" placeholder="Аллергии (если есть)" class="hidden">
+        <input type="text" id="dietary_preferences" placeholder="Пищевые предпочтения" class="hidden">
+        
+        <button onclick="handleAuth()" id="authBtn">Войти</button>
+        <p onclick="toggleReg()" id="toggleText">
+            Нет аккаунта? Зарегистрироваться
+        </p>
+    </div>
+
+    <!-- ДЭШБОРД -->
+    <div id="dashboardSection" class="hidden">
+        <h2 id="welcomeMsg"></h2>
+        
+        <!-- Панель УЧЕНИКА -->
+        <div id="studentPanel" class="hidden">
+            <div class="profile-box">
+                <h3>👤 Мой профиль</h3>
+                <p><strong>Логин:</strong> <span id="profileUsername"></span></p>
+                <p><strong>Баланс:</strong> <span id="profileBalance" class="price"></span>₽</p>
+                <p><strong>Абонемент:</strong> <span id="subscriptionInfo"></span></p>
+                <p><strong>Аллергии:</strong> <span id="profileAllergies"></span></p>
+                <p><strong>Предпочтения:</strong> <span id="profilePreferences"></span></p>
+                <button class="secondary" onclick="showTopupModal()">Пополнить баланс</button>
+                <button class="secondary" onclick="showSubscriptionModal()">Купить абонемент</button>
+            </div>
+            
+            <h3>🔔 Уведомления</h3>
+            <div id="notifications"></div>
+            
+            <h3>🍽 Меню на сегодня</h3>
+            <div id="menuList">Загрузка...</div>
+            
+            <h3>📋 Мои заказы</h3>
+            <div class="button-group">
+                <button onclick="showOrders('active')" class="secondary">Активные</button>
+                <button onclick="showOrders('history')" class="secondary">История</button>
+            </div>
+            <div id="myOrders">Нет заказов</div>
+        </div>
+
+        <!-- Панель ПОВАРА -->
+        <div id="cookPanel" class="hidden">
+            <h3>🍳 Управление остатками блюд</h3>
+            <div id="dishInventory">Загрузка...</div>
+            
+            <h3>📦 Склад продуктов</h3>
+            <div id="productInventory">Загрузка...</div>
+            <div class="inventory-item">
+                <input type="text" id="invItemName" placeholder="Название продукта">
+                <input type="number" id="invItemQuantity" placeholder="Количество">
+                <input type="text" id="invItemUnit" placeholder="Единица (кг/литр/шт)">
+                <button onclick="addInventoryItem()">Добавить продукт</button>
+            </div>
+            
+            <h3>📝 Заявка на продукты</h3>
+            <input type="text" id="supplyItem" placeholder="Название продукта (напр. Картофель)">
+            <input type="number" id="supplyAmount" placeholder="Количество">
+            <input type="text" id="supplyUnit" placeholder="Единица" value="кг">
+            <button onclick="sendSupplyRequest()">Отправить заявку</button>
+        </div>
+
+        <!-- Панель АДМИНА -->
+        <div id="adminPanel" class="hidden">
+            <h3>🍽 Управление меню</h3>
+            <div id="menuManagement">
+                <div class="inventory-item">
+                    <input type="text" id="newDishName" placeholder="Название блюда">
+                    <input type="number" id="newDishPrice" placeholder="Цена">
+                    <select id="newDishCategory">
+                        <option value="breakfast">Завтрак</option>
+                        <option value="lunch">Обед</option>
+                    </select>
+                    <input type="text" id="newDishDesc" placeholder="Описание">
+                    <input type="number" id="newDishQuantity" placeholder="Начальное количество" value="100">
+                    <button class="secondary" onclick="createMenuItem()">Добавить блюдо</button>
+                </div>
+                <div id="menuItemsList"></div>
+            </div>
+            
+            <h3>📊 Статистика и отчеты</h3>
+            <div id="statsContent"></div>
+            <div class="filter-section">
+                <input type="date" id="reportStartDate">
+                <input type="date" id="reportEndDate">
+                <button onclick="generateReport()" class="secondary">Сгенерировать отчет</button>
+            </div>
+            <div id="reportResult"></div>
+            
+            <h3>📝 Заявки на согласование</h3>
+            <div id="supplyList">Нет заявок</div>
+        </div>
+
+        <button class="logout" onclick="logout()">Выйти</button>
+    </div>
+</div>
+
+<!-- Модальное окно для пополнения баланса -->
+<div id="topupModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('topupModal')">&times;</span>
+        <h3>Пополнение баланса</h3>
+        <input type="number" id="topupAmount" placeholder="Сумма (₽)" min="10">
+        <button onclick="topupBalance()">Пополнить</button>
+    </div>
+</div>
+
+<!-- Модальное окно для покупки абонемента -->
+<div id="subscriptionModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('subscriptionModal')">&times;</span>
+        <h3>Купить абонемент</h3>
+        <select id="subscriptionPlan">
+            <option value="5">5 обедов - 450₽</option>
+            <option value="10">10 обедов - 850₽</option>
+            <option value="20">20 обедов - 1600₽</option>
+            <option value="30">30 обедов - 2250₽</option>
+        </select>
+        <button onclick="buySubscription()">Купить</button>
+    </div>
+</div>
+
+<script>
+    const API = "http://127.0.0.1:8000";
+    let isRegister = false;
+    let currentToken = localStorage.getItem('token');
+    let currentRole = localStorage.getItem('role');
+    let currentUser = null;
+
+    if (currentToken) {
+        showDashboard();
+    }
+
+    function toggleReg() {
+        isRegister = !isRegister;
+        document.getElementById('authTitle').innerText = isRegister ? "Регистрация" : "Вход";
+        document.getElementById('authBtn').innerText = isRegister ? "Создать аккаунт" : "Войти";
+        document.getElementById('toggleText').innerText = isRegister ? "Уже есть аккаунт? Войти" : "Нет аккаунта? Зарегистрироваться";
+        
+        document.getElementById('roleSelect').classList.toggle('hidden', !isRegister);
+        document.getElementById('allergies').classList.toggle('hidden', !isRegister);
+        document.getElementById('dietary_preferences').classList.toggle('hidden', !isRegister);
+    }
+
+    async function handleAuth() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const role = document.getElementById('roleSelect').value;
+        const allergies = document.getElementById('allergies').value;
+        const dietary_preferences = document.getElementById('dietary_preferences').value;
+
+        const endpoint = isRegister ? "/register" : "/login";
+        const body = isRegister 
+            ? { username, password, role, allergies, dietary_preferences }
+            : { username, password };
+
+        try {
+            const res = await fetch(API + endpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            
+            if (!res.ok) throw new Error(data.detail || "Ошибка");
+
+            if (isRegister) {
+                alert("Регистрация успешна! Теперь войдите.");
+                toggleReg();
+            } else {
+                localStorage.setItem('token', data.access_token);
+                localStorage.setItem('role', data.role);
+                currentToken = data.access_token;
+                currentRole = data.role;
+                showDashboard();
+            }
+        } catch (e) {
+            alert(e.message);
+        }
+    }
+
+    async function showDashboard() {
+        document.getElementById('authSection').classList.add('hidden');
+        document.getElementById('dashboardSection').classList.remove('hidden');
+        
+        const res = await fetch(`${API}/me?token=${currentToken}`);
+        currentUser = await res.json();
+        
+        document.getElementById('welcomeMsg').innerText = `Добро пожаловать, ${currentUser.username} (${currentRole})`;
+
+        if (currentRole === 'student') {
+            loadStudentData();
+        } else if (currentRole === 'cook') {
+            loadCookData();
+        } else if (currentRole === 'admin') {
+            loadAdminData();
+        }
+    }
+
+    // --- УЧЕНИК ---
+    async function loadStudentData() {
+        document.getElementById('studentPanel').classList.remove('hidden');
+        await loadProfile();
+        await loadNotifications();
+        await loadMenu();
+        await showOrders('active');
+    }
+
+    async function loadProfile() {
+        const res = await fetch(`${API}/my_profile?token=${currentToken}`);
+        const profile = await res.json();
+        
+        document.getElementById('profileUsername').innerText = profile.username;
+        document.getElementById('profileBalance').innerText = profile.balance.toFixed(2);
+        document.getElementById('profileAllergies').innerText = profile.allergies || 'Нет';
+        document.getElementById('profilePreferences').innerText = profile.dietary_preferences || 'Нет';
+        
+        const subInfo = document.getElementById('subscriptionInfo');
+        if (profile.subscription) {
+            subInfo.innerHTML = `<span class="price">${profile.subscription.meals_remaining}</span> обедов (до ${new Date(profile.subscription.expires_at).toLocaleDateString()})`;
+        } else {
+            subInfo.innerText = 'Нет активного абонемента';
+        }
+    }
+
+    async function loadNotifications() {
+        const res = await fetch(`${API}/notifications?token=${currentToken}`);
+        const notifications = await res.json();
+        
+        const list = document.getElementById('notifications');
+        if (notifications.length === 0) {
+            list.innerHTML = '<p>Нет новых уведомлений</p>';
+            return;
+        }
+        
+        list.innerHTML = notifications.map(n => `
+            <div class="notification-item ${n.is_read ? '' : 'unread'}" onclick="markNotificationRead(${n.id})">
+                <small>${new Date(n.created_at).toLocaleString()}</small><br>
+                ${n.message}
+            </div>
+        `).join('');
+    }
+
+    async function markNotificationRead(id) {
+        await fetch(`${API}/notifications/${id}/read?token=${currentToken}`, { method: "PUT" });
+        loadNotifications();
+    }
+
+    async function loadMenu() {
+        const res = await fetch(`${API}/menu`);
+        const menu = await res.json();
+        
+        const list = document.getElementById('menuList');
+        if (menu.length === 0) {
+            list.innerHTML = '<p>Меню пусто</p>';
+            return;
+        }
+        
+        list.innerHTML = menu.map(item => `
+            <div class="menu-item">
+                <div>
+                    <b>${item.name}</b> (${item.category === 'breakfast' ? 'Завтрак' : 'Обед'}) 
+                    <br><small>${item.description || 'Нет описания'}</small>
+                    <br><small>Остаток: ${item.quantity}</small>
+                </div>
+                <div>
+                    <span class="price">${item.price}₽</span>
+                    <button onclick="buyItem(${item.id})" style="width:auto; padding:5px 10px;">Купить</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function buyItem(id) {
+        const res = await fetch(`${API}/buy/${id}?token=${currentToken}`, { method: "POST" });
+        const data = await res.json();
+        
+        if (res.ok) {
+            alert(`Куплено! Способ оплаты: ${data.payment_method === 'subscription' ? 'Абонемент' : 'Баланс'}`);
+            loadMenu();
+            loadProfile();
+            showOrders('active');
+        } else {
+            alert(`Ошибка: ${data.detail}`);
+        }
+    }
+
+    async function showOrders(type) {
+        const res = await fetch(`${API}/my_orders?token=${currentToken}`);
+        const orders = await res.json();
+        
+        const div = document.getElementById('myOrders');
+        let filteredOrders = type === 'active' ? orders.filter(o => !o.is_received) : orders;
+        
+        if (filteredOrders.length === 0) {
+            div.innerHTML = `<p>Нет ${type === 'active' ? 'активных' : ''} заказов</p>`;
+            return;
+        }
+        
+        div.innerHTML = filteredOrders.map(o => `
+            <div class="order-item">
+                <div>
+                    <b>Заказ #${o.id}</b> - ${o.item_name}
+                    <br><small>${new Date(o.created_at).toLocaleString()}</small>
+                    ${o.is_received ? '<br><small style="color:var(--accent-cyan);">Получен</small>' : ''}
+                </div>
+                <div>
+                    <span class="price">${o.price}₽</span>
+                    ${!o.is_received ? `<button onclick="receiveOrder(${o.id}, this)" style="width:auto; padding:5px 10px;">Получить</button>` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function receiveOrder(id, btn) {
+        const res = await fetch(`${API}/receive/${id}?token=${currentToken}`, { method: "PUT" });
+        if (res.ok) {
+            btn.parentElement.parentElement.remove();
+            alert("Приятного аппетита!");
+            loadNotifications();
+        }
+    }
+
+    function showTopupModal() {
+        document.getElementById('topupModal').style.display = 'block';
+    }
+
+    function showSubscriptionModal() {
+        document.getElementById('subscriptionModal').style.display = 'block';
+    }
+
+    async function topupBalance() {
+        const amount = parseFloat(document.getElementById('topupAmount').value);
+        if (!amount || amount < 10) {
+            alert("Минимальная сумма 10₽");
+            return;
+        }
+        
+        const res = await fetch(`${API}/topup_balance?token=${currentToken}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ amount })
+        });
+        
+        if (res.ok) {
+            alert("Баланс пополнен!");
+            closeModal('topupModal');
+            loadProfile();
+        } else {
+            alert("Ошибка пополнения");
+        }
+    }
+
+    async function buySubscription() {
+        const plan = parseInt(document.getElementById('subscriptionPlan').value);
+        const res = await fetch(`${API}/buy_subscription?meals_count=${plan}&token=${currentToken}`, {
+            method: "POST"
+        });
+        
+        if (res.ok) {
+            alert("Абонемент куплен!");
+            closeModal('subscriptionModal');
+            loadProfile();
+        } else {
+            const data = await res.json();
+            alert(`Ошибка: ${data.detail}`);
+        }
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    // --- ПОВАР ---
+    async function loadCookData() {
+        document.getElementById('cookPanel').classList.remove('hidden');
+        await loadDishInventory();
+        await loadProductInventory();
+    }
+
+    async function loadDishInventory() {
+        const res = await fetch(`${API}/cook/dishes?token=${currentToken}`);
+        const items = await res.json();
+        
+        const list = document.getElementById('dishInventory');
+        list.innerHTML = items.map(item => `
+            <div class="inventory-item">
+                <b>${item.name}</b> (${item.category === 'breakfast' ? 'Завтрак' : 'Обед'})
+                <div class="button-group">
+                    <input type="number" id="qty-${item.id}" value="${item.quantity}" style="width:80px;">
+                    <button onclick="updateDishQuantity(${item.id})">Обновить</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function updateDishQuantity(itemId) {
+        const qty = parseInt(document.getElementById(`qty-${itemId}`).value);
+        const res = await fetch(`${API}/cook/dishes/${itemId}/quantity?token=${currentToken}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ quantity: qty })
+        });
+        
+        if (res.ok) {
+            alert("Остаток обновлен!");
+            loadDishInventory();
+        }
+    }
+
+    async function loadProductInventory() {
+        const res = await fetch(`${API}/cook/inventory?token=${currentToken}`);
+        const items = await res.json();
+        
+        const list = document.getElementById('productInventory');
+        if (items.length === 0) {
+            list.innerHTML = '<p>Склад пуст</p>';
+            return;
+        }
+        
+        list.innerHTML = items.map(item => `
+            <div class="inventory-item">
+                <b>${item.item_name}</b>: ${item.quantity} ${item.unit}
+                <div class="button-group">
+                    <input type="number" id="inv-qty-${item.id}" value="${item.quantity}" style="width:80px;">
+                    <button onclick="updateInventoryItem(${item.id})">Обновить</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function addInventoryItem() {
+        const name = document.getElementById('invItemName').value;
+        const quantity = parseFloat(document.getElementById('invItemQuantity').value);
+        const unit = document.getElementById('invItemUnit').value;
+        
+        if (!name || !quantity || !unit) {
+            alert("Заполните все поля");
+            return;
+        }
+        
+        const res = await fetch(`${API}/cook/inventory?token=${currentToken}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, quantity, unit })
+        });
+        
+        if (res.ok) {
+            alert("Продукт добавлен!");
+            loadProductInventory();
+            document.getElementById('invItemName').value = '';
+            document.getElementById('invItemQuantity').value = '';
+            document.getElementById('invItemUnit').value = '';
+        }
+    }
+
+    async function updateInventoryItem(id) {
+        const qty = parseFloat(document.getElementById(`inv-qty-${id}`).value);
+        const res = await fetch(`${API}/cook/inventory/${id}?token=${currentToken}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ quantity: qty })
+        });
+        
+        if (res.ok) {
+            alert("Остаток обновлен!");
+            loadProductInventory();
+        }
+    }
+
+    async function sendSupplyRequest() {
+        const name = document.getElementById('supplyItem').value;
+        const amount = parseInt(document.getElementById('supplyAmount').value);
+        const unit = document.getElementById('supplyUnit').value;
+        
+        if (!name || !amount) {
+            alert("Заполните все поля");
+            return;
+        }
+        
+        const res = await fetch(`${API}/supply?token=${currentToken}`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ item_name: name, amount, unit })
+        });
+        
+        if (res.ok) {
+            alert("Заявка отправлена администратору");
+            document.getElementById('supplyItem').value = '';
+            document.getElementById('supplyAmount').value = '';
+        }
+    }
+
+    // --- АДМИН ---
+    async function loadAdminData() {
+        document.getElementById('adminPanel').classList.remove('hidden');
+        await loadMenuItemsList();
+        await loadAdminStats();
+        await loadSupplyRequests();
+    }
+
+    async function loadMenuItemsList() {
+        const res = await fetch(`${API}/menu`);
+        const items = await res.json();
+        
+        const list = document.getElementById('menuItemsList');
+        list.innerHTML = items.map(item => `
+            <div class="menu-item">
+                <div>
+                    <b>${item.name}</b> - ${item.price}₽ (${item.category})
+                    <br><small>${item.description || 'Нет описания'}</small>
+                </div>
+                <div>
+                    <button onclick="deleteMenuItem(${item.id})" class="danger" style="width:auto;">Удалить</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function createMenuItem() {
+        const name = document.getElementById('newDishName').value;
+        const price = parseFloat(document.getElementById('newDishPrice').value);
+        const category = document.getElementById('newDishCategory').value;
+        const desc = document.getElementById('newDishDesc').value;
+        const qty = parseInt(document.getElementById('newDishQuantity').value);
+        
+        if (!name || !price || !desc) {
+            alert("Заполните все поля");
+            return;
+        }
+        
+        const res = await fetch(`${API}/admin/menu?token=${currentToken}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, price, category, description: desc, quantity: qty })
+        });
+        
+        if (res.ok) {
+            alert("Блюдо добавлено!");
+            loadMenuItemsList();
+            document.getElementById('newDishName').value = '';
+            document.getElementById('newDishPrice').value = '';
+            document.getElementById('newDishDesc').value = '';
+        }
+    }
+
+    async function deleteMenuItem(id) {
+        if (!confirm("Удалить блюдо?")) return;
+        
+        const res = await fetch(`${API}/admin/menu/${id}?token=${currentToken}`, {
+            method: "DELETE"
+        });
+        
+        if (res.ok) {
+            alert("Блюдо удалено!");
+            loadMenuItemsList();
+        }
+    }
+
+    async function loadAdminStats() {
+        const res = await fetch(`${API}/admin/stats?token=${currentToken}`);
+        const data = await res.json();
+        
+        document.getElementById('statsContent').innerHTML = `
+            <div class="stats-box">Продано обедов: <b>${data.total_sales}</b></div>
+            <div class="stats-box">Выручка: <b>${data.revenue.toFixed(2)}₽</b></div>
+        `;
+    }
+
+    async function loadSupplyRequests() {
+        const res = await fetch(`${API}/admin/stats?token=${currentToken}`);
+        const data = await res.json();
+        
+        const list = document.getElementById('supplyList');
+        if (data.pending_supplies.length === 0) {
+            list.innerHTML = '<p>Нет новых заявок</p>';
+            return;
+        }
+        
+        list.innerHTML = data.pending_supplies.map(req => `
+            <div class="request-item">
+                <b>${req.item_name}</b> (${req.amount} ${req.unit})
+                <br>Повар: ${req.cook_name}
+                <br><small>${new Date(req.created_at).toLocaleString()}</small>
+                <button onclick="approveSupply(${req.id})" style="width:auto; float:right;">Согласовать</button>
+                <div style="clear:both"></div>
+            </div>
+        `).join('');
+    }
+
+    async function approveSupply(id) {
+        const res = await fetch(`${API}/admin/approve_supply/${id}?token=${currentToken}`, { method: "PUT" });
+        if (res.ok) {
+            alert("Заявка одобрена!");
+            loadAdminStats();
+            loadSupplyRequests();
+        }
+    }
+
+    async function generateReport() {
+        const startDate = document.getElementById('reportStartDate').value;
+        const endDate = document.getElementById('reportEndDate').value;
+        
+        if (!startDate || !endDate) {
+            alert("Выберите даты");
+            return;
+        }
+        
+        const res = await fetch(`${API}/admin/reports?start_date=${startDate}&end_date=${endDate}&token=${currentToken}`);
+        const report = await res.json();
+        
+        if (!res.ok) {
+            alert(`Ошибка: ${report.detail}`);
+            return;
+        }
+        
+        const div = document.getElementById('reportResult');
+        div.innerHTML = `
+            <h4>Отчет за период: ${report.period}</h4>
+            <p>Всего заказов: <b>${report.total_orders}</b></p>
+            <p>Общая выручка: <b>${report.total_revenue.toFixed(2)}₽</b></p>
+            <table>
+                <tr>
+                    <th>Дата</th>
+                    <th>Ученик</th>
+                    <th>Блюдо</th>
+                    <th>Цена</th>
+                    <th>Статус</th>
+                </tr>
+                ${report.details.map(r => `
+                    <tr>
+                        <td>${new Date(r.date).toLocaleDateString()}</td>
+                        <td>${r.student_name}</td>
+                        <td>${r.item_name}</td>
+                        <td>${r.price}₽</td>
+                        <td>${r.is_received ? 'Получен' : 'Не получен'}</td>
+                    </tr>
+                `).join('')}
+            </table>
+        `;
+    }
+
+    function logout() {
+        localStorage.clear();
+        location.reload();
+    }
+</script>
+
+</body>
+</html>
