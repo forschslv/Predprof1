@@ -27,6 +27,11 @@ async function loadModuleMenu() {
 
 function displayModuleMenu() {
     const weekMenuDisplay = document.getElementById('weekMenuDisplay');
+    if (!weekMenuDisplay) {
+        console.warn('Week menu display container not found');
+        return;
+    }
+    
     const daysOfWeek = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
     
     let menuHtml = '<div class="week-menu">';
@@ -71,6 +76,11 @@ async function loadDishesForDayDisplay(dayIndex, dishIds) {
         const dishes = await Promise.all(promises);
         
         const dayContainer = document.getElementById(`day-${dayIndex}-dishes`);
+        if (!dayContainer) {
+            console.warn(`Day ${dayIndex} dishes container not found`);
+            return;
+        }
+        
         let dishesHtml = '';
         
         dishes.forEach((dish, idx) => {
@@ -91,12 +101,18 @@ async function loadDishesForDayDisplay(dayIndex, dishIds) {
         dayContainer.innerHTML = dishesHtml || '<p>Нет доступных блюд</p>';
     } catch (error) {
         console.error(`Error loading dishes for day ${dayIndex}:`, error);
-        document.getElementById(`day-${dayIndex}-dishes`).innerHTML = '<p>Ошибка загрузки блюд</p>';
+        const dayContainer = document.getElementById(`day-${dayIndex}-dishes`);
+        if (dayContainer) dayContainer.innerHTML = '<p>Ошибка загрузки блюд</p>';
     }
 }
 
 function setupOrderForm() {
     const weekOrderForm = document.getElementById('weekOrderForm');
+    if (!weekOrderForm) {
+        console.warn('Week order form container not found');
+        return;
+    }
+    
     const daysOfWeek = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
     
     let formHtml = '';
@@ -149,6 +165,11 @@ async function setupDayOrderForm(dayIndex, dishIds) {
         const dishes = await Promise.all(promises);
         
         const dayFormContainer = document.getElementById(`day-${dayIndex}-order-form`);
+        if (!dayFormContainer) {
+            console.warn(`Day ${dayIndex} order form container not found`);
+            return;
+        }
+        
         let formHtml = '';
         
         dishes.forEach((dish, dishIdx) => {
@@ -192,12 +213,18 @@ async function setupDayOrderForm(dayIndex, dishIds) {
         }
     } catch (error) {
         console.error(`Error setting up order form for day ${dayIndex}:`, error);
-        document.getElementById(`day-${dayIndex}-order-form`).innerHTML = '<p>Ошибка настройки формы заказа</p>';
+        const dayFormContainer = document.getElementById(`day-${dayIndex}-order-form`);
+        if (dayFormContainer) dayFormContainer.innerHTML = '<p>Ошибка настройки формы заказа</p>';
     }
 }
 
 function adjustQuantity(dayIndex, dishId, change) {
     const qtyInput = document.getElementById(`qty-${dayIndex}-${dishId}`);
+    if (!qtyInput) {
+        console.warn(`Quantity input for day ${dayIndex}, dish ${dishId} not found`);
+        return;
+    }
+    
     let newValue = parseInt(qtyInput.value) + change;
     
     if (newValue < 0) newValue = 0;
@@ -236,7 +263,8 @@ function updateDayTotal(dayIndex) {
     });
     
     // Placeholder - we'll update this when we have the actual dish prices
-    document.getElementById(`day-${dayIndex}-total`).textContent = `${calculateDayTotal(dayIndex)}₽`;
+    const dayTotalElement = document.getElementById(`day-${dayIndex}-total`);
+    if (dayTotalElement) dayTotalElement.textContent = `${calculateDayTotal(dayIndex)}₽`;
 }
 
 function calculateDayTotal(dayIndex) {
@@ -316,8 +344,10 @@ async function submitOrder() {
             alert(`Заказ успешно создан! Номер заказа: ${result.id}, общая сумма: ${result.total_amount}₽`);
             
             // Show payment modal
-            document.getElementById('totalOrderAmount').textContent = `${result.total_amount}₽`;
-            document.getElementById('paymentModal').style.display = 'block';
+            const totalOrderAmount = document.getElementById('totalOrderAmount');
+            if (totalOrderAmount) totalOrderAmount.textContent = `${result.total_amount}₽`;
+            const paymentModal = document.getElementById('paymentModal');
+            if (paymentModal) paymentModal.style.display = 'block';
         } else {
             alert(result.detail || "Ошибка создания заказа");
         }
@@ -327,14 +357,15 @@ async function submitOrder() {
 }
 
 function closeModal(modalId) {
-    document.getElementById(modalId).style.display = 'none';
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'none';
 }
 
 async function confirmPayment() {
     const orderId = 1; // In a real app, this would come from the created order
-    const paymentProof = document.getElementById('paymentProof').files[0];
+    const paymentProof = document.getElementById('paymentProof');
     
-    if (!paymentProof) {
+    if (!paymentProof || !paymentProof.files[0]) {
         alert("Пожалуйста, прикрепите подтверждение оплаты");
         return;
     }
@@ -360,6 +391,11 @@ async function loadMyOrders() {
             const orders = await response.json();
             const ordersContainer = document.getElementById('myOrders');
             
+            if (!ordersContainer) {
+                console.warn('My orders container not found');
+                return;
+            }
+            
             if (orders.length === 0) {
                 ordersContainer.innerHTML = '<p>У вас нет заказов</p>';
                 return;
@@ -380,10 +416,12 @@ async function loadMyOrders() {
             
             ordersContainer.innerHTML = ordersHtml;
         } else {
-           document.getElementById('myOrders').innerHTML = '<p>Ошибка загрузки заказов</p>';
+            const ordersContainer = document.getElementById('myOrders');
+            if (ordersContainer) ordersContainer.innerHTML = '<p>Ошибка загрузки заказов</p>';
         }
     } catch (error) {
         console.error("Error loading orders:", error);
-        document.getElementById('myOrders').innerHTML = '<p>Ошибка загрузки заказов</p>';
+        const ordersContainer = document.getElementById('myOrders');
+        if (ordersContainer) ordersContainer.innerHTML = '<p>Ошибка загрузки заказов</p>';
     }
 }

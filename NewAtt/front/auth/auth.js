@@ -4,16 +4,25 @@ try {
     console.error("Error initializing API_BASE:", e);
 }
 async function toggleReg() {
-    isRegister = !isRegister;
-    document.getElementById('authTitle').innerText = isRegister ? "Регистрация" : "Вход";
-    document.getElementById('authBtn').innerText = isRegister ? "Зарегистрироваться" : "Войти";
-    document.getElementById('toggleText').innerText = isRegister ? "Уже есть аккаунт? Войти" : "Нет аккаунта? Зарегистрироваться";
+    window.isRegister = !window.isRegister;
     
+    const authTitle = document.getElementById('authTitle');
+    const authBtn = document.getElementById('authBtn');
+    const toggleText = document.getElementById('toggleText');
     const usernameField = document.getElementById('username');
     const emailField = document.getElementById('email');
     const confirmCodeField = document.getElementById('confirmCode');
     
-    if (isRegister) {
+    if (authTitle) authTitle.innerText = window.isRegister ? "Регистрация" : "Вход";
+    if (authBtn) authBtn.innerText = window.isRegister ? "Зарегистрироваться" : "Войти";
+    if (toggleText) toggleText.innerText = window.isRegister ? "Уже есть аккаунт? Войти" : "Нет аккаунта? Зарегистрироваться";
+    
+    if (!usernameField || !emailField || !confirmCodeField) {
+        console.warn('Required auth elements not found');
+        return;
+    }
+    
+    if (window.isRegister) {
         // Registration: show username, email, and code fields
         usernameField.classList.remove('hidden');
         emailField.classList.remove('hidden');
@@ -28,9 +37,9 @@ async function toggleReg() {
 }
 
 async function handleAuth() {
-    const username = document.getElementById('username').value;
-    const email = document.getElementById('email').value;
-    const confirmCode = document.getElementById('confirmCode').value;
+    const username = document.getElementById('username')?.value || '';
+    const email = document.getElementById('email')?.value || '';
+    const confirmCode = document.getElementById('confirmCode')?.value || '';
     
     // If code field is filled, try to verify directly
     if (confirmCode.trim() !== "") {
@@ -46,18 +55,19 @@ async function handleAuth() {
             
             if (verifyRes.ok) {
                 localStorage.setItem('token', verifyData.access_token);
-                currentToken = verifyData.access_token;
-                currentUser = verifyData.user;
+                window.currentToken = verifyData.access_token;
+                window.currentUser = verifyData.user;
+                localStorage.setItem('currentUser', JSON.stringify(verifyData.user)); // Store user in localStorage
                 
                 // Determine role based on status
-                if (currentUser.status.toLowerCase().includes('admin')) {
-                    currentRole = 'admin';
-                } else if (currentUser.status.toLowerCase().includes('cook')) {
-                    currentRole = 'cook';
+                if (window.currentUser.status.toLowerCase().includes('admin')) {
+                    window.currentRole = 'admin';
+                } else if (window.currentUser.status.toLowerCase().includes('cook')) {
+                    window.currentRole = 'cook';
                 } else {
-                    currentRole = 'student';
+                    window.currentRole = 'student';
                 }
-                localStorage.setItem('role', currentRole);
+                localStorage.setItem('role', window.currentRole);
                 
                 showDashboard();
             } else {
@@ -69,7 +79,7 @@ async function handleAuth() {
     } else {
         // Request code to be sent
         try {
-            if (isRegister) {
+            if (window.isRegister) {
                 // Registration flow - send verification code
                 const registerRes = await fetch(`${API_BASE}/register`, {
                     method: "POST",
@@ -111,7 +121,7 @@ async function handleAuth() {
                 }
             }
         } catch (error) {
-            if (isRegister) {
+            if (window.isRegister) {
                 alert("Ошибка регистрации: " + error.message);
             } else {
                 alert("Ошибка входа: " + error.message);
@@ -121,8 +131,8 @@ async function handleAuth() {
 }
 
 async function verifyCode() {
-    const email = document.getElementById('verifyEmail').value;
-    const code = document.getElementById('verifyCode').value;
+    const email = document.getElementById('verifyEmail')?.value || '';
+    const code = document.getElementById('verifyCode')?.value || '';
     
     try {
         const verifyRes = await fetch(`${API_BASE}/verify-code`, {
@@ -135,27 +145,36 @@ async function verifyCode() {
         
         if (verifyRes.ok) {
             localStorage.setItem('token', verifyData.access_token);
-            currentToken = verifyData.access_token;
-            currentUser = verifyData.user;
+            window.currentToken = verifyData.access_token;
+            window.currentUser = verifyData.user;
+            localStorage.setItem('currentUser', JSON.stringify(verifyData.user)); // Store user in localStorage
             
             // Determine role based on status
-            if (currentUser.status.toLowerCase().includes('admin')) {
-                currentRole = 'admin';
-            } else if (currentUser.status.toLowerCase().includes('cook')) {
-                currentRole = 'cook';
+            if (window.currentUser.status.toLowerCase().includes('admin')) {
+                window.currentRole = 'admin';
+            } else if (window.currentUser.status.toLowerCase().includes('cook')) {
+                window.currentRole = 'cook';
             } else {
-                currentRole = 'student';
+                window.currentRole = 'student';
             }
-            localStorage.setItem('role', currentRole);
+            localStorage.setItem('role', window.currentRole);
             
             // Remove verification section and show main dashboard
-            document.getElementById('verificationSection').remove();
+            const verificationSection = document.getElementById('verificationSection');
+            if (verificationSection) {
+                verificationSection.remove();
+            }
             
             // Show back the auth fields for next logout
-            document.getElementById('username').classList.remove('hidden');
-            document.getElementById('email').classList.remove('hidden');
-            document.getElementById('authBtn').classList.remove('hidden');
-            document.getElementById('toggleText').classList.remove('hidden');
+            const usernameField = document.getElementById('username');
+            const emailField = document.getElementById('email');
+            const authBtn = document.getElementById('authBtn');
+            const toggleText = document.getElementById('toggleText');
+            
+            if (usernameField) usernameField.classList.remove('hidden');
+            if (emailField) emailField.classList.remove('hidden');
+            if (authBtn) authBtn.classList.remove('hidden');
+            if (toggleText) toggleText.classList.remove('hidden');
             
             showDashboard();
         } else {
@@ -168,9 +187,9 @@ async function verifyCode() {
 
 function logout() {
     localStorage.clear();
-    currentToken = null;
-    currentRole = null;
-    currentUser = null;
+    window.currentToken = null;
+    window.currentRole = null;
+    window.currentUser = null;
     
     // Remove verification section if it exists
     const verificationSection = document.getElementById('verificationSection');
@@ -178,29 +197,43 @@ function logout() {
         verificationSection.remove();
     }
     
-    document.getElementById('dashboardSection').classList.add('hidden');
-    document.getElementById('authSection').classList.remove('hidden');
+    const dashboardSection = document.getElementById('dashboardSection');
+    const authSection = document.getElementById('authSection');
+    
+    if (dashboardSection) dashboardSection.classList.add('hidden');
+    if (authSection) authSection.classList.remove('hidden');
     
     // Show all auth fields again if they were hidden
-    document.getElementById('username').classList.remove('hidden');
-    document.getElementById('email').classList.remove('hidden');
-    document.getElementById('confirmCode').classList.remove('hidden');
-    document.getElementById('authBtn').classList.remove('hidden');
-    document.getElementById('toggleText').classList.remove('hidden');
+    const usernameField = document.getElementById('username');
+    const emailField = document.getElementById('email');
+    const confirmCodeField = document.getElementById('confirmCode');
+    const authBtn = document.getElementById('authBtn');
+    const toggleText = document.getElementById('toggleText');
+    
+    if (usernameField) usernameField.classList.remove('hidden');
+    if (emailField) emailField.classList.remove('hidden');
+    if (confirmCodeField) confirmCodeField.classList.remove('hidden');
+    if (authBtn) authBtn.classList.remove('hidden');
+    if (toggleText) toggleText.classList.remove('hidden');
     
     // Reset auth form
-    document.getElementById('username').value = '';
-    document.getElementById('email').value = '';
-    document.getElementById('confirmCode').value = '';
+    if (usernameField) usernameField.value = '';
+    if (emailField) emailField.value = '';
+    if (confirmCodeField) confirmCodeField.value = '';
 
-    isRegister = false;
-    document.getElementById('authTitle').innerText = 'Вход';
-    document.getElementById('authBtn').innerText = 'Войти';
-    document.getElementById('toggleText').innerText = 'Нет аккаунта? Зарегистрироваться';
+    window.isRegister = false;
+    
+    const authTitle = document.getElementById('authTitle');
+    if (authTitle) {
+        authTitle.innerText = 'Вход';
+        document.getElementById('authBtn').innerText = 'Войти';
+        document.getElementById('toggleText').innerText = 'Нет аккаунта? Зарегистрироваться';
+    }
     
     // Reset fields to login mode
-    document.getElementById('username').classList.add('hidden'); // Login mode hides username
-    document.getElementById('confirmCode').classList.remove('hidden'); // Show code field
-    document.getElementById('username').placeholder = 'Имя пользователя';
-    document.getElementById('email').classList.remove('hidden');
+    if (usernameField) {
+        usernameField.classList.add('hidden'); // Login mode hides username
+        usernameField.placeholder = 'Имя пользователя';
+    }
+    if (emailField) emailField.classList.remove('hidden');
 }

@@ -1,9 +1,14 @@
 // COOK FUNCTIONS
 async function loadCookData() {
-    document.getElementById('cookPanel').classList.remove('hidden');
-    
-    // Load global menu
-    await loadGlobalMenu();
+    const cookPanel = document.getElementById('cookPanel');
+    if (cookPanel) {
+        cookPanel.classList.remove('hidden');
+        
+        // Load global menu
+        await loadGlobalMenu();
+    } else {
+        console.warn('Cook panel not found in current page context');
+    }
 }
 
 async function loadGlobalMenu() {
@@ -30,6 +35,11 @@ async function loadGlobalMenu() {
 
 function displayDishes(dishes) {
     const dishesList = document.getElementById('dishesList');
+    
+    if (!dishesList) {
+        console.warn('Dishes list container not found');
+        return;
+    }
     
     if (dishes.length === 0) {
         dishesList.innerHTML = '<p>Меню пусто</p>';
@@ -185,6 +195,11 @@ async function loadDishesForDay() {
             
             // Display dish selectors by type
             const dayMenuSetup = document.getElementById('dayMenuSetup');
+            if (!dayMenuSetup) {
+                console.warn('Day menu setup container not found');
+                return;
+            }
+            
             let setupHtml = '';
             
             for (const [type, dishes] of Object.entries(dishesByType)) {
@@ -205,11 +220,13 @@ async function loadDishesForDay() {
             
             dayMenuSetup.innerHTML = setupHtml;
         } else {
-            document.getElementById('dayMenuSetup').innerHTML = '<p>Ошибка загрузки блюд</p>';
+            const dayMenuSetup = document.getElementById('dayMenuSetup');
+            if (dayMenuSetup) dayMenuSetup.innerHTML = '<p>Ошибка загрузки блюд</p>';
         }
     } catch (error) {
         console.error("Error loading dishes for day setup:", error);
-        document.getElementById('dayMenuSetup').innerHTML = '<p>Ошибка загрузки блюд</p>';
+        const dayMenuSetup = document.getElementById('dayMenuSetup');
+        if (dayMenuSetup) dayMenuSetup.innerHTML = '<p>Ошибка загрузки блюд</p>';
     }
 }
 

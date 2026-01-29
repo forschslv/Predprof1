@@ -1,9 +1,14 @@
 // ADMIN FUNCTIONS
 async function loadAdminData() {
-    document.getElementById('adminPanel').classList.remove('hidden');
-    
-    // Load orders
-    await loadOrders();
+    const adminPanel = document.getElementById('adminPanel');
+    if (adminPanel) {
+        adminPanel.classList.remove('hidden');
+        
+        // Load orders
+        await loadOrders();
+    } else {
+        console.warn('Admin panel not found in current page context');
+    }
 }
 
 async function loadOrders() {
@@ -17,6 +22,11 @@ async function loadOrders() {
         if (response.ok) {
             const orders = await response.json();
             const ordersList = document.getElementById('ordersList');
+            
+            if (!ordersList) {
+                console.warn('Orders list container not found');
+                return;
+            }
             
             if (orders.length === 0) {
                 ordersList.innerHTML = '<p>Нет заказов</p>';
@@ -47,11 +57,13 @@ async function loadOrders() {
             
             ordersList.innerHTML = ordersHtml;
         } else {
-            document.getElementById('ordersList').innerHTML = '<p>Ошибка загрузки заказов</p>';
+            const ordersList = document.getElementById('ordersList');
+            if (ordersList) ordersList.innerHTML = '<p>Ошибка загрузки заказов</p>';
         }
     } catch (error) {
         console.error("Error loading orders:", error);
-        document.getElementById('ordersList').innerHTML = '<p>Ошибка загрузки заказов</p>';
+        const ordersList = document.getElementById('ordersList');
+        if (ordersList) ordersList.innerHTML = '<p>Ошибка загрузки заказов</p>';
     }
 }
 
