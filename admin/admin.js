@@ -25,6 +25,7 @@ async function loadAdminData() {
     await loadMenuItemsList();
     await loadAdminStats();
     await loadSupplyRequests();
+    await loadNotifications();
 }
 
 async function loadMenuItemsList() {
@@ -96,7 +97,7 @@ async function loadAdminStats() {
 }
 
 async function loadSupplyRequests() {
-    const res = await fetch(`${API}/admin/supplies?token=${currentToken}`);
+    const res = await fetch(`${API}/admin/stats?token=${currentToken}`);
     const data = await res.json();
     
     const list = document.getElementById('supplyList');
@@ -166,6 +167,47 @@ async function generateReport() {
             `).join('')}
         </table>
     `;
+}
+
+async function loadNotifications() {
+    const res = await fetch(`${API}/notifications?token=${currentToken}`);
+    const notifications = await res.json();
+    
+    const list = document.getElementById('notifications');
+    // Filter to show only unread notifications
+    const unreadNotifications = notifications.filter(n => !n.is_read);
+    
+    if (unreadNotifications.length === 0) {
+        list.innerHTML = '<p>Нет новых уведомлений</p>';
+        return;
+    }
+    
+    list.innerHTML = unreadNotifications.map(n=> `
+        <div class="notification-item unread" onclick="markNotificationRead(${n.id})">
+            <small>${new Date(n.created_at).toLocaleString()}</small><br>
+            ${n.message}
+        </div>
+    `).join('');
+}
+
+async function markNotificationRead(id) {
+    await fetch(`${API}/notifications/${id}/read?token=${currentToken}`, { method: "PUT" });
+    // Reload notifications to remove the read one from the display
+    loadNotifications();
+}
+
+// Function to clear all read notifications
+async function clearReadNotifications() {
+    const res = await fetch(`${API}/notifications/read/clear?token=${currentToken}`, { method: "DELETE" });
+    const data = await res.json();
+
+    if (res.ok) {
+        alert(data.msg);
+        // Reload notifications to update the display
+        loadNotifications();
+    } else {
+        alert(`Ошибка: ${data.detail || data.msg}`);
+    }
 }
 
 function logout() {

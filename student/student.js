@@ -96,6 +96,12 @@ async function loadMenu() {
         return;
     }
     
+    // Get user's received orders to enable reviews for those items
+    const ordersRes = await fetch(`${API}/my_orders?token=${currentToken}`);
+    const orders = await ordersRes.json();
+    
+    const receivedOrderItemIds = orders.filter(order => order.is_received).map(order => order.item_id);
+    
     list.innerHTML = menu.map(item => `
         <div class="menu-item">
             <div>
@@ -106,6 +112,7 @@ async function loadMenu() {
             <div>
                 <span class="price">${item.price}₽</span>
                 <button onclick="buyItem(${item.id})" style="width:auto; padding:5px 10px;">Купить</button>
+                ${receivedOrderItemIds.includes(item.id) ? `<button onclick="showReviewModal(${item.id})" style="width:auto; padding:5px 10px; margin-left: 5px;">Оценить</button>` : ''}
             </div>
         </div>
     `).join('');
@@ -209,6 +216,120 @@ async function buySubscription() {
 
 function closeModal(modalId) {
     document.getElementById(modalId).style.display = 'none';
+}
+
+function showReviewModal(itemId) {
+    // Create modal if it doesn't exist
+    let reviewModal = document.getElementById('reviewModal');
+    if (!reviewModal) {
+        reviewModal = document.createElement('div');
+        reviewModal.id = 'reviewModal';
+        reviewModal.className = 'modal';
+        reviewModal.innerHTML = `
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('reviewModal')">&times;</span>
+                <h3>Оставить отзыв</h3>
+                <label>Оценка:</label>
+                <select id="reviewRating">
+                    <option value="1">1 - Плохо</option>
+                    <option value="2">2 - Удовлетворительно</option>
+                    <option value="3">3 - Хорошо</option>
+                    <option value="4">4 - Очень хорошо</option>
+                    <option value="5">5 - Отлично</option>
+                </select>
+                <textarea id="reviewComment" placeholder="Ваш комментарий"></textarea>
+                <button onclick="submitReview()">Отправить</button>
+            </div>
+        `;
+        document.body.appendChild(reviewModal);
+    }
+    
+    // Store the item ID for later use
+    window.currentReviewItemId = itemId;
+    
+    document.getElementById('reviewModal').style.display = 'block';
+}
+
+async function submitReview() {
+    const rating = parseInt(document.getElementById('reviewRating').value);
+    const comment = document.getElementById('reviewComment').value;
+    
+    if (!window.currentReviewItemId) {
+        alert('Ошибка: не выбрано блюдо для отзыва');
+        return;
+    }
+    
+    const res = await fetch(`${API}/review/${window.currentReviewItemId}?token=${currentToken}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating, comment })
+    });
+    
+    const data = await res.json();
+    
+    if (res.ok) {
+        alert("Отзыв успешно отправлен!");
+        closeModal('reviewModal');
+        document.getElementById('reviewComment').value = '';
+    } else {
+        alert(`Ошибка: ${data.detail || 'Неизвестная ошибка'}`);
+    }
+}
+
+function showEditProfileModal() {
+    // Create modal if it doesn't exist
+    let profileModal = document.getElementById('profileModal');
+    if (!profileModal) {
+        profileModal = document.createElement('div');
+        profileModal.id = 'profileModal';
+        profileModal.className = 'modal';
+        profileModal.innerHTML = `
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('profileModal')">&times;</span>
+                <h3>Изменить профиль</h3>
+                <label>Аллергии:</label>
+                <input type="text" id="editAllergies" placeholder="Аллергии (если есть)">
+                <label>Пищевые предпочтения:</label>
+                <input type="text" id="editDietaryPrefs" placeholder="Пищевые предпочтения">
+                <button onclick="saveProfileChanges()">Сохранить изменения</button>
+            </div>
+        `;
+        document.body.appendChild(profileModal);
+    }
+    
+    // Load current profile data
+    loadCurrentProfileData();
+    
+    document.getElementById('profileModal').style.display = 'block';
+}
+
+async function loadCurrentProfileData() {
+    const res = await fetch(`${API}/my_profile?token=${currentToken}`);
+    const profile = await res.json();
+    
+    document.getElementById('editAllergies').value = profile.allergies || '';
+    document.getElementById('editDietaryPrefs').value = profile.dietary_preferences || '';
+}
+
+async function saveProfileChanges() {
+    const allergies = document.getElementById('editAllergies').value;
+    const dietaryPreferences = document.getElementById('editDietaryPrefs').value;
+    
+    const res = await fetch(`${API}/update_profile?token=${currentToken}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ allergies, dietary_preferences: dietaryPreferences })
+    });
+    
+    const data = await res.json();
+    
+    if (res.ok) {
+        alert("Профиль успешно обновлен!");
+        closeModal('profileModal');
+        loadProfile(); // Refresh the profile display
+    } else {
+        alert(`Ошибка: ${data.detail || 'Неизвестная ошибка'}`);
+    }
 }
 
 function logout() {
