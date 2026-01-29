@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Школьная Столовая</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="container">
+    <h1>Школьная Столовая</h1>
+
+    <!-- АВТОРИЗАЦИЯ -->
+    <div id="authSection">
+        <h2 id="authTitle">Вход</h2>
+        <input type="text" id="username" placeholder="Логин">
+        <input type="password" id="password" placeholder="Пароль">
+        <select id="roleSelect" class="hidden">
+            <option value="student">Ученик</option>
+            <option value="cook">Повар</option>
+            <option value="admin">Администратор</option>
+        </select>
+        <input type="text" id="allergies" placeholder="Аллергии (если есть)" class="hidden">
+        <input type="text" id="dietary_preferences" placeholder="Пищевые предпочтения" class="hidden">
+        
+        <button onclick="handleAuth()" id="authBtn">Войти</button>
+        <p onclick="toggleReg()" id="toggleText">
+            Нет аккаунта? Зарегистрироваться
+        </p>
+    </div>
+
+    <!-- ДЭШБОРД -->
+    <div id="dashboardSection" class="hidden">
+        <h2 id="welcomeMsg"></h2>
+        
+        <!-- Панель УЧЕНИКА -->
+        <div id="studentPanel" class="hidden">
+            <div class="profile-box">
+                <h3>👤 Мой профиль</h3>
+                <p><strong>Логин:</strong> <span id="profileUsername"></span></p>
+                <p><strong>Баланс:</strong> <span id="profileBalance" class="price"></span>₽</p>
+                <p><strong>Абонемент:</strong> <span id="subscriptionInfo"></span></p>
+                <p><strong>Аллергии:</strong> <span id="profileAllergies"></span></p>
+                <p><strong>Предпочтения:</strong> <span id="profilePreferences"></span></p>
+                <button class="secondary" onclick="showTopupModal()">Пополнить баланс</button>
+                <button class="secondary" onclick="showSubscriptionModal()">Купить абонемент</button>
+            </div>
+            
+            <h3>🔔 Уведомления</h3>
+            <div id="notifications"></div>
+            
+            <h3>🍽 Меню на сегодня</h3>
+            <div id="menuList">Загрузка...</div>
+            
+            <h3>📋 Мои заказы</h3>
+            <div class="button-group">
+                <button onclick="showOrders('active')" class="secondary">Активные</button>
+                <button onclick="showOrders('history')" class="secondary">История</button>
+            </div>
+            <div id="myOrders">Нет заказов</div>
+        </div>
+
+        <!-- Панель ПОВАРА -->
+        <div id="cookPanel" class="hidden">
+            <h3>🍳 Управление остатками блюд</h3>
+            <div id="dishInventory">Загрузка...</div>
+            
+            <h3>📦 Склад продуктов</h3>
+            <div id="productInventory">Загрузка...</div>
+            <div class="inventory-item">
+                <input type="text" id="invItemName" placeholder="Название продукта">
+                <input type="number" id="invItemQuantity" placeholder="Количество">
+                <input type="text" id="invItemUnit" placeholder="Единица (кг/литр/шт)">
+                <button onclick="addInventoryItem()">Добавить продукт</button>
+            </div>
+            
+            <h3>📝 Заявка на продукты</h3>
+            <input type="text" id="supplyItem" placeholder="Название продукта (напр. Картофель)">
+            <input type="number" id="supplyAmount" placeholder="Количество">
+            <input type="text" id="supplyUnit" placeholder="Единица" value="кг">
+            <button onclick="sendSupplyRequest()">Отправить заявку</button>
+        </div>
+
+        <!-- Панель АДМИНА -->
+        <div id="adminPanel" class="hidden">
+            <h3>🍽 Управление меню</h3>
+            <div id="menuManagement">
+                <div class="inventory-item">
+                    <input type="text" id="newDishName" placeholder="Название блюда">
+                    <input type="number" id="newDishPrice" placeholder="Цена">
+                    <select id="newDishCategory">
+                        <option value="breakfast">Завтрак</option>
+                        <option value="lunch">Обед</option>
+                    </select>
+                    <input type="text" id="newDishDesc" placeholder="Описание">
+                    <input type="number" id="newDishQuantity" placeholder="Начальное количество" value="100">
+                    <button class="secondary" onclick="createMenuItem()">Добавить блюдо</button>
+                </div>
+                <div id="menuItemsList"></div>
+            </div>
+            
+            <h3>📊 Статистика и отчеты</h3>
+            <div id="statsContent"></div>
+            <div class="filter-section">
+                <input type="date" id="reportStartDate">
+                <input type="date" id="reportEndDate">
+                <button onclick="generateReport()" class="secondary">Сгенерировать отчет</button>
+            </div>
+            <div id="reportResult"></div>
+            
+            <h3>📝 Заявки на согласование</h3>
+            <div id="supplyList">Нет заявок</div>
+        </div>
+
+        <button class="logout" onclick="logout()">Выйти</button>
+    </div>
+</div>
+
+<!-- Модальное окно для пополнения баланса -->
+<div id="topupModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('topupModal')">&times;</span>
+        <h3>Пополнение баланса</h3>
+        <input type="number" id="topupAmount" placeholder="Сумма (₽)" min="10">
+        <button onclick="topupBalance()">Пополнить</button>
+    </div>
+</div>
+
+<!-- Модальное окно для покупки абонемента -->
+<div id="subscriptionModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('subscriptionModal')">&times;</span>
+        <h3>Купить абонемент</h3>
+        <select id="subscriptionPlan">
+            <option value="5">5 обедов - 450₽</option>
+            <option value="10">10 обедов - 850₽</option>
+            <option value="20">20 обедов - 1600₽</option>
+            <option value="30">30 обедов - 2250₽</option>
+        </select>
+        <button onclick="buySubscription()">Купить</button>
+    </div>
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
