@@ -695,6 +695,38 @@ async def mark_notification_read(notification_id: int, token: str, db: Session =
     db.commit()
     return {"msg": "Notification marked as read"}
 
+
+@app.delete("/notifications/{notification_id}")
+async def delete_notification(notification_id: int, token: str, db: Session = Depends(get_db)):
+    user = get_current_user(token, db)
+    notification = db.query(Notification).filter(
+        Notification.id == notification_id,
+        Notification.user_id.in_([user.id, 0])  # Allow deletion of personal and system notifications
+    ).first()
+    if not notification:
+        raise HTTPException(404, "Notification not found")
+
+    db.delete(notification)
+    db.commit()
+    return {"msg": "Notification deleted"}
+
+
+@app.delete("/notifications/read/clear")
+async def clear_read_notifications(token: str, db: Session = Depends(get_db)):
+    user = get_current_user(token, db)
+    # Delete all read notifications for the user
+    read_notifications = db.query(Notification).filter(
+        (Notification.user_id == user.id) | (Notification.user_id == 0),
+        Notification.is_read == True
+    ).all()
+
+    count = len(read_notifications)
+    for notification in read_notifications:
+        db.delete(notification)
+    db.commit()
+    return {"msg": f"Deleted {count} read notifications", "deleted_count": count}
+
+
 if __name__ == "__main__":
     import uvicorn
     ensure_database_schema()  # Ensure database schema is up to date

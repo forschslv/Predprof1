@@ -50,13 +50,16 @@ async function loadNotifications() {
     const notifications = await res.json();
     
     const list = document.getElementById('notifications');
-    if (notifications.length === 0) {
+    //Filter to show only unread notifications
+    const unreadNotifications = notifications.filter(n => !n.is_read);
+    
+    if (unreadNotifications.length === 0) {
         list.innerHTML = '<p>Нет новых уведомлений</p>';
         return;
     }
     
-    list.innerHTML = notifications.map(n => `
-        <div class="notification-item ${n.is_read ? '' : 'unread'}" onclick="markNotificationRead(${n.id})">
+    list.innerHTML = unreadNotifications.map(n=> `
+        <div class="notification-item unread" onclick="markNotificationRead(${n.id})">
             <small>${new Date(n.created_at).toLocaleString()}</small><br>
             ${n.message}
         </div>
@@ -65,7 +68,22 @@ async function loadNotifications() {
 
 async function markNotificationRead(id) {
     await fetch(`${API}/notifications/${id}/read?token=${currentToken}`, { method: "PUT" });
+//Reload notifications to remove the read one from the display
     loadNotifications();
+}
+
+// Function to clear all read notifications
+async function clearReadNotifications() {
+    const res = await fetch(`${API}/notifications/read/clear?token=${currentToken}`, { method: "DELETE" });
+    const data = await res.json();
+
+    if (res.ok) {
+        alert(data.msg);
+        // Reload notifications to update the display
+        loadNotifications();
+    } else {
+        alert(`Ошибка: ${data.detail || data.msg}`);
+}
 }
 
 async function loadMenu() {
