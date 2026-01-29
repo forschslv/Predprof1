@@ -24,11 +24,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.currentRole = localStorage.getItem('role');
     
     if (window.currentToken) {
-        // We need to restore currentUser from localStorage or fetch it
-        // For now, let's try to get it from localStorage or set a default
+        // Try to get user from localStorage first
         const storedUser = localStorage.getItem('currentUser');
         if (storedUser) {
             window.currentUser = JSON.parse(storedUser);
+        } else {
+            // If not in localStorage, fetch from API
+            try {
+                const response = await fetch(`${API_BASE}/users/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${window.currentToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const userData = await response.json();
+                    window.currentUser = userData;
+                    localStorage.setItem('currentUser', JSON.stringify(userData));
+                }
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+            }
         }
         
         await showDashboard();

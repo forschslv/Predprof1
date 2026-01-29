@@ -1,17 +1,17 @@
 // STUDENT ORDER FUNCTIONS
 async function loadModuleMenu() {
     try {
-        const response = await fetch(`${API_BASE}/module-menu`, {
+        const response = await fetch(`${window.API_BASE}/module-menu`, {
             headers: {
-                'Authorization': `Bearer ${currentToken}`
+                'Authorization': `Bearer ${window.currentToken}`
            }
         });
         
         if (response.ok) {
-            moduleMenu = await response.json();
+            window.moduleMenu = await response.json();
         } else {
             // If no module menu exists yet, create an empty one
-            moduleMenu = {};
+            window.moduleMenu = {};
         }
         
         displayModuleMenu();
@@ -19,7 +19,7 @@ async function loadModuleMenu() {
     } catch (error) {
         console.error("Error loading module menu:", error);
         // Create empty module menu
-        moduleMenu = {};
+        window.moduleMenu = {};
         displayModuleMenu();
         setupOrderForm();
     }
@@ -37,7 +37,7 @@ function displayModuleMenu() {
     let menuHtml = '<div class="week-menu">';
     
     for (let i = 0; i < 6; i++) {
-        const dayDishes = moduleMenu[i] || { dish_ids: [] };
+        const dayDishes = window.moduleMenu[i] || { dish_ids: [] };
         menuHtml += `
             <div class="week-day-container">
                 <div class="week-day-title">${daysOfWeek[i]}</div>
@@ -56,7 +56,7 @@ function displayModuleMenu() {
     
     // Now load dishes for each day that has them
     for (let i = 0; i < 6; i++) {
-        const dayDishes = moduleMenu[i];
+        const dayDishes = window.moduleMenu[i];
         if (dayDishes && dayDishes.dish_ids && dayDishes.dish_ids.length > 0) {
             loadDishesForDayDisplay(i, dayDishes.dish_ids);
         }
@@ -66,9 +66,9 @@ function displayModuleMenu() {
 async function loadDishesForDayDisplay(dayIndex, dishIds) {
     try {
         const promises = dishIds.map(dishId => 
-            fetch(`${API_BASE}/menu/${dishId}`, {
+            fetch(`${window.API_BASE}/menu/${dishId}`, {
                 headers: {
-                    'Authorization': `Bearer ${currentToken}`
+                    'Authorization': `Bearer ${window.currentToken}`
                 }
             }).then(res => res.json())
         );
@@ -118,7 +118,7 @@ function setupOrderForm() {
     let formHtml = '';
     
     for (let i = 0; i < 6; i++){
-        const dayDishes = moduleMenu[i] || { dish_ids: [] };
+        const dayDishes = window.moduleMenu[i] || { dish_ids: [] };
         formHtml += `
             <div class="week-day-container">
                 <div class="week-day-title">${daysOfWeek[i]}</div>
@@ -139,14 +139,14 @@ function setupOrderForm() {
     
     // Now populate order forms for each day that has dishes
     for (let i = 0; i < 6; i++) {
-        const dayDishes = moduleMenu[i];
+        const dayDishes = window.moduleMenu[i];
         if (dayDishes && dayDishes.dish_ids && dayDishes.dish_ids.length > 0) {
             setupDayOrderForm(i, dayDishes.dish_ids);
         }
     }
     
     // Initialize current order structure
-    currentOrder = {
+    window.currentOrder = {
         week_start_date: '',
         days: []
     };
@@ -155,9 +155,9 @@ function setupOrderForm() {
 async function setupDayOrderForm(dayIndex, dishIds) {
     try {
         const promises = dishIds.map(dishId => 
-            fetch(`${API_BASE}/menu/${dishId}`, {
+            fetch(`${window.API_BASE}/menu/${dishId}`, {
                 headers: {
-                    'Authorization': `Bearer ${currentToken}`
+                    'Authorization': `Bearer ${window.currentToken}`
                 }
             }).then(res => res.json())
         );
@@ -195,8 +195,8 @@ async function setupDayOrderForm(dayIndex, dishIds) {
         dayFormContainer.innerHTML = formHtml;
         
         // Initialize day in current order
-        if (!currentOrder.days[dayIndex]) {
-            currentOrder.days[dayIndex] = {
+        if (!window.currentOrder.days[dayIndex]) {
+            window.currentOrder.days[dayIndex] = {
                 day_of_week: dayIndex,
                 items: []
             };
@@ -204,7 +204,7 @@ async function setupDayOrderForm(dayIndex, dishIds) {
             // Initialize items array for each dish
             dishes.forEach(dish => {
                 if (dish) {
-                    currentOrder.days[dayIndex].items.push({
+                    window.currentOrder.days[dayIndex].items.push({
                         dish_id: dish.id,
                         quantity: 0
                     });
@@ -232,7 +232,7 @@ function adjustQuantity(dayIndex, dishId, change) {
     qtyInput.value = newValue;
     
     // Update the current order
-    const dayOrder = currentOrder.days[dayIndex];
+    const dayOrder = window.currentOrder.days[dayIndex];
     const item = dayOrder.items.find(item => item.dish_id === dishId);
     if (item) {
         item.quantity = newValue;
@@ -243,7 +243,7 @@ function adjustQuantity(dayIndex, dishId, change) {
 
 function updateDayTotal(dayIndex) {
     let dayTotal = 0;
-    const dayOrder = currentOrder.days[dayIndex];
+    const dayOrder = window.currentOrder.days[dayIndex];
     
     if (dayOrder) {
         dayOrder.items.forEach(item => {
@@ -253,7 +253,7 @@ function updateDayTotal(dayIndex) {
     }
     
     // Recalculate based on actual inputs
-    const dishIds = moduleMenu[dayIndex]?.dish_ids || [];
+    const dishIds = window.moduleMenu[dayIndex]?.dish_ids || [];
     dishIds.forEach(dishId => {
         const qtyInput = document.getElementById(`qty-${dayIndex}-${dishId}`);
         if (qtyInput) {
@@ -269,7 +269,7 @@ function updateDayTotal(dayIndex) {
 
 function calculateDayTotal(dayIndex) {
     let total = 0;
-    const dishIds = moduleMenu[dayIndex]?.dish_ids || [];
+    const dishIds = window.moduleMenu[dayIndex]?.dish_ids || [];
     
     dishIds.forEach(dishId => {
         const qtyInput = document.getElementById(`qty-${dayIndex}-${dishId}`);
@@ -299,7 +299,7 @@ async function submitOrder() {
     };
     
     for (let dayIndex = 0; dayIndex < 6; dayIndex++) {
-        const dishIds = moduleMenu[dayIndex]?.dish_ids || [];
+        const dishIds = window.moduleMenu[dayIndex]?.dish_ids || [];
         const dayItems = [];
         
         dishIds.forEach(dishId => {
@@ -329,11 +329,11 @@ async function submitOrder() {
     }
     
     try {
-        const response = await fetch(`${API_BASE}/orders`, {
+        const response = await fetch(`${window.API_BASE}/orders`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${currentToken}`
+                'Authorization': `Bearer ${window.currentToken}`
             },
             body: JSON.stringify(orderData)
         });
@@ -381,9 +381,9 @@ async function confirmPayment() {
 
 async function loadMyOrders() {
     try {
-        const response = await fetch(`${API_BASE}/orders/my`, {
+        const response = await fetch(`${window.API_BASE}/orders/my`, {
             headers: {
-                'Authorization': `Bearer ${currentToken}`
+                'Authorization': `Bearer ${window.currentToken}`
             }
         });
         
