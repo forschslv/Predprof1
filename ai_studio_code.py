@@ -3,7 +3,7 @@ from typing import List, Optional
 from fastapi import FastAPI, HTTPException, Depends, status, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, ForeignKey, DateTime, Float, func, Date
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, ForeignKey, DateTime, Float, func,Date,text
 from sqlalchemy.orm import sessionmaker, Session, relationship, declarative_base
 from passlib.context import CryptContext
 from jose import JWTError, jwt
@@ -24,7 +24,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
     hashed_password = Column(String)
-    role = Column(String)  # 'student', 'cook', 'admin'
+    role = Column(String)  # 'student', 'cook','admin'
     allergies = Column(String, default="")
     dietary_preferences = Column(String, default="")
     balance = Column(Float, default=0.0)
@@ -99,7 +99,35 @@ class Inventory(Base):
     unit = Column(String)
     min_threshold = Column(Float, default=10.0)
 
-Base.metadata.create_all(bind=engine)
+
+def ensure_database_schema():
+    """Ensure the database schema is up to date"""
+    Base.metadata.create_all(bind=engine)
+    
+    # Check and add missing columns if needed
+    with engine.connect() as conn:
+        # Check if dietary_preferences column exists
+        result = conn.execute(text("""
+            SELECT name FROM pragma_table_info('users') WHERE name='dietary_preferences';
+        """))
+        if not result.fetchone():
+            conn.execute(text("ALTER TABLE users ADD COLUMN dietary_preferences TEXT DEFAULT '';"))
+        
+        # Check if allergies column exists  
+        result = conn.execute(text("""
+            SELECT name FROM pragma_table_info('users') WHERE name='allergies';
+        """))
+        if not result.fetchone():
+            conn.execute(text("ALTER TABLE users ADD COLUMN allergies TEXT DEFAULT '';"))
+        
+        # Check if balance column exists
+        result = conn.execute(text("""
+            SELECT name FROM pragma_table_info('users') WHERE name='balance';
+        """))
+        if not result.fetchone():
+            conn.execute(text("ALTER TABLE users ADD COLUMN balance REAL DEFAULT 0.0;"))
+        
+        conn.commit()
 
 # --- PYDANTIC SCHEMAS ---
 class UserRegister(BaseModel):
@@ -170,11 +198,12 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 1. АВТОРИЗАЦИЯ
+#1. АВТОРИЗАЦИЯ
 @app.post("/register")
 def register(user: UserRegister, db: Session = Depends(get_db)):
     if db.query(User).filter(User.username == user.username).first():
@@ -491,7 +520,7 @@ async def get_stats(token: str, db: Session = Depends(get_db)):
             "cook_name": req.cook.username,
             "created_at": req.created_at
         } for req in pending_supplies]
-    }
+   }
 
 @app.put("/admin/approve_supply/{req_id}")
 async def approve_supply(req_id: int, token: str, db: Session = Depends(get_db)):
@@ -507,7 +536,7 @@ async def approve_supply(req_id: int, token: str, db: Session = Depends(get_db))
     item = db.query(MenuItem).first()
     if item:
         item.quantity += req.amount
-    
+
     db.commit()
     create_notification(db, req.cook_id, f"Ваша заявка на {req.item_name} одобрена")
     return {"msg": "Supply request approved"}
@@ -549,7 +578,7 @@ async def delete_menu_item(item_id: int, token: str, db: Session = Depends(get_d
     item = db.query(MenuItem).filter(MenuItem.id == item_id).first()
     if not item:
         raise HTTPException(404, "Item not found")
-    
+
     db.delete(item)
     db.commit()
     return {"msg": "Menu item deleted"}
@@ -624,4 +653,5 @@ async def mark_notification_read(notification_id: int, token: str, db: Session =
 
 if __name__ == "__main__":
     import uvicorn
+    ensure_database_schema()  # Ensure database schema is up to date
     uvicorn.run(app, host="127.0.0.1", port=8000)
