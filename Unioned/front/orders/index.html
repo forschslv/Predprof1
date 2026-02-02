@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Заказы - Система заказа питания</title>
+    <link rel="stylesheet" href="../cafeteria_styles.css">
+</head>
+
+<body>
+<div class="container">
+    <h1>Система заказа питания в столовой 🍽️</h1>
+
+    <div id="dashboardSection">
+        <h2 id="welcomeMsg"></h2>
+        
+        <!-- STUDENT PANEL -->
+        <div id="studentPanel" class="hidden">
+            <div class="profile-box">
+                <h3>👤 Профиль ученика</h3>
+                <p><strong>Имя:</strong> <span id="profileName"></span></p>
+                <p><strong>Фамилия:</strong> <span id="profileSecondaryName"></span></p>
+                <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+                <p><strong>Статус:</strong> <span id="profileStatus"></span></p>
+                <p><strong>Класс:</strong> <span id="profileClass"></span></p>
+                <p><strong>Классный руководитель:</strong> <span id="profileTeacher"></span></p>
+            </div>
+            
+            <h3>🍽️ Меню на модуль</h3>
+            <div id="moduleMenuDisplay">
+                <div id="weekMenuDisplay">
+                    <!-- Days of week will be displayed here -->
+                </div>
+                
+                <h4>Заказ на неделю</h4>
+                <div id="orderForm">
+                    <label>Дата начала недели: <input type="date" id="weekStartDate"></label>
+                    <div id="weekOrderForm">
+                        <!-- Day order forms will be dynamically generated -->
+                    </div>
+                    <button onclick="submitOrder()" class="secondary">Подтвердить заказ</button>
+                </div>
+            </div>
+            
+            <h3>📋 Мои заказы</h3>
+            <div id="myOrders">Загрузка...</div>
+        </div>
+        
+        <button class="logout" onclick="logout()">Выйти</button>
+    </div>
+</div>
+
+<!-- MODAL FOR PAYMENT -->
+<div id="paymentModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('paymentModal')">&times;</span>
+        <h3>Оплата заказа</h3>
+        <div id="paymentInfo">
+            <p>Итоговая сумма: <span id="totalOrderAmount" class="price">0₽</span></p>
+            <p>Реквизиты для оплаты: [реквизиты]</p>
+        </div>
+        <div>
+            <label>Подтверждение оплаты:</label>
+            <input type="file" id="paymentProof" accept=".pdf,.png,.jpg,.jpeg">
+        </div>
+        <button onclick="confirmPayment()">Подтверждаю оплату</button>
+    </div>
+</div>
+
+<script src="../app.js"></script>
+<script src="../auth/auth.js"></script>
+<script src="../common/student.js"></script>
+<script src="orders.js"></script>
+<script src="../common/cook.js"></script>
+<script src="../admin/admin.js"></script>
+<script src="../dish_types.js"></script>
+
+</body>
+</html>
