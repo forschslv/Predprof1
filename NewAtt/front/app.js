@@ -1,9 +1,6 @@
 // Global variables
-try {
-    const API_BASE = "http://localhost:8000";
-} catch (e) {
-    console.error("Error initializing API_BASE:", e);
-}
+const API_BASE = "http://localhost:8000";
+
 let currentToken = localStorage.getItem('token');
 let currentRole = localStorage.getItem('role');
 let currentUser = null;
