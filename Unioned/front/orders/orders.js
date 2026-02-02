@@ -1,4 +1,4 @@
-// STUDENT ORDER FUNCTIONS
+//STUDENT ORDER FUNCTIONS
 async function loadModuleMenu() {
     try {
         const response = await fetch(`${window.API_BASE}/module-menu`, {
@@ -32,11 +32,11 @@ function displayModuleMenu() {
         return;
     }
     
-    const daysOfWeek = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+    const daysOfWeek= ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
     
     let menuHtml = '<div class="week-menu">';
     
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 6; i++){
         const dayDishes = window.moduleMenu[i] || { dish_ids: [] };
         menuHtml += `
             <div class="week-day-container">
@@ -51,7 +51,7 @@ function displayModuleMenu() {
         `;
     }
     
-    menuHtml += '</div>';
+    menuHtml+= '</div>';
     weekMenuDisplay.innerHTML = menuHtml;
     
     // Now load dishes for each day that has them
@@ -65,8 +65,7 @@ function displayModuleMenu() {
 
 async function loadDishesForDayDisplay(dayIndex, dishIds) {
     try {
-        const promises = dishIds.map(dishId => 
-            fetch(`${window.API_BASE}/menu/${dishId}`, {
+        const promises = dishIds.map(dishId =>fetch(`${window.API_BASE}/menu/${dishId}`, {
                 headers: {
                     'Authorization': `Bearer ${window.currentToken}`
                 }
@@ -115,7 +114,7 @@ function setupOrderForm() {
     
     const daysOfWeek = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
     
-    let formHtml = '';
+    let formHtml= '';
     
     for (let i = 0; i < 6; i++){
         const dayDishes = window.moduleMenu[i] || { dish_ids: [] };
@@ -128,7 +127,7 @@ function setupOrderForm() {
                         : '<p>Нет меню для заказа в этот день</p>'
                     }
                 </div>
-                <div class="day-total">
+                <divclass="day-total">
                     Итого за день: <span id="day-${i}-total" class="price">0₽</span>
                </div>
             </div>
@@ -137,7 +136,7 @@ function setupOrderForm() {
     
     weekOrderForm.innerHTML = formHtml;
     
-    // Now populate order forms for each day that has dishes
+    // Now populate order forms for each day that hasdishes
     for (let i = 0; i < 6; i++) {
         const dayDishes = window.moduleMenu[i];
         if (dayDishes && dayDishes.dish_ids && dayDishes.dish_ids.length > 0) {
@@ -155,7 +154,7 @@ function setupOrderForm() {
 async function setupDayOrderForm(dayIndex, dishIds) {
     try {
         const promises = dishIds.map(dishId => 
-            fetch(`${window.API_BASE}/menu/${dishId}`, {
+           fetch(`${window.API_BASE}/menu/${dishId}`, {
                 headers: {
                     'Authorization': `Bearer ${window.currentToken}`
                 }
@@ -173,7 +172,7 @@ async function setupDayOrderForm(dayIndex, dishIds) {
         let formHtml = '';
         
         dishes.forEach((dish, dishIdx) => {
-            if (dish) {
+            if (dish){
                 formHtml += `
                     <div class="dish-item">
                         <div class="dish-info">
@@ -182,9 +181,9 @@ async function setupDayOrderForm(dayIndex, dishIds) {
                             <div class="dish-type">${window.getDishTypeName(dish.type)}</div>
                         </div>
                         <div>
-                            <button onclick="adjustQuantity(${dayIndex}, ${dish.id}, -1)">-</button>
+<button onclick="adjustQuantity(${dayIndex}, ${dish.id}, -1)">-</button>
                             <input type="number" id="qty-${dayIndex}-${dish.id}" class="order-quantity" value="0" min="0" onchange="updateDayTotal(${dayIndex})">
-                            <button onclick="adjustQuantity(${dayIndex}, ${dish.id}, 1)">+</button>
+                            <buttononclick="adjustQuantity(${dayIndex}, ${dish.id}, 1)">+</button>
                             <div class="dish-price">${dish.price_rub}₽</div>
                         </div>
                     </div>
@@ -194,7 +193,7 @@ async function setupDayOrderForm(dayIndex, dishIds) {
         
         dayFormContainer.innerHTML = formHtml;
         
-        // Initialize day in current order
+        // Initialize day incurrent order
         if (!window.currentOrder.days[dayIndex]) {
             window.currentOrder.days[dayIndex] = {
                 day_of_week: dayIndex,
@@ -220,7 +219,7 @@ async function setupDayOrderForm(dayIndex, dishIds) {
 
 function adjustQuantity(dayIndex, dishId, change) {
     const qtyInput = document.getElementById(`qty-${dayIndex}-${dishId}`);
-    if (!qtyInput) {
+   if (!qtyInput) {
         console.warn(`Quantity input for day ${dayIndex}, dish ${dishId} not found`);
         return;
     }
@@ -229,7 +228,7 @@ function adjustQuantity(dayIndex, dishId, change) {
     
     if (newValue < 0) newValue = 0;
     
-    qtyInput.value = newValue;
+    qtyInput.value =newValue;
     
     // Update the current order
     const dayOrder = window.currentOrder.days[dayIndex];
@@ -241,14 +240,14 @@ function adjustQuantity(dayIndex, dishId, change) {
     updateDayTotal(dayIndex);
 }
 
-function updateDayTotal(dayIndex) {
+functionupdateDayTotal(dayIndex) {
     let dayTotal = 0;
     const dayOrder = window.currentOrder.days[dayIndex];
     
     if (dayOrder) {
         dayOrder.items.forEach(item => {
             // Need to get dish price to calculate total
-            // For now, we'll update totals when submitting the order
+            // For now, we'll update totals whensubmitting the order
         });
     }
     
@@ -256,7 +255,7 @@ function updateDayTotal(dayIndex) {
     const dishIds = window.moduleMenu[dayIndex]?.dish_ids || [];
     dishIds.forEach(dishId => {
         const qtyInput = document.getElementById(`qty-${dayIndex}-${dishId}`);
-        if (qtyInput) {
+        if (qtyInput){
             // We need to fetch dish prices to calculate total
             // For simplicity in this demo, we'll calculate when needed
         }
@@ -264,7 +263,7 @@ function updateDayTotal(dayIndex) {
     
     // Placeholder - we'll update this when we have the actual dish prices
     const dayTotalElement = document.getElementById(`day-${dayIndex}-total`);
-    if (dayTotalElement) dayTotalElement.textContent = `${calculateDayTotal(dayIndex)}₽`;
+   if (dayTotalElement) dayTotalElement.textContent = `${calculateDayTotal(dayIndex)}₽`;
 }
 
 function calculateDayTotal(dayIndex) {
@@ -301,14 +300,14 @@ function calculateDayTotal(dayIndex) {
 // Enhanced function to calculate total with proper async handling
 async function calculateTotalWithPrices() {
     let total = 0;
-    const dishPromises = [];
+    const dishPromises =[];
     
     for (let dayIndex = 0; dayIndex < 6; dayIndex++) {
         const dishIds = window.moduleMenu[dayIndex]?.dish_ids || [];
         
         dishIds.forEach(dishId => {
             const qtyInput = document.getElementById(`qty-${dayIndex}-${dishId}`);
-            if (qtyInput) {
+           if (qtyInput) {
                 const quantity = parseInt(qtyInput.value) || 0;
 
                 if (quantity > 0) {
@@ -326,7 +325,7 @@ async function calculateTotalWithPrices() {
                         return 0;
                     })
                     .catch(error => {
-                        console.error(`Error fetching dish ${dishId}:`, error);
+                        console.error(`Errorfetching dish ${dishId}:`, error);
                         return 0;
                     });
 
@@ -339,7 +338,7 @@ async function calculateTotalWithPrices() {
     const prices = await Promise.all(dishPromises);
     total = prices.reduce((sum, price) => sum + price, 0);
     
-    return total;
+    returntotal;
 }
 
 async function submitOrder() {
@@ -351,7 +350,7 @@ async function submitOrder() {
     }
     
     // Prepare order data
-    const orderData = {
+    const orderData= {
         week_start_date: weekStartDate,
         days: []
     };
@@ -367,7 +366,7 @@ async function submitOrder() {
                 if (quantity > 0) {
                     dayItems.push({
                         dish_id: dishId,
-                        quantity: quantity
+                        quantity:quantity
                     });
                 }
             }
@@ -401,7 +400,7 @@ async function submitOrder() {
         if (response.ok) {
             // Calculate the total amount from the order
             const totalAmount = await calculateTotalWithPrices();
-            alert(`Заказ успешно создан! Номер заказа: ${result.id}, общая сумма: ${totalAmount}₽`);
+            alert(`Заказ успешно создан! Номерзаказа: ${result.id}, общая сумма: ${totalAmount}₽`);
             
             // Show payment modal
             const totalOrderAmount = document.getElementById('totalOrderAmount');
@@ -417,7 +416,7 @@ async function submitOrder() {
 }
 
 function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
+   const modal = document.getElementById(modalId);
     if (modal) modal.style.display = 'none';
 }
 
@@ -434,7 +433,7 @@ async function confirmPayment() {
     const formData = new FormData();
     formData.append('file', paymentProof.files[0]);
     
-    try {
+   try {
         const response = await fetch(`${window.API_BASE}/orders/${orderId}/pay`, {
             method: 'POST',
             headers: {
@@ -460,7 +459,9 @@ async function confirmPayment() {
 
 async function loadMyOrders() {
     try {
-        const response = await fetch(`${window.API_BASE}/orders/my`, {
+        //Fixed endpoint according to OpenAPI spec - there's no /orders/my endpoint
+        // Using /orders to get user's orders
+        const response = await fetch(`${window.API_BASE}/orders`, {
             headers: {
                 'Authorization': `Bearer ${window.currentToken}`
             }
@@ -469,11 +470,6 @@ async function loadMyOrders() {
         if (response.ok) {
             const orders = await response.json();
             const ordersContainer = document.getElementById('myOrders');
-            
-            if (!ordersContainer) {
-                console.warn('My orders container not found');
-                return;
-            }
             
             if (orders.length === 0) {
                 ordersContainer.innerHTML = '<p>У вас нет заказов</p>';
@@ -485,22 +481,20 @@ async function loadMyOrders() {
                 ordersHtml += `
                     <div class="order-item">
                         <div>
-                            <b>Заказ #${order.id}</b> - Статус: ${order.status}
+                            <b>Заказ#${order.id}</b> - Статус: ${order.status}
                            <br><small>Дата начала недели: ${order.week_start_date}</small>
                             <br><small>Общая сумма: ${order.total_amount}₽</small>
                         </div>
                     </div>
-                `;
+`;
             });
             
             ordersContainer.innerHTML = ordersHtml;
         } else {
-            const ordersContainer = document.getElementById('myOrders');
-            if (ordersContainer) ordersContainer.innerHTML = '<p>Ошибка загрузки заказов</p>';
+            document.getElementById('myOrders').innerHTML = '<p>Ошибка загрузки заказов</p>';
         }
     } catch (error) {
         console.error("Error loading orders:", error);
-        const ordersContainer = document.getElementById('myOrders');
-        if (ordersContainer) ordersContainer.innerHTML = '<p>Ошибка загрузки заказов</p>';
+        document.getElementById('myOrders').innerHTML = '<p>Ошибка загрузки заказов</p>';
     }
 }

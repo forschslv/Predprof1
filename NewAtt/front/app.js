@@ -65,9 +65,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function showDashboard() {
     const authSection = document.getElementById('authSection');
     const dashboardSection = document.getElementById('dashboardSection');
+    const navigationHub = document.getElementById('navigationHub');
     
     if (authSection) authSection.classList.add('hidden');
     if (dashboardSection) dashboardSection.classList.remove('hidden');
+    if (navigationHub) navigationHub.classList.add('hidden');
     
     const welcomeMsg = document.getElementById('welcomeMsg');
     if (welcomeMsg && window.currentUser) {
@@ -107,9 +109,11 @@ function logout() {
     
     const dashboardSection = document.getElementById('dashboardSection');
     const authSection = document.getElementById('authSection');
+    const navigationHub = document.getElementById('navigationHub');
     
     if (dashboardSection) dashboardSection.classList.add('hidden');
     if (authSection) authSection.classList.remove('hidden');
+    if (navigationHub) navigationHub.classList.remove('hidden');
     
     // Show all auth fields again if they were hidden
     const usernameField = document.getElementById('username');

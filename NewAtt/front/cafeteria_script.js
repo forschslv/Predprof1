@@ -17,8 +17,11 @@ if (currentToken) {
     showDashboard();
 } else {
     // Set up login form by default
-    document.getElementById('username').classList.add('hidden');
-    document.getElementById('confirmCode').classList.remove('hidden');
+    const usernameField = document.getElementById('username');
+    const confirmCodeField = document.getElementById('confirmCode');
+    
+    if (usernameField) usernameField.classList.add('hidden');
+    if (confirmCodeField) confirmCodeField.classList.remove('hidden');
 }
 
 function toggleReg() {
@@ -65,7 +68,7 @@ async function handleAuth() {
             if (verifyRes.ok) {
                 localStorage.setItem('token', verifyData.access_token);
                 currentToken = verifyData.access_token;
-currentUser = verifyData.user;
+                currentUser = verifyData.user;
                 
                 // Determine role based on status
                 if (currentUser.status.toLowerCase().includes('admin')) {
@@ -187,6 +190,7 @@ async function verifyCode() {
 async function showDashboard() {
     document.getElementById('authSection').classList.add('hidden');
     document.getElementById('dashboardSection').classList.remove('hidden');
+    document.getElementById('navigationHub').classList.add('hidden');
     
     document.getElementById('welcomeMsg').innerText = `Добро пожаловать, ${currentUser.name} ${currentUser.secondary_name} (${currentRole})`;
 
@@ -212,7 +216,7 @@ async function loadStudentData() {
     document.getElementById('profileClass').innerText = "10А"; // Would come from backend
     document.getElementById('profileTeacher').innerText = "Иванова М.П."; // Would come from backend
     
-// Load module menu
+    // Load module menu
     await loadModuleMenu();
     
     // Load orders
@@ -267,12 +271,12 @@ function displayModuleMenu() {
     }
     
     menuHtml += '</div>';
-    weekMenuDisplay.innerHTML =menuHtml;
+    weekMenuDisplay.innerHTML = menuHtml;
     
     // Now load dishes for each day that has them
     for (let i = 0; i < 6; i++) {
         const dayDishes = moduleMenu[i];
-        if (dayDishes && dayDishes.dish_ids && dayDishes.dish_ids.length >0) {
+        if (dayDishes && dayDishes.dish_ids && dayDishes.dish_ids.length > 0) {
             loadDishesForDayDisplay(i, dayDishes.dish_ids);
         }
     }
@@ -290,7 +294,7 @@ async function loadDishesForDayDisplay(dayIndex, dishIds) {
         
         const dishes = await Promise.all(promises);
         
-        const dayContainer = document.getElementById(`day-${dayIndex}-dishes`);
+        const dayContainer = document.getElementById(`day-${i}-dishes`);
         let dishesHtml = '';
         
         dishes.forEach((dish, idx) => {
@@ -319,7 +323,7 @@ async function loadDishesForDayDisplay(dayIndex, dishIds) {
 
 function setupOrderForm() {
     const weekOrderForm = document.getElementById('weekOrderForm');
-    constdaysOfWeek = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+    const daysOfWeek = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
     
     let formHtml = '';
     
@@ -330,7 +334,7 @@ function setupOrderForm() {
                 <div class="week-day-title">${daysOfWeek[i]}</div>
                 <div id="day-${i}-order-form">
                     ${dayDishes.dish_ids && dayDishes.dish_ids.length > 0 
-                        ? '<p>Загрузка формызаказа...</p>' 
+                        ? '<p>Загрузка формы заказа...</p>' 
                         : '<p>Нет меню для заказа в этот день</p>'
                     }
                 </div>
@@ -383,9 +387,9 @@ async function setupDayOrderForm(dayIndex, dishIds) {
                             <div class="dish-type">${window.getDishTypeName(dish.type)}</div>
                         </div>
                         <div>
-<button onclick="adjustQuantity(${dayIndex}, ${dish.id}, -1)">-</button>
+                            <button onclick="adjustQuantity(${dayIndex}, ${dish.id}, -1)">-</button>
                             <input type="number" id="qty-${dayIndex}-${dish.id}" class="order-quantity" value="0" min="0" onchange="updateDayTotal(${dayIndex})">
-                            <buttononclick="adjustQuantity(${dayIndex}, ${dish.id}, 1)">+</button>
+                            <button onclick="adjustQuantity(${dayIndex}, ${dish.id}, 1)">+</button>
                             <div class="dish-price">${dish.price_rub}₽</div>
                         </div>
                     </div>
@@ -395,7 +399,8 @@ async function setupDayOrderForm(dayIndex, dishIds) {
         
         dayFormContainer.innerHTML = formHtml;
         
-        // Initialize day incurrent orderif (!currentOrder.days[dayIndex]) {
+        // Initialize day in current order
+        if (!currentOrder.days[dayIndex]) {
             currentOrder.days[dayIndex] = {
                 day_of_week: dayIndex,
                 items: []
@@ -410,7 +415,7 @@ async function setupDayOrderForm(dayIndex, dishIds) {
                     });
                 }
             });
-
+        }
     } catch (error) {
         console.error(`Error setting up order form for day ${dayIndex}:`, error);
         document.getElementById(`day-${dayIndex}-order-form`).innerHTML = '<p>Ошибка настройки формы заказа</p>';
@@ -421,7 +426,7 @@ function adjustQuantity(dayIndex, dishId, change) {
     const qtyInput = document.getElementById(`qty-${dayIndex}-${dishId}`);
     let newValue = parseInt(qtyInput.value) + change;
     
-    if (newValue <0) newValue = 0;
+    if (newValue < 0) newValue = 0;
     
     qtyInput.value = newValue;
     
@@ -441,7 +446,8 @@ function updateDayTotal(dayIndex) {
     
     if (dayOrder) {
         dayOrder.items.forEach(item => {
-            // Need to get dish price to calculatetotal// For now, we'll update totals when submitting the order
+            // Need to get dish price to calculate total
+            // For now, we'll update totals when submitting the order
         });
     }
     
@@ -466,13 +472,13 @@ function calculateDayTotal(dayIndex) {
     dishIds.forEach(dishId => {
         const qtyInput = document.getElementById(`qty-${dayIndex}-${dishId}`);
         if (qtyInput) {
-            constquantity = parseInt(qtyInput.value) || 0;
+            const quantity = parseInt(qtyInput.value) || 0;
             // In a real app, we'd store dish prices, but for now we'll fetch them when needed
             // This is simplified for the demo
         }
     });
     
-    // This is a simplified calculation - in a real app we'd have thedish prices cached
+    // This is a simplified calculation - in a real app we'd have the dish prices cached
     return total;
 }
 
@@ -484,7 +490,7 @@ async function submitOrder() {
         return;
     }
     
-    // Prepare orderdata
+    // Prepare order data
     const orderData = {
         week_start_date: weekStartDate,
         days: []
@@ -494,7 +500,7 @@ async function submitOrder() {
         const dishIds = moduleMenu[dayIndex]?.dish_ids || [];
         const dayItems = [];
         
-dishIds.forEach(dishId => {
+        dishIds.forEach(dishId => {
             const qtyInput = document.getElementById(`qty-${dayIndex}-${dishId}`);
             if (qtyInput) {
                 const quantity = parseInt(qtyInput.value) || 0;
@@ -570,7 +576,9 @@ async function confirmPayment() {
 
 async function loadMyOrders() {
     try {
-        const response = await fetch(`${API_BASE}/orders/my`, {
+        // Fixed endpoint according to OpenAPI spec - there's no /orders/my endpoint
+        // Using /orders to get user's orders
+        const response = await fetch(`${API_BASE}/orders`, {
             headers: {
                 'Authorization': `Bearer ${currentToken}`
             }
@@ -581,7 +589,7 @@ async function loadMyOrders() {
             const ordersContainer = document.getElementById('myOrders');
             
             if (orders.length === 0) {
-                ordersContainer.innerHTML = '<p>У вас нетзаказов</p>';
+                ordersContainer.innerHTML = '<p>У вас нет заказов</p>';
                 return;
             }
             
@@ -632,7 +640,7 @@ async function loadGlobalMenu() {
             displayDishes([]);
         }
     } catch (error) {
-        console.error("Error loading globalmenu:", error);
+        console.error("Error loading global menu:", error);
         globalMenu = [];
         displayDishes([]);
     }
@@ -683,15 +691,15 @@ function filterDishes() {
 async function createDish() {
     const name = document.getElementById('newDishName').value;
     const shortName = document.getElementById('newDishShortName').value;
-const type = document.getElementById('newDishType').value;
+    const type = document.getElementById('newDishType').value;
     const composition = document.getElementById('newDishComposition').value;
     const quantityGrams = parseInt(document.getElementById('newDishQuantityGrams').value);
     const priceRub = parseFloat(document.getElementById('newDishPriceRub').value);
-   const barcode = document.getElementById('newDishBarcode').value || null;
+    const barcode = document.getElementById('newDishBarcode').value || null;
     const period = document.getElementById('newDishPeriod').value || null;
     
     if (!name || !type || !composition || !quantityGrams || !priceRub) {
-        alert("Пожалуйста, заполнитевсе обязательные поля");
+        alert("Пожалуйста, заполните все обязательные поля");
         return;
     }
     
@@ -703,7 +711,7 @@ const type = document.getElementById('newDishType').value;
                 'Authorization': `Bearer ${currentToken}`
             },
             body: JSON.stringify({
-name,
+                name,
                 short_name: shortName || null,
                 type,
                 composition,
@@ -718,7 +726,8 @@ name,
         
         if (response.ok) {
             alert("Блюдо успешно добавлено!");
-            loadGlobalMenu(); // Refresh the list// Clear form
+            loadGlobalMenu(); // Refresh the list
+            // Clear form
             document.getElementById('newDishName').value = '';
             document.getElementById('newDishShortName').value = '';
             document.getElementById('newDishComposition').value = '';
@@ -729,7 +738,7 @@ name,
         } else {
             alert(result.detail || "Ошибка добавления блюда");
         }
-} catch (error) {
+    } catch (error) {
         alert("Ошибка добавления блюда: " + error.message);
     }
 }
@@ -756,7 +765,7 @@ async function deleteDish(dishId) {
             alert("Блюдо успешно удалено!");
             loadGlobalMenu(); // Refresh the list
         } else {
-            const result = awaitresponse.json();
+            const result = await response.json();
             alert(result.detail || "Ошибка удаления блюда");
         }
     } catch (error) {
@@ -765,7 +774,8 @@ async function deleteDish(dishId) {
 }
 
 function uploadMenuFile(isProvider) {
-    // In a real app, this would open a file upload dialogalert(`Загрузка ${isProvider ? 'меню поставщика' : 'собственного меню'} из файла (функция в разработке)\nПараметр is_provider: ${isProvider}`);
+    // In a real app, this would open a file upload dialog
+    alert(`Загрузка ${isProvider ? 'меню поставщика' : 'собственного меню'} из файла (функция в разработке)\nПараметр is_provider: ${isProvider}`);
 }
 
 async function loadDishesForDay() {
@@ -781,7 +791,7 @@ async function loadDishesForDay() {
         if (response.ok) {
             const allDishes = await response.json();
             
-            // Groupdishes by type
+            // Group dishes by type
             const dishesByType = {};
             allDishes.forEach(dish => {
                 if (!dishesByType[dish.type]) {
@@ -790,7 +800,7 @@ async function loadDishesForDay() {
                 dishesByType[dish.type].push(dish);
             });
             
-            // Display dish selectors bytype
+            // Display dish selectors by type
             const dayMenuSetup = document.getElementById('dayMenuSetup');
             let setupHtml = '';
             
@@ -821,13 +831,14 @@ async function loadDishesForDay() {
 }
 
 async function saveModuleMenu() {
-    // Collect selected dishes for each day// This is a simplified version - in a real app we would collect actual selections
+    // Collect selected dishes for each day
+    // This is a simplified version - in a real app we would collect actual selections
     const schedule = [];
     
     // For demonstration, we'll create a sample schedule
     for (let day = 0; day < 6; day++) {
         // Get all checked dish checkboxes for this day
-const checkedDishes = []; // In a real app, we would collect from the UI
+        const checkedDishes = []; // In a real app, we would collect from the UI
         
         schedule.push({
             day_of_week: day,
@@ -847,7 +858,7 @@ const checkedDishes = []; // In a real app, we would collect from the UI
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${currentToken}`
             },
-body: JSON.stringify({schedule })
+            body: JSON.stringify({ schedule })
         });
         
         if (response.ok) {
@@ -857,7 +868,7 @@ body: JSON.stringify({schedule })
             alert(result.detail || "Ошибка сохранения меню на модуль");
         }
     } catch (error) {
-        alert("Ошибкасохранения меню на модуль: " + error.message);
+        alert("Ошибка сохранения меню на модуль: " + error.message);
     }
 }
 
@@ -889,7 +900,9 @@ async function loadAdminData() {
 
 async function loadOrders() {
     try {
-        const response = await fetch(`${API_BASE}/orders/all`, {
+        // Fixed endpoint according to OpenAPI spec - there's no /orders/all endpoint
+        // Using /orders to get all orders
+        const response = await fetch(`${API_BASE}/orders`, {
             headers: {
                 'Authorization': `Bearer ${currentToken}`
             }
@@ -940,6 +953,7 @@ async function updateOrderStatus(orderId) {
     const newStatus = document.getElementById(`status-${orderId}`).value;
     
     try {
+        // Fixed endpoint according to OpenAPI spec
         const response = await fetch(`${API_BASE}/admin/orders/${orderId}/status?status=${newStatus}`, {
             method: 'PATCH',
             headers: {
@@ -967,8 +981,7 @@ function downloadReport() {
         return;
     }
     
-    // In a real app, this would download a DOCX report
-    // For now, we'll simulate the download
+    // Fixed endpoint according to OpenAPI spec
     window.open(`${API_BASE}/admin/reports/docx?date_query=${reportDate}`, '_blank');
 }
 
@@ -987,6 +1000,7 @@ function logout() {
     
     document.getElementById('dashboardSection').classList.add('hidden');
     document.getElementById('authSection').classList.remove('hidden');
+    document.getElementById('navigationHub').classList.remove('hidden');
     
     // Show all auth fields again if they were hidden
     document.getElementById('username').classList.remove('hidden');

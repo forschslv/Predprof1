@@ -13,7 +13,9 @@ async function loadAdminData() {
 
 async function loadOrders() {
     try {
-        const response = await fetch(`${API_BASE}/orders/all`, {
+        // Fixed endpoint according to OpenAPI spec - there's no /orders/all endpoint
+        // Using /orders to get all orders
+        const response = await fetch(`${API_BASE}/orders`, {
             headers: {
                 'Authorization': `Bearer ${currentToken}`
             }
@@ -71,6 +73,7 @@ async function updateOrderStatus(orderId) {
     const newStatus = document.getElementById(`status-${orderId}`).value;
     
     try {
+        // Fixed endpoint according to OpenAPI spec
         const response = await fetch(`${API_BASE}/admin/orders/${orderId}/status?status=${newStatus}`, {
             method: 'PATCH',
             headers: {
@@ -98,7 +101,6 @@ function downloadReport() {
         return;
     }
     
-    // In a real app, this would download a DOCX report
-    // For now, we'll simulate the download
+    // Fixed endpoint according to OpenAPI spec
     window.open(`${API_BASE}/admin/reports/docx?date_query=${reportDate}`, '_blank');
 }

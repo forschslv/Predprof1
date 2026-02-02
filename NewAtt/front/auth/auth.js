@@ -199,9 +199,11 @@ function logout() {
     
     const dashboardSection = document.getElementById('dashboardSection');
     const authSection = document.getElementById('authSection');
+    const navigationHub = document.getElementById('navigationHub');
     
     if (dashboardSection) dashboardSection.classList.add('hidden');
     if (authSection) authSection.classList.remove('hidden');
+    if (navigationHub) navigationHub.classList.remove('hidden');
     
     // Show all auth fields again if they were hidden
     const usernameField = document.getElementById('username');

@@ -10,6 +10,17 @@
 <div class="container">
     <h1>Система заказа питания в столовой 🍽️</h1>
 
+    <!-- Navigation Hub - Main Entry Point -->
+    <div class="navigation-hub" id="navigationHub">
+        <h2>Выберите раздел:</h2>
+        <div class="button-group">
+            <a href="auth/index.html"><button class="secondary">Авторизация</button></a>
+            <a href="orders/index.html"><button class="secondary">Заказы</button></a>
+            <a href="common/index.html"><button class="secondary">Повар</button></a>
+            <a href="admin/index.html"><button class="secondary">Администрирование</button></a>
+        </div>
+    </div>
+
     <!-- Include themed HTML sections -->
     <div id="dashboardSection" class="hidden">
         <h2 id="welcomeMsg"></h2>
@@ -37,6 +48,11 @@
                 <p><strong>Статус:</strong> <span id="profileStatus"></span></p>
                 <p><strong>Класс:</strong> <span id="profileClass"></span></p>
                 <p><strong>Классный руководитель:</strong> <span id="profileTeacher"></span></p>
+                <div class="navigation-links">
+                    <a href="admin/index.html"><button class="secondary small">Перейти к админ-панели</button></a>
+                    <a href="common/index.html"><button class="secondary small">Перейти к меню</button></a>
+                    <a href="orders/index.html"><button class="secondary small">Перейти к заказам</button></a>
+                </div>
             </div>
             
             <h3>🍽️ Меню на модуль</h3>
@@ -130,6 +146,12 @@
                     <button onclick="exportModuleMenu()" class="secondary">Экспортировать в JSON</button>
                 </div>
             </div>
+            
+            <div class="navigation-links">
+                <a href="admin/index.html"><button class="secondary small">Перейти к админ-панели</button></a>
+                <a href="orders/index.html"><button class="secondary small">Перейти к заказам</button></a>
+                <a href="index.html"><button class="secondary small">Вернуться на главную</button></a>
+            </div>
         </div>
 
         <!-- Admin Panel -->
@@ -143,6 +165,12 @@
             <div class="filter-section">
                 <label>Дата: <input type="date" id="reportDate"></label>
                 <button onclick="downloadReport()" class="secondary">Скачать отчет</button>
+            </div>
+            
+            <div class="navigation-links">
+                <a href="common/index.html"><button class="secondary small">Перейти к меню</button></a>
+                <a href="orders/index.html"><button class="secondary small">Перейти к заказам</button></a>
+                <a href="index.html"><button class="secondary small">Вернуться на главную</button></a>
             </div>
         </div>
 
