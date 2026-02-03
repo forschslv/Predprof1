@@ -62,7 +62,7 @@ function getRoleDisplayName(role) {
 }
 
 // Utility function to redirect to login if not authenticated
-function requireAuth(redirectUrl = 'auth/index.html') {
+function requireAuth(redirectUrl = 'auth/auth.html') {
     const token = localStorage.getItem('token');
     if (!token) {
         window.location.href = redirectUrl;
