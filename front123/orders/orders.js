@@ -111,6 +111,9 @@ async function submitOrder() {
         if (response.ok) {
             alert(`Заказ успешно создан! Номер заказа: ${result.id}, общая сумма: ${result.total_amount}₽`);
             
+            // Store the order ID for payment confirmation
+            window.currentOrderId = result.id;
+            
             // Show payment modal
             const totalAmountElement = document.getElementById('totalOrderAmount');
             if (totalAmountElement) {
@@ -133,7 +136,7 @@ function closeModal(modalId) {
 }
 
 async function confirmPayment() {
-    const orderId = 1; // In a real app, this would come from the created order
+    const orderId = window.currentOrderId || 1; // Use the stored order ID
     const paymentProof = document.getElementById('paymentProof').files[0];
     
     if (!paymentProof) {
@@ -146,7 +149,10 @@ async function confirmPayment() {
         const formData = new FormData();
         formData.append('file', paymentProof);
         
-        const response = await fetch(`${window.API_BASE}/orders/1/pay`, {
+        // Assuming we have the order ID from somewhere, ideally passed from context
+        // For now, we'll need to track the created order ID to use here
+        const orderId = window.currentOrderId || 1; // Replace with actual order ID
+        const response = await fetch(`${window.API_BASE}/orders/${orderId}/pay`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${window.currentToken}`
