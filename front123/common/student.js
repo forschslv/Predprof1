@@ -88,13 +88,18 @@ function displayModuleMenu() {
 
 async function loadDishesForDayDisplay(dayIndex, dishIds) {
     try {
-        const promises = dishIds.map(dishId => 
-            fetch(`${window.API_BASE}/menu/${dishId}`, {
-                headers: {
-                    'Authorization': `Bearer ${window.currentToken}`
-                }
-            }).then(res => res.json())
-        );
+        // Fetch all menu items and filter client-side since there's no API endpoint for single dish
+        const response = await fetch(`${window.API_BASE}/menu`, {
+            headers: {
+                'Authorization': `Bearer ${window.currentToken}`
+            }
+        });
+        const allDishes = await response.json();
+        
+        const promises = dishIds.map(dishId => {
+            const dish = allDishes.find(d => d.id === dishId);
+            return Promise.resolve(dish);
+        });
         
         const dishes = await Promise.all(promises);
         
@@ -171,13 +176,18 @@ function setupOrderForm() {
 
 async function setupDayOrderForm(dayIndex, dishIds) {
     try {
-        const promises = dishIds.map(dishId => 
-            fetch(`${window.API_BASE}/menu/${dishId}`, {
-                headers: {
-                    'Authorization': `Bearer ${window.currentToken}`
-                }
-            }).then(res => res.json())
-        );
+        // Fetch all menu items and filter client-side since there's no API endpoint for single dish
+        const response = await fetch(`${window.API_BASE}/menu`, {
+            headers: {
+                'Authorization': `Bearer ${window.currentToken}`
+            }
+        });
+        const allDishes = await response.json();
+        
+        const promises = dishIds.map(dishId => {
+            const dish = allDishes.find(d => d.id === dishId);
+            return Promise.resolve(dish);
+        });
         
         const dishes = await Promise.all(promises);
         

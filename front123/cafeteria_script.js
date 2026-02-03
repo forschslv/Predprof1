@@ -311,13 +311,18 @@ function displayModuleMenu() {
 
 async function loadDishesForDayDisplay(dayIndex, dishIds) {
     try {
-        const promises = dishIds.map(dishId => 
-            fetch(`${API_BASE}/menu/${dishId}`, {
-                headers: {
-                    'Authorization': `Bearer ${currentToken}`
-                }
-            }).then(res => res.json())
-        );
+        // Fetch all menu items and filter client-side since there's no API endpoint for single dish
+        const response = await fetch(`${API_BASE}/menu`, {
+            headers: {
+                'Authorization': `Bearer ${currentToken}`
+            }
+        });
+        const allDishes = await response.json();
+        
+        const promises = dishIds.map(dishId => {
+            const dish = allDishes.find(d => d.id === dishId);
+            return Promise.resolve(dish);
+        });
         
         const dishes = await Promise.all(promises);
         
@@ -394,13 +399,18 @@ function setupOrderForm() {
 
 async function setupDayOrderForm(dayIndex, dishIds) {
     try {
-        const promises = dishIds.map(dishId => 
-            fetch(`${API_BASE}/menu/${dishId}`, {
-                headers: {
-                    'Authorization': `Bearer ${currentToken}`
-                }
-            }).then(res => res.json())
-        );
+        // Fetch all menu items and filter client-side since there's no API endpoint for single dish
+        const response = await fetch(`${API_BASE}/menu`, {
+            headers: {
+                'Authorization': `Bearer ${currentToken}`
+            }
+        });
+        const allDishes = await response.json();
+        
+        const promises = dishIds.map(dishId => {
+            const dish = allDishes.find(d => d.id === dishId);
+            return Promise.resolve(dish);
+        });
         
         const dishes = await Promise.all(promises);
         
@@ -808,24 +818,8 @@ async function deleteDish(dishId) {
         return;
     }
     
-    try {
-        const response = await fetch(`${API_BASE}/menu/dish/${dishId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${currentToken}`
-            }
-        });
-        
-        if (response.ok) {
-            alert("Блюдо успешно удалено!");
-            loadGlobalMenu(); // Refresh the list
-        } else {
-            const result = await response.json();
-            alert(result.detail || "Ошибка удаления блюда");
-        }
-    } catch (error) {
-        alert("Ошибка удаления блюда: " + error.message);
-    }
+    // Note: The API does not support deleting dishes directly
+    alert("Функция удаления блюд временно недоступна - API не поддерживает удаление блюд");
 }
 
 function uploadMenuFile(isProvider) {

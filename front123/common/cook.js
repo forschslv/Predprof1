@@ -143,24 +143,8 @@ async function deleteDish(dishId) {
         return;
     }
     
-    try {
-        const response = await fetch(`${window.API_BASE}/menu/dish/${dishId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${window.currentToken}`
-            }
-        });
-        
-        if (response.ok) {
-            alert("Блюдо успешно удалено!");
-            loadGlobalMenu(); // Refresh the list
-        } else {
-            const result = await response.json();
-            alert(result.detail || "Ошибка удаления блюда");
-        }
-    } catch (error) {
-        alert("Ошибка удаления блюда: " + error.message);
-    }
+    // Note: The API does not support deleting dishes directly
+    alert("Функция удаления блюд временно недоступна - API не поддерживает удаление блюд");
 }
 
 function uploadMenuFile(isProvider) {
