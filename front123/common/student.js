@@ -1,5 +1,9 @@
 // Student-specific functionality
-
+try {
+    API_BASE = "http://localhost:8000";
+} catch (e) {
+    console.error("Error initializing API_BASE:", e);
+}
 async function loadStudentData() {
     const studentPanel = document.getElementById('studentPanel');
     if (studentPanel) studentPanel.classList.remove('hidden');

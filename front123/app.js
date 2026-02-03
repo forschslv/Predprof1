@@ -2,7 +2,7 @@
 
 // Global variables
 try {
-    const API_BASE = "http://localhost:8000";
+    API_BASE = "http://localhost:8000";
 } catch (e) {
     console.error("Error initializing API_BASE:", e);
 }

@@ -1,5 +1,9 @@
 // Cook-specific functionality
-
+try {
+    API_BASE = "http://localhost:8000";
+} catch (e) {
+    console.error("Error initializing API_BASE:", e);
+}
 async function loadCookData() {
     const cookPanel = document.getElementById('cookPanel');
     if (cookPanel) cookPanel.classList.remove('hidden');

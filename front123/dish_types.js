@@ -1,5 +1,10 @@
 // Dish type constants and utilities
 // Make function globally available
+try {
+    API_BASE = "http://localhost:8000";
+} catch (e) {
+    console.error("Error initializing API_BASE:", e);
+}
 window.DISH_TYPES = {
     MAIN: { key: 'MAIN', name: 'Второе горячее блюдо' },
     GARNISH: { key: 'GARNISH', name: 'Гарнир' },

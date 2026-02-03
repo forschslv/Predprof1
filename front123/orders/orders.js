@@ -1,5 +1,9 @@
 // Orders-specific functionality
-
+try {
+    API_BASE = "http://localhost:8000";
+} catch (e) {
+    console.error("Error initializing API_BASE:", e);
+}
 async function loadMyOrders() {
     try {
         const response = await fetch(`${window.API_BASE}/orders`, {

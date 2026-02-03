@@ -1,5 +1,9 @@
 // Admin-specific functionality
-
+try {
+    API_BASE = "http://localhost:8000";
+} catch (e) {
+    console.error("Error initializing API_BASE:", e);
+}
 async function loadAdminData() {
     const adminPanel = document.getElementById('adminPanel');
     if (adminPanel) adminPanel.classList.remove('hidden');
