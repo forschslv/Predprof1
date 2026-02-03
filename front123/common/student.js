@@ -366,6 +366,9 @@ async function submitOrder() {
         if (response.ok) {
             alert(`Заказ успешно создан! Номер заказа: ${result.id}, общая сумма: ${result.total_amount}₽`);
             
+            // Store the order ID for payment confirmation
+            window.currentOrderId = result.id;
+            
             // Show payment modal
             const totalAmountElement = document.getElementById('totalOrderAmount');
             if (totalAmountElement) {
