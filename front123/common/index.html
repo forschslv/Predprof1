@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Меню - Система заказа питания</title>
+    <link rel="stylesheet" href="../cafeteria_styles.css">
+</head>
+
+<body>
+<div class="container">
+    <h1>Меню 🍽️</h1>
+
+    <div id="menuSection">
+        <h2>Глобальное меню</h2>
+        <div class="filter-section">
+            <select id="dishTypeFilter">
+                <option value="">Все типы блюд</option>
+                <option value="MAIN">Второе горячее блюдо</option>
+                <option value="GARNISH">Гарнир</option>
+                <option value="PREPARED">Готовое кулинарное блюдо</option>
+                <option value="DRINK">Напиток</option>
+                <option value="SALAD">Салат</option>
+                <option value="SOUP">Суп</option>
+                <option value="BREAD">Хлеб</option>
+            </select>
+            <button onclick="filterDishes()">Фильтровать</button>
+        </div>
+        
+        <div id="dishesList">
+            <p>Загрузка блюд...</p>
+        </div>
+    </div>
+
+    <div id="moduleMenuSection">
+        <h2>Меню на модуль</h2>
+        <div id="weekMenuDisplay">
+            <div class="week-menu">
+                <div class="week-day-container">
+                    <div class="week-day-title">Понедельник</div>
+                    <div id="day-0-dishes">Загрузка...</div>
+                </div>
+                <div class="week-day-container">
+                    <div class="week-day-title">Вторник</div>
+                    <div id="day-1-dishes">Загрузка...</div>
+                </div>
+                <div class="week-day-container">
+                    <div class="week-day-title">Среда</div>
+                    <div class="week-day-title">Среда</div>
+                    <div id="day-2-dishes">Загрузка...</div>
+                </div>
+                <div class="week-day-container">
+                    <div class="week-day-title">Четверг</div>
+                    <div id="day-3-dishes">Загрузка...</div>
+                </div>
+                <div class="week-day-container">
+                    <div class="week-day-title">Пятница</div>
+                    <div id="day-4-dishes">Загрузка...</div>
+                </div>
+                <div class="week-day-container">
+                    <div class="week-day-title">Суббота</div>
+                    <div id="day-5-dishes">Загрузка...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="navigation-links">
+        <a href="../index.html"><button class="secondary">На главную</button></a>
+        <a href="../auth/index.html"><button class="secondary">Войти</button></a>
+        <a href="../orders/index.html"><button class="secondary">К заказам</button></a>
+        <a href="../admin/index.html"><button class="secondary">К админ-панели</button></a>
+    </div>
+</div>
+
+<script>
+    // Global variables
+    try {
+        const API_BASE = "http://localhost:8000";
+    } catch (e) {
+        console.error("Error initializing API_BASE:", e);
+    }
+    let currentToken = localStorage.getItem('token');
+    let currentUser = null;
+    let globalMenu = [];
+
+    // Load user data if available
+    if (currentToken) {
+        const storedUser = localStorage.getItem('currentUser');
+        if (storedUser) {
+            currentUser = JSON.parse(storedUser);
+        }
+    }
+
+    // Initialize the app
+    window.addEventListener('DOMContentLoaded', async () => {
+        await loadGlobalMenu();
+        await loadModuleMenu();
+    });
+
+    async function loadGlobalMenu() {
+        try {
+            const response = await fetch(`${API_BASE}/menu`, {
+                headers: {
+                    'Authorization': `Bearer ${currentToken}`
+                }
+            });
+            
+            if (response.ok) {
+                globalMenu = await response.json();
+                displayDishes(globalMenu);
+            } else {
+                globalMenu = [];
+                displayDishes([]);
+            }
+        } catch (error) {
+            console.error("Error loading global menu:", error);
+            globalMenu = [];
+            displayDishes([]);
+        }
+    }
+
+    function displayDishes(dishes) {
+        const dishesList = document.getElementById('dishesList');
+        
+        if (!dishesList) return;
+        
+        if (dishes.length === 0) {
+            dishesList.innerHTML = '<p>Меню пусто</p>';
+            return;
+        }
+        
+        let dishesHtml = '';
+        dishes.forEach(dish => {
+            dishesHtml += `
+                <div class="menu-item">
+                    <div>
+                        <b>${dish.name}</b> (${getDishTypeName(dish.type)})
+                        <br><small><strong>Состав:</strong> ${dish.composition}</small>
+                        <br><small><strong>Количество:</strong> ${dish.quantity_grams} грамм</small>
+                        <br><small><strong>Цена:</strong> ${dish.price_rub}₽</small>
+                    </div>
+                </div>
+            `;
+        });
+        
+        dishesList.innerHTML = dishesHtml;
+    }
+
+    function getDishTypeName(type) {
+        const typeNames = {
+            'MAIN': 'Второе горячее блюдо',
+            'GARNISH': 'Гарнир',
+            'PREPARED': 'Готовое кулинарное блюдо',
+            'DRINK': 'Напиток',
+            'SALAD': 'Салат',
+            'SOUP': 'Суп',
+            'BREAD': 'Хлеб'
+        };
+        return typeNames[type] || type;
+    }
+
+    function filterDishes() {
+        const filterValue = document.getElementById('dishTypeFilter').value;
+        
+        if (!filterValue) {
+            displayDishes(globalMenu);
+        } else {
+            const filteredDishes = globalMenu.filter(dish => dish.type === filterValue);
+            displayDishes(filteredDishes);
+        }
+    }
+
+    async function loadModuleMenu() {
+        try {
+            const response = await fetch(`${API_BASE}/module-menu`, {
+                headers: {
+                    'Authorization': `Bearer ${currentToken}`
+                }
+            });
+            
+            if (response.ok) {
+                const moduleMenu = await response.json();
+                
+                // Load dishes for each day that has them
+                for (let i = 0; i < 6; i++) {
+                    const dayDishes = moduleMenu[i];
+                    if (dayDishes && dayDishes.dish_ids && dayDishes.dish_ids.length > 0) {
+                        loadDishesForDayDisplay(i, dayDishes.dish_ids);
+                    }
+                }
+            } else {
+                console.error("Error loading module menu:", response.statusText);
+            }
+        } catch (error) {
+            console.error("Error loading module menu:", error);
+        }
+    }
+
+    async function loadDishesForDayDisplay(dayIndex, dishIds) {
+        try {
+            const promises = dishIds.map(dishId => 
+                fetch(`${API_BASE}/menu/${dishId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                }).then(res => res.json())
+            );
+            
+            const dishes = await Promise.all(promises);
+            
+            const dayContainer = document.getElementById(`day-${dayIndex}-dishes`);
+            if (!dayContainer) return;
+            
+            let dishesHtml = '';
+            
+            dishes.forEach(dish => {
+                if (dish) {
+                    dishesHtml += `
+                        <div class="dish-item">
+                            <div class="dish-info">
+                                <div class="dish-name">${dish.name}</div>
+                                <div class="dish-composition">${dish.composition}</div>
+                                <div class="dish-type">${getDishTypeName(dish.type)}</div>
+                            </div>
+                            <div class="dish-price">${dish.price_rub}₽</div>
+                        </div>
+                    `;
+                }
+            });
+            
+            dayContainer.innerHTML = dishesHtml || '<p>Нет доступных блюд</p>';
+        } catch (error) {
+            console.error(`Error loading dishes for day ${dayIndex}:`, error);
+            const container = document.getElementById(`day-${dayIndex}-dishes`);
+            if (container) container.innerHTML = '<p>Ошибка загрузки блюд</p>';
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Администрирование - Система заказа питания</title>
+    <link rel="stylesheet" href="../cafeteria_styles.css">
+</head>
+
+<body>
+<div class="container">
+    <h1>Администрирование 📊</h1>
+
+    <div id="adminSection">
+        <h2>Управление заказами</h2>
+        <div id="ordersManagement">
+            <div id="ordersList">
+                <p>Загрузка заказов...</p>
+            </div>
+        </div>
+        
+        <h2>Отчеты</h2>
+        <div class="filter-section">
+            <label>Дата: <input type="date" id="reportDate"></label>
+            <button onclick="downloadReport()" class="secondary">Скачать отчет</button>
+        </div>
+    </div>
+
+    <div class="navigation-links">
+        <a href="../index.html"><button class="secondary">На главную</button></a>
+        <a href="../auth/index.html"><button class="secondary">Войти</button></a>
+        <a href="../common/index.html"><button class="secondary">К меню</button></a>
+        <a href="../orders/index.html"><button class="secondary">К заказам</button></a>
+    </div>
+</div>
+
+<script>
+    // Global variables
+    try {
+        const API_BASE = "http://localhost:8000";
+    } catch (e) {
+        console.error("Error initializing API_BASE:", e);
+    }
+    let currentToken = localStorage.getItem('token');
+    let currentUser = null;
+
+    // Load user data if available
+    if (currentToken) {
+        const storedUser = localStorage.getItem('currentUser');
+        if (storedUser) {
+            currentUser = JSON.parse(storedUser);
+        }
+    }
+
+    // Initialize the app
+    window.addEventListener('DOMContentLoaded', async () => {
+        await loadOrders();
+    });
+
+    async function loadOrders() {
+        try {
+            const response = await fetch(`${API_BASE}/orders`, {
+                headers: {
+                    'Authorization': `Bearer ${currentToken}`
+                }
+            });
+            
+            if (response.ok) {
+                const orders = await response.json();
+                const ordersList = document.getElementById('ordersList');
+                
+                if (!ordersList) return;
+                
+                if (orders.length === 0) {
+                    ordersList.innerHTML = '<p>Нет заказов</p>';
+                    return;
+                }
+                
+                let ordersHtml = '';
+                orders.forEach(order => {
+                    ordersHtml += `
+                        <div class="order-item">
+                            <div>
+                                <b>Заказ #${order.id}</b> - Статус: ${order.status}
+                                <br><small>Пользователь: ${order.user_email || 'N/A'}</small>
+                                <br><small>Дата начала недели: ${order.week_start_date}</small>
+                                <br><small>Общая сумма: ${order.total_amount}₽</small>
+                            </div>
+                            <div>
+                                <select id="status-${order.id}">
+                                    <option value="PENDING" ${order.status === 'PENDING' ? 'selected' : ''}>В ожидании</option>
+                                    <option value="PAID" ${order.status === 'PAID' ? 'selected' : ''}>Оплачен</option>
+                                    <option value="PROBLEM" ${order.status === 'PROBLEM' ? 'selected' : ''}>Проблема</option>
+                                </select>
+                                <button type="button" onclick="updateOrderStatus(${order.id})" style="width:auto; margin-top:5px;">Обновить</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                ordersList.innerHTML = ordersHtml;
+            } else {
+                const ordersList = document.getElementById('ordersList');
+                if (ordersList) {
+                    ordersList.innerHTML = '<p>Ошибка загрузки заказов</p>';
+                }
+            }
+        } catch (error) {
+            console.error("Error loading orders:", error);
+            const ordersList = document.getElementById('ordersList');
+            if (ordersList) {
+                ordersList.innerHTML = '<p>Ошибка загрузки заказов</p>';
+            }
+        }
+    }
+
+    async function updateOrderStatus(orderId) {
+        const newStatus = document.getElementById(`status-${orderId}`).value;
+        
+        try {
+            // Fixed endpoint according to OpenAPI spec
+            const response = await fetch(`${API_BASE}/admin/orders/${orderId}/status?status=${newStatus}`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${currentToken}`
+                }
+            });
+            
+            if (response.ok) {
+                alert("Статус заказа обновлен!");
+                loadOrders(); // Refresh the list
+            } else {
+                const result = await response.json();
+                alert(result.detail || "Ошибка обновления статуса заказа");
+            }
+        } catch (error) {
+            alert("Ошибка обновления статуса заказа: " + error.message);
+        }
+    }
+
+    function downloadReport() {
+        const reportDate = document.getElementById('reportDate').value;
+        
+        if (!reportDate) {
+            alert("Пожалуйста, выберите дату для отчета");
+            return;
+        }
+        
+        // Fixed endpoint according to OpenAPI spec
+        window.open(`${API_BASE}/admin/reports/docx?date_query=${reportDate}`, '_blank');
+    }
+</script>
+
+</body>
+</html>
