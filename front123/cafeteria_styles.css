@@ -125,6 +125,11 @@ input, select, button, textarea {
     outline: none;
 }
 
+/* Ensure select elements have proper text color */
+select {
+    color: var(--text-primary);
+}
+
 input:focus, select:focus, textarea:focus {
     border-color: var(--accent-cyan);
     box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
@@ -268,6 +273,12 @@ button.danger {
     padding: 10px;
     font-size: 0.9em;
     min-width: 120px;
+    background: linear-gradient(45deg, var(--accent-blue), var(--accent-purple));
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 .modal {
@@ -323,6 +334,7 @@ th, td {
     border: none;
     padding: 12px;
     text-align: left;
+    color: var(--text-primary);
 }
 
 th {
@@ -352,6 +364,7 @@ tr:hover {
     margin-right: 10px;
     margin-bottom: 0;
     display: inline-block;
+    color: var(--text-primary);
 }
 
 .week-day-container {
@@ -386,6 +399,7 @@ tr:hover {
 
 .dish-name {
     font-weight: 600;
+    color: var(--text-primary);
 }
 
 .dish-composition {
@@ -445,11 +459,12 @@ tr:hover {
 .navigation-links {
     margin: 20px 0;
     padding: 15px;
-    background-color: #f5f5f5;
+    background: rgba(0, 0, 0, 0.3);
     border-radius: 5px;
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
+    border: 1px solid var(--border-color);
 }
 
 .navigation-links.secondary {
@@ -465,17 +480,18 @@ tr:hover {
 /* Navigation Hub Styles */
 .navigation-hub {
     text-align: center;
-    margin:40px auto;
+    margin: 40px auto;
     padding: 30px;
     max-width: 600px;
-    background-color: #f9f9f9;
+    background: var(--bg-glass);
     border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(5px);
 }
 
 .navigation-hub h2 {
     margin-bottom: 20px;
-    color: #333;
+    color: var(--text-primary);
 }
 
 .button-group {
@@ -485,76 +501,59 @@ tr:hover {
     flex-wrap: wrap;
 }
 
-/* General styles */
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.hidden {
-    display: none;
-}
-
-.logout {
-    margin-top: 20px;
-    padding: 10px 20px;
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.logout:hover {
-    background-color: #c82333;
-}
-
+/* Profile box styles */
 .profile-box {
-    background-color: #e9ecef;
-    padding: 15px;
-    border-radius: 5px;
-    margin-bottom: 20px;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+    border-color: var(--accent-purple);
+    padding: 20px;
+    margin-bottom: 15px;
 }
 
 .profile-box p {
     margin: 5px 0;
+    color: var(--text-primary);
 }
 
 /* Menu styles */
 .menu-item, .order-item {
-    border: 1px solid #ddd;
-    padding: 10px;
+    border: 1px solid var(--border-color);
+    padding: 20px;
     margin: 10px 0;
-    border-radius: 5px;
-    background-color: white;
+    border-radius: 15px;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
 }
 
 .price {
-    font-weight: bold;
-    color: #28a745;
+    font-weight: 700;
+    color: var(--accent-cyan);
+    font-size: 1.1rem;
 }
 
 .danger {
-    background-color: #dc3545;
+    background: linear-gradient(45deg, #ef4444, #dc2626);
     color: white;
+    border: none;
 }
 
 .danger:hover {
-    background-color: #c82333;
+    background: linear-gradient(45deg, #dc2626, #b91c1c);
 }
 
 .secondary {
-    background-color: #6c757d;
+    background: linear-gradient(45deg, var(--accent-purple), #a855f7);
     color: white;
     border: none;
-    padding: 8px 16px;
-    border-radius: 5px;
+    padding: 12px 15px;
+    border-radius: 12px;
     cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 .secondary:hover {
-    background-color: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
 }
 
 /* Modal styles */
@@ -566,28 +565,37 @@ tr:hover {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
 }
 
 .modal-content {
-    background-color: white;
-    margin: 15% auto;
-    padding: 20px;
-    border-radius: 5px;
-    width: 80%;
-    max-width: 500px;
+    background: var(--bg-glass);
+    border: 1px solid var(--border-color);
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: var(--shadow);
+    position: relative;
 }
 
 .close {
-    color: #aaa;
+    color: var(--text-secondary);
     float: right;
-    font-size: 28px;
+    font-size: 32px;
     font-weight: bold;
     cursor: pointer;
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    transition: all 0.3s ease;
 }
 
 .close:hover {
-    color: black;
+    color: var(--accent-cyan);
+    text-shadow: 0 0 10px var(--accent-cyan);
 }
 
 /* Week menu styles */
@@ -599,24 +607,34 @@ tr:hover {
 }
 
 .week-day-container {
-    border: 1px solid #ddd;
-    padding: 10px;
-    border-radius: 5px;
-    background-color: #f8f9fa;
+    border: 1px solid var(--border-color);
+    border-radius: 15px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.week-day-container:hover {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: var(--accent-cyan);
 }
 
 .week-day-title {
-    font-weight: bold;
+    font-size: 1.2rem;
+    font-weight: 600;
     margin-bottom: 10px;
-    color: #495057;
+    color: var(--accent-cyan);
 }
 
 .dish-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding:8px 0;
-    border-bottom: 1px solid #eee;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    background: rgba(0, 0, 0, 0.3);
 }
 
 .dish-info {
@@ -624,57 +642,67 @@ tr:hover {
 }
 
 .dish-name {
-    font-weight: bold;
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
 .dish-composition {
-    font-size: 0.9em;
-    color: #666;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
 }
 
 .dish-type {
-    font-size: 0.8em;
-    color: #888;
+    font-size: 0.85rem;
+    color: var(--accent-purple);
 }
 
 .order-quantity {
-    width: 60px;
-    margin: 0 10px;
+    width: 80px;
     text-align: center;
+    margin: 0 10px;
 }
 
 .day-total {
     margin-top: 10px;
-    padding:10px;
-    background-color: #e9ecef;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.3);
     border-radius: 5px;
     font-weight: bold;
+    border: 1px solid var(--border-color);
 }
 
 /* Filter section */
 .filter-section {
-    margin: 15px 0;
-    padding: 15px;
-    background-color: #f8f9fa;
-    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
 }
 
 .inventory-item {
-    background-color: #f8f9fa;
-    padding: 15px;
-    border-radius: 5px;
-    margin: 15px 0;
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    margin-bottom: 15px;
+    border-radius: 15px;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
 }
 
 .inventory-item input, 
 .inventory-item select, 
 .inventory-item textarea {
     width: 100%;
-    padding: 8px;
-    margin: 5px 0;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    box-sizing: border-box;
+    padding: 12px 15px;
+    margin: 8px 0;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    outline: none;
 }
 
 .button-group button {
