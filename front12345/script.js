@@ -77,7 +77,17 @@ function logout() {
 function checkAuth() {
     if (!localStorage.getItem('token')) window.location.href = 'login.html';
 }
-function requireAdmin() {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    if (!user.is_admin) window.location.href = 'dashboard.html';
+// Updated admin check function using /users/me endpoint
+async function requireAdmin() {
+    try {
+        const userData = await apiRequest('/users/me', 'GET');
+        if (!userData.is_admin) {
+            window.location.href = 'dashboard.html';
+        }
+    } catch (error) {
+        console.error('Error checking admin status:', error);
+        // If there's an error getting user data, redirect to login
+        localStorage.clear();
+        window.location.href = 'login.html';
+    }
 }

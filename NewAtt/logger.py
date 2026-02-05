@@ -1,0 +1,179 @@
+import logging
+import sys, os
+from logging.handlers import RotatingFileHandler
+try:
+    is_server = os.uname().nodename == "SERVERNYA"
+except AttributeError:
+    is_server = True
+# Создание логгера
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+log_text = "%(asctime)s - %(message)s"
+log_dir = os.path.join(os.path.dirname(__file__),"logger_logs")
+debug_path = os.path.join(log_dir, "debug.log")
+info_path = os.path.join(log_dir, "info.log")
+warning_path = os.path.join(log_dir, "warning.log")
+error_path = os.path.join(log_dir, "error.log")
+fatal_path = os.path.join(log_dir, "fatal.log")
+all_path = os.path.join(log_dir, "all.log")
+warning_error_fatal_path = os.path.join(log_dir, "warning_error_fatal.log")
+
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+
+class DebugFilter(logging.Filter):
+    def filter(self, record):
+        return record.levelno <= logging.DEBUG
+
+class InfoFilter(logging.Filter):
+    def filter(self, record):
+        return logging.DEBUG < record.levelno <= logging.INFO
+
+class WarningFilter(logging.Filter):
+    def filter(self, record):
+        return logging.INFO < record.levelno <= logging.WARNING
+
+class ErrorFilter(logging.Filter):
+    def filter(self, record):
+        return logging.WARNING < record.levelno <= logging.ERROR
+
+class FatalFilter(logging.Filter):
+    def filter(self, record):
+        return logging.ERROR < record.levelno
+
+
+class ColoredFormatter(logging.Formatter):
+    """
+    Logging Formatter to add colors to log messages
+    """
+    grey = "\x1b[90m"
+    standard = "\x1b[39m"
+    yellow = "\x1b[93m"
+    error = "\x1b[91m"
+    critical = "\x1b[91;1;4;7m"
+    reset = "\x1b[0m"
+    format = "%(asctime)s - %(message)s"
+
+    FORMATS = {
+        logging.DEBUG: f'{"\033[100m" if is_server else ""}DEBUG{"\033[49m" if is_server else ""}   | {"\033[90m" if is_server else ""}{log_text}{"\033[39m" if is_server else ""}',
+        logging.INFO: f'{"\033[30m\033[47m" if is_server else ""}INFO{"\033[39m\033[49m" if is_server else ""}    | {"\033[39m" if is_server else ""}{log_text}{"\033[39m" if is_server else ""}',
+        logging.WARNING: f'{"\033[43m\033[91m" if is_server else ""}WARNING{"\033[39m\033[49m" if is_server else ""} | {"\033[93m" if is_server else ""}{log_text}{"\033[39m" if is_server else ""}',
+        logging.ERROR: f'\033[41m\033[30mERROR\033[49m\033[39m   | \033[31m{log_text}\033[39m {{%(filename)s - %(funcName)s - %(lineno)d}}',
+        logging.CRITICAL: f'{"\033[1m\033[4m\033[6m\033[101m\033[93m" if is_server else ""}FATAL{"\033[0m" if is_server else ""}   | {"\033[91m" if is_server else ""}{log_text}{"\033[39m" if is_server else ""} {{%(filename)s - %(funcName)s - %(lineno)d}}',
+    }
+
+    def format(self, record):
+        log_fmt = self.FORMATS.get(record.levelno)
+        if log_fmt is None:
+            logger.warning(f"Unknown log level: {record.levelno}")
+            log_fmt = self.FORMATS[logging.WARNING]
+        formatter = logging.Formatter(log_fmt)
+        return formatter.format(record)
+
+all_handler = logging.StreamHandler(sys.stdout)
+all_handler.setLevel(logging.DEBUG)
+all_handler.setFormatter(ColoredFormatter())
+logger.addHandler(all_handler)
+
+
+debug_file_handler = RotatingFileHandler(
+maxBytes=5<<20,  # 5MB
+    backupCount=3,
+    mode='a',
+    filename=debug_path,
+    encoding='utf-8')
+debug_file_handler.setLevel(logging.DEBUG)
+debug_file_handler.addFilter(DebugFilter())
+debug_file_handler.setFormatter(logging.Formatter(
+    f'{"\033[100m" if is_server else ""}DEBUG{"\033[49m" if is_server else ""} | {"\033[90m" if is_server else ""}{log_text}{"\033[39m" if is_server else ""}'
+))
+
+info_file_handler = RotatingFileHandler(
+maxBytes=10<<20,  # 20MB
+    backupCount=3,
+    mode='a',
+    filename=info_path,
+    encoding='utf-8')
+info_file_handler.setLevel(logging.INFO)
+info_file_handler.addFilter(InfoFilter())
+info_file_handler.setFormatter(logging.Formatter(
+    f'{"\033[30m\033[47m" if is_server else ""}INFO{"\033[39m\033[49m" if is_server else ""}  | {"\033[39m" if is_server else ""}{log_text}{"\033[39m" if is_server else ""}'
+))
+warning_file_handler = RotatingFileHandler(
+maxBytes=5<<20,  # 5MB
+    backupCount=3,
+    mode='a',
+    filename=warning_path,
+    encoding='utf-8')
+warning_file_handler.setLevel(logging.WARNING)
+warning_file_handler.addFilter(WarningFilter())
+warning_file_handler.setFormatter(logging.Formatter(
+    f'{"\033[43m\033[31m" if is_server else ""}WARNING{"\033[39m\033[49m" if is_server else ""}| {"\033[93m" if is_server else ""}{log_text}{"\033[39m" if is_server else ""}'
+))
+error_file_handler = RotatingFileHandler(
+maxBytes=5<<20,  # 5MB
+    backupCount=3,
+    mode='a',
+    filename=error_path,
+    encoding='utf-8')
+error_file_handler.setLevel(logging.ERROR)
+error_file_handler.addFilter(ErrorFilter())
+error_file_handler.setFormatter(logging.Formatter(
+    f'\033[41m\033[30mERROR\033[49m\033[39m | \033[31m{log_text}\033[39m {{%(filename)s - %(funcName)s - %(lineno)d}}'))
+fatal_file_handler = RotatingFileHandler(
+maxBytes=5<<20,  # 5MB
+    backupCount=3,
+    mode='a',
+    filename=fatal_path,
+    encoding='utf-8')
+fatal_file_handler.setLevel(logging.CRITICAL)
+fatal_file_handler.addFilter(FatalFilter())
+fatal_file_handler.setFormatter(logging.Formatter(
+    f'{"\033[1m\033[4m\033[6m\033[101m\033[93m" if is_server else ""}FATAL{"\033[0m" if is_server else ""} | {"\033[91m" if is_server else ""}{log_text}{"\033[39m" if is_server else ""} {{%(filename)s - %(funcName)s - %(lineno)d}}'
+))
+
+
+logger.addHandler(debug_file_handler)
+logger.addHandler(info_file_handler)
+logger.addHandler(warning_file_handler)
+logger.addHandler(error_file_handler)
+logger.addHandler(fatal_file_handler)
+
+all_file_handler = RotatingFileHandler(
+    maxBytes=20<<20,  # 20MB
+    backupCount=3,
+    mode='a',
+    filename=all_path,
+    encoding='utf-8')
+all_file_handler.setLevel(logging.DEBUG)
+all_file_handler.setFormatter(ColoredFormatter())
+logger.addHandler(all_file_handler)
+
+warning_error_fatal_path_file_handler = RotatingFileHandler(
+    maxBytes=20<<20,  # 20MB
+    backupCount=3,
+    mode='a',
+    filename=warning_error_fatal_path,
+    encoding='utf-8')
+warning_error_fatal_path_file_handler.setLevel(logging.WARNING)
+warning_error_fatal_path_file_handler.setFormatter(
+    ColoredFormatter()
+)
+logger.addHandler(warning_error_fatal_path_file_handler)
+
+
+
+
+logger.debug("Logger created and loaded")
+
+#   # Testing logs
+#
+# logger.debug("Debug log")
+# logger.info("Info log")
+# logger.warning("Warning log")
+# logger.error("Error log")
+# logger.critical("Critical log")
+#
+
+

@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 load_dotenv()
-
+from logger import logger
 import uvicorn
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile, status
 from fastapi.responses import FileResponse
@@ -171,7 +171,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
 
 @app.get("/users/me", response_model=UserResponse)
 def read_users_me(current_user: User = Depends(get_current_user)):
-
+    logger.debug(f"Current user: {current_user}")
     return current_user
 
 @app.post("/verify-code", response_model=VerifyCodeResponse)
@@ -479,4 +479,6 @@ def update_admin_status_by_email(data: AdminUpdateByEmailRequest, db: Session = 
     return UserResponse.model_validate(user)
 
 if __name__ == "__main__":
+    import init_db
+    init_db.init_db()
     uvicorn.run(app, host="0.0.0.0", port=8000)
