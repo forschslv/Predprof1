@@ -17,7 +17,7 @@ def init_db(database_url: str = "sqlite:///./app.db") -> None:
     from models import User
     from auth import create_access_token
 
-    admin_email = os.getenv("ADMIN_EMAIL", "12130213@gmail.com")
+    admin_email = os.getenv("ADMIN_EMAIL", "12130213@students.sch2.ru")
     SessionLocal = sessionmaker(bind=engine)
     session = SessionLocal()
     existing = session.query(User).filter(User.email == admin_email).first()
