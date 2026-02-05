@@ -152,6 +152,7 @@ async function loadMenuData() {
         renderMenu();
 
     } catch (e) {
+        console.error("Load menu failed", e);
         container.innerHTML = `<p style="color:red">Не удалось загрузить меню: ${e.message}</p>`;
     }
 }
@@ -314,7 +315,8 @@ async function submitOrder() {
         switchTab('history');
 
     } catch (e) {
-        // Ошибка уже выведена в request
+        console.error("Submit order failed", e);
+        alert(`Ошибка оформления заказа: ${e.message}`);
     } finally {
         btn.disabled = false;
         btn.innerText = "Оформить заказ";
@@ -355,6 +357,7 @@ async function loadHistory() {
         list.innerHTML = html;
 
     } catch (e) {
+        console.error("Load history failed", e);
         list.innerHTML = 'Ошибка загрузки истории';
     }
 }
@@ -375,7 +378,8 @@ async function downloadReceipt(orderId) {
         a.click();
         a.remove();
     } catch (e) {
-        alert(e.message);
+        console.error("Download receipt failed", e);
+        alert(`Ошибка скачивания чека: ${e.message}`);
     }
 }
 
