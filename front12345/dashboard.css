@@ -176,3 +176,36 @@ input[type="date"] {
     border-radius: 6px;
     color-scheme: dark;
 }
+/* Дополнительно к предыдущему CSS */
+
+.dish-category-title {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent-purple);
+    margin: 15px 0 5px 0;
+    font-weight: bold;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+    padding-bottom: 3px;
+}
+
+.dish-info-block {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Ограничиваем ширину текста состава, чтобы не ломать карточку */
+.dish-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+    display: block;
+}
+
+.dish-card {
+    gap: 10px; /* Отступ между ценой и названием */
+}

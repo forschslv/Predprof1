@@ -5,6 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Личный кабинет - Столовая</title>
     <link rel="stylesheet" href="dashboard.css">
+    <style>
+        .dish-category-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent-purple);
+            margin: 15px 0 5px 0;
+            font-weight: bold;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+            padding-bottom: 3px;
+        }
+        .dish-info-block {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex: 1;
+        }
+        .dish-meta {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 220px;
+            display: block;
+            margin-top: 4px;
+        }
+        .dish-card { gap: 10px; }
+        .date-hint { font-size: 0.8rem; color: var(--text-secondary); margin-left: 10px; }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -26,16 +56,17 @@
         </div>
 
         <div id="tab-newOrder" class="tab-content">
-            <div class="tab-header">
-                <h2>Меню на неделю</h2>
+            <div class="tab-header" style="margin-bottom: 20px; padding: 15px; background: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border-color);">
+                <h2 style="margin: 0 0 10px 0;">Меню модуля</h2>
                 <div class="date-control">
-                    <span>Дата начала недели: </span>
+                    <label for="weekPicker" style="color: var(--text-primary); margin-right: 10px;">Оформить на неделю с:</label>
                     <input type="date" id="weekPicker">
+                    <span class="date-hint" id="dateHint"></span>
                 </div>
             </div>
 
             <div id="menuContainer" class="week-grid">
-                <p class="loading-text">Выберите дату, чтобы увидеть меню...</p>
+                <p class="loading-text">Загрузка меню...</p>
             </div>
         </div>
 
