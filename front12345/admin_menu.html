@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Управление меню - Админ</title>
+    <link rel="stylesheet" href="cafeteria_styles.css">
+</head>
+<body>
+    <div class="container">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h1>Управление глобальным меню</h1>
+            <button onclick="window.location.href='admin.html'" class="secondary" style="width:auto;">Назад в панель</button>
+        </div>
+
+        <!-- Секция 1: Загрузка файла (Эндпоинт /menu/upload) -->
+        <div class="inventory-item">
+            <h2>Загрузить из файла</h2>
+            <p style="color:var(--text-secondary); margin-bottom:10px;">
+                Загрузите текстовый файл. <b>Внимание:</b> при загрузке все старые блюда выбранного типа будут удалены!
+            </p>
+            <div style="margin: 10px 0;">
+                <label><input type="radio" name="uploadType" value="true" checked> Меню поставщика</label>
+                <label style="margin-left: 20px;"><input type="radio" name="uploadType" value="false"> Собственное меню</label>
+            </div>
+            <input type="file" id="menuFileInput">
+            <button onclick="uploadMenuFile()" id="uploadBtn">Заменить всё меню из файла</button>
+        </div>
+
+        <!-- Секция 2: Добавление блюда вручную (Эндпоинт /menu/dish) -->
+        <div class="inventory-item">
+            <h2>Добавить блюдо вручную</h2>
+            <div class="button-group" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <input type="text" id="dishName" placeholder="Название блюда">
+                <select id="dishType">
+                    <option value="MAIN">Основное блюдо</option>
+                    <option value="GARNISH">Гарнир</option>
+                    <option value="SALAD">Салат</option>
+                    <option value="SOUP">Суп</option>
+                    <option value="DRINK">Напиток</option>
+                    <option value="PREPARED">Готовое</option>
+                    <option value="BREAD">Хлеб</option>
+                </select>
+                <input type="number" id="dishWeight" placeholder="Вес (граммы)">
+                <input type="number" id="dishPrice" placeholder="Цена (рубли)">
+                <textarea id="dishComp" placeholder="Состав" style="grid-column: span 2;"></textarea>
+            </div>
+            <button onclick="createDishManual()" class="secondary">Добавить в базу</button>
+        </div>
+
+        <!-- Секция 3: Просмотр текущего меню -->
+        <h2>Текущие блюда в базе</h2>
+        <div id="globalMenuList">
+            <!-- Сюда загрузится список из /menu -->
+            <p>Загрузка списка блюд...</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        checkAuth();
+
+        // Загрузка текущего списка блюд
+        async function loadCurrentMenu() {
+            try {
+                const dishes = await apiRequest('/menu');
+                const list = document.getElementById('globalMenuList');
+                list.innerHTML = '';
+
+                if (dishes.length === 0) {
+                    list.innerHTML = '<p>Меню пусто.</p>';
+                    return;
+                }
+
+                // Группировка по типу для удобства
+                const types = [...new Set(dishes.map(d => d.type))];
+
+                types.forEach(type => {
+                    const typeHeader = document.createElement('h3');
+                    typeHeader.innerText = type;
+                    typeHeader.style.color = 'var(--accent-purple)';
+                    list.appendChild(typeHeader);
+
+                    dishes.filter(d => d.type === type).forEach(dish => {
+                        const div = document.createElement('div');
+                        div.className = 'menu-item';
+                        div.innerHTML = `
+                            <div style="display:flex; justify-content:space-between;">
+                                <strong>${dish.name}</strong>
+                                <span class="price">${dish.price_rub} ₽</span>
+                            </div>
+                            <div class="dish-composition">${dish.composition} (${dish.quantity_grams}г)</div>
+                            <div style="font-size:10px; color:var(--text-secondary)">${dish.is_provider ? 'Поставщик' : 'Собственное'}</div>
+                        `;
+                        list.appendChild(div);
+                    });
+                });
+            } catch (e) {}
+        }
+
+        // Загрузка файла (/menu/upload)
+        async function uploadMenuFile() {
+            const fileInput = document.getElementById('menuFileInput');
+            const isProvider = document.querySelector('input[name="uploadType"]:checked').value;
+            const btn = document.getElementById('uploadBtn');
+
+            if (fileInput.files.length === 0) return alert("Выберите файл!");
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            btn.disabled = true;
+            btn.innerText = "Загрузка...";
+
+            try {
+                // В API /menu/upload параметр is_provider идет как query
+                await apiRequest(`/menu/upload?is_provider=${isProvider}`, 'POST', formData, true);
+                alert("Меню успешно обновлено из файла!");
+                loadCurrentMenu();
+            } catch (e) {
+                // Ошибка уже выведена в apiRequest
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Заменить всё меню из файла";
+            }
+        }
+
+        // Создание блюда вручную (/menu/dish)
+        async function createDishManual() {
+            const data = {
+                name: document.getElementById('dishName').value,
+                type: document.getElementById('dishType').value,
+                composition: document.getElementById('dishComp').value,
+                quantity_grams: parseInt(document.getElementById('dishWeight').value),
+                price_rub: parseFloat(document.getElementById('dishPrice').value)
+            };
+
+            if (!data.name || !data.price_rub) return alert("Заполните название и цену!");
+
+            try {
+                await apiRequest('/menu/dish', 'POST', data);
+                alert("Блюдо добавлено!");
+                loadCurrentMenu();
+                // Очистка формы
+                document.getElementById('dishName').value = '';
+                document.getElementById('dishComp').value = '';
+            } catch (e) {}
+        }
+
+        loadCurrentMenu();
+    </script>
+</body>
+</html>

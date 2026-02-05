@@ -13,7 +13,10 @@
         </div>
 
         <div class="button-group" style="margin-bottom: 30px;">
-            <button onclick="showTab('menu')">Загрузка Меню</button>
+            <!-- Добавьте эту кнопку первой -->
+            <button onclick="window.location.href='admin_menu.html'" style="background: var(--accent-cyan); color: #000;">База блюд (Меню)</button>
+
+            <button onclick="showTab('menu')">Загрузка Меню (Быстрая)</button>
             <button onclick="showTab('module')">Конструктор Модуля</button>
             <button onclick="showTab('reports')">Отчеты</button>
         </div>
