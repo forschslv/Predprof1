@@ -2,246 +2,59 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Личный кабинет - Столовая Л2Ш</title>
-    <link rel="stylesheet" href="cafeteria_styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет - Столовая</title>
+    <link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
     <div class="container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h1 id="welcomeUser">Загрузка...</h1>
-            <div class="button-group" style="width: auto; margin: 0;">
-                <button id="adminBtn" class="hidden" onclick="window.location.href='admin.html'">Админка</button>
-                <button onclick="logout()" class="danger" style="width: auto;">Выйти</button>
-            </div>
-        </div>
 
-        <!-- Переключатель вкладок -->
+        <header class="dashboard-header">
+            <div class="user-info">
+                <h1 id="welcomeUser">Загрузка...</h1>
+                <span id="userEmail">...</span>
+            </div>
+            <div class="header-controls">
+                <button id="adminBtn" class="btn-secondary hidden">⚙️ Админка</button>
+                <button id="logoutBtn" class="btn-danger">Выйти</button>
+            </div>
+        </header>
+
         <div class="navigation-links">
-            <button onclick="showTab('history')">История заказов</button>
-            <button onclick="showTab('newOrder')" style="background: var(--accent-cyan); color: #000;">Сделать заказ</button>
+            <button id="nav-newOrder" class="nav-btn active">🍽 Сделать заказ</button>
+            <button id="nav-history" class="nav-btn">📜 История заказов</button>
         </div>
 
-        <!-- ВКЛАДКА: ИСТОРИЯ -->
-        <div id="tab-history">
-            <h2>Мои заказы</h2>
-            <div id="ordersList" class="order-list">
-                <p>Загрузка истории...</p>
-            </div>
-        </div>
-
-        <!-- ВКЛАДКА: НОВЫЙ ЗАКАЗ -->
-        <div id="tab-newOrder" class="hidden">
-            <h2>Новый заказ на неделю</h2>
-
-            <div class="filter-section">
-                <label>Выберите дату начала недели (понедельник):</label>
-                <input type="date" id="orderWeekStart">
-            </div>
-
-            <div id="menuGrid" class="week-menu">
-                <!-- Сюда динамически подгрузится меню из /module-menu -->
-                <p>Загрузка доступного меню...</p>
-            </div>
-
-            <!-- Плашка с итогом -->
-            <div class="balance-box" style="position: sticky; bottom: 20px; z-index: 100; margin-top: 30px; border: 2px solid var(--accent-cyan);">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div style="font-size: 1.4rem;">Итого к оплате: <span id="totalPrice" class="price">0</span> ₽</div>
-                    <button onclick="createOrder()" id="submitOrderBtn" style="width: auto; padding: 10px 30px;">Оформить заказ</button>
+        <div id="tab-newOrder" class="tab-content">
+            <div class="tab-header">
+                <h2>Меню на неделю</h2>
+                <div class="date-control">
+                    <span>Дата начала недели: </span>
+                    <input type="date" id="weekPicker">
                 </div>
             </div>
+
+            <div id="menuContainer" class="week-grid">
+                <p class="loading-text">Выберите дату, чтобы увидеть меню...</p>
+            </div>
         </div>
+
+        <div id="tab-history" class="tab-content hidden">
+            <h2>Мои заказы</h2>
+            <div id="ordersList" class="history-list">
+                </div>
+        </div>
+
     </div>
 
-    <script src="script.js"></script>
-    <script>
-        const DAYS_NAMES = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
-        let globalDishes = {}; // ID -> Dish Object
-        let selections = {};   // { dayIdx: { dishId: quantity } }
+    <div id="orderSummary" class="order-summary-bar">
+        <div class="summary-info">
+            <div class="summary-text">Блюд: <span id="countDisplay">0</span></div>
+            <div class="summary-total">Итого: <span id="totalDisplay">0</span> ₽</div>
+        </div>
+        <button id="submitOrderBtn" class="btn-order">Оформить заказ</button>
+    </div>
 
-        async function initDashboard() {
-            const user = await validateAccess(false);
-            document.getElementById('welcomeUser').innerText = `Привет, ${user.name}!`;
-            if (user.is_admin) document.getElementById('adminBtn').classList.remove('hidden');
-
-            // Установка даты на следующий понедельник по умолчанию
-            const today = new Date();
-            const nextMonday = new Date();
-            nextMonday.setDate(today.getDate() + (1 + 7 - today.getDay()) % 7);
-            document.getElementById('orderWeekStart').value = nextMonday.toISOString().split('T')[0];
-
-            loadOrdersHistory();
-            prepareOrderMenu();
-        }
-
-        // --- ЛОГИКА ИСТОРИИ ---
-        async function loadOrdersHistory() {
-            try {
-                const orders = await apiRequest('/orders'); // GET /orders (get_my_orders_orders_get)
-                const list = document.getElementById('ordersList');
-                list.innerHTML = '';
-
-                if (!orders || orders.length === 0) {
-                    list.innerHTML = '<p>У вас пока нет заказов.</p>';
-                    return;
-                }
-
-                orders.forEach(order => {
-                    const div = document.createElement('div');
-                    div.className = 'order-item';
-                    div.style.cursor = 'pointer';
-                    div.onclick = () => window.location.href = `order_details.html?id=${order.id}`;
-
-                    div.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <div>
-                                <div class="dish-name">Заказ #${order.id}</div>
-                                <div class="dish-composition">Неделя: ${order.week_start_date}</div>
-                            </div>
-                            <div style="text-align:right;">
-                                <div class="price">${order.total_amount} ₽</div>
-                                <div style="font-weight:bold; color:var(--accent-purple)">${order.status}</div>
-                            </div>
-                        </div>
-                    `;
-                    list.appendChild(div);
-                });
-            } catch (e) { console.error(e); }
-        }
-
-        // --- ЛОГИКА ЗАКАЗА ---
-        async function prepareOrderMenu() {
-            try {
-                // 1. Берем все блюда для цен и названий
-                const dishes = await apiRequest('/menu');
-                dishes.forEach(d => globalDishes[d.id] = d);
-
-                // 2. Берем состав меню на модуль (какие блюда в какие дни доступны)
-                const moduleMenu = await apiRequest('/module-menu');
-
-                // Группируем по дням
-                const menuByDay = {};
-                moduleMenu.forEach(item => {
-                    if (!menuByDay[item.day_of_week]) menuByDay[item.day_of_week] = [];
-                    menuByDay[item.day_of_week].push(item.dish_id);
-                });
-
-                const grid = document.getElementById('menuGrid');
-                grid.innerHTML = '';
-
-                for (let i = 0; i < 7; i++) {
-                    if (!menuByDay[i]) continue;
-
-                    const dayBox = document.createElement('div');
-                    dayBox.className = 'week-day-container';
-                    dayBox.innerHTML = `<div class="week-day-title">${DAYS_NAMES[i]}</div>`;
-
-                    menuByDay[i].forEach(dishId => {
-                        const dish = globalDishes[dishId];
-                        if (!dish) return;
-
-                        const itemDiv = document.createElement('div');
-                        itemDiv.className = 'dish-item';
-                        itemDiv.innerHTML = `
-                            <div class="dish-info">
-                                <div class="dish-name">${dish.name}</div>
-                                <div class="dish-type">${dish.type} | ${dish.price_rub} ₽</div>
-                            </div>
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <button class="secondary" style="width:30px; padding:0;" onclick="changeQty(${i}, ${dishId}, -1)">-</button>
-                                <b id="qty-${i}-${dishId}">0</b>
-                                <button class="secondary" style="width:30px; padding:0;" onclick="changeQty(${i}, ${dishId}, 1)">+</button>
-                            </div>
-                        `;
-                        dayBox.appendChild(itemDiv);
-                    });
-                    grid.appendChild(dayBox);
-                }
-            } catch (e) { console.error(e); }
-        }
-
-        function changeQty(dayIdx, dishId, delta) {
-            if (!selections[dayIdx]) selections[dayIdx] = {};
-            let current = selections[dayIdx][dishId] || 0;
-            current = Math.max(0, current + delta);
-            selections[dayIdx][dishId] = current;
-
-            document.getElementById(`qty-${dayIdx}-${dishId}`).innerText = current;
-            calculateTotal();
-        }
-
-        function calculateTotal() {
-            let total = 0;
-            for (let day in selections) {
-                for (let dishId in selections[day]) {
-                    const qty = selections[day][dishId];
-                    if (qty > 0 && globalDishes[dishId]) {
-                        total += globalDishes[dishId].price_rub * qty;
-                    }
-                }
-            }
-            document.getElementById('totalPrice').innerText = total;
-        }
-
-        async function createOrder() {
-            const weekStart = document.getElementById('orderWeekStart').value;
-            if (!weekStart) return alert("Выберите дату!");
-
-            // Преобразуем selections в формат OrderCreate из Swagger
-            const daysPayload = [];
-            for (let day in selections) {
-                const items = [];
-                for (let dishId in selections[day]) {
-                    if (selections[day][dishId] > 0) {
-                        items.push({
-                            dish_id: parseInt(dishId),
-                            quantity: selections[day][dishId]
-                        });
-                    }
-                }
-                if (items.length > 0) {
-                    daysPayload.push({
-                        day_of_week: parseInt(day),
-                        items: items
-                    });
-                }
-            }
-
-            if (daysPayload.length === 0) return alert("Выберите хотя бы одно блюдо!");
-
-            const payload = {
-                week_start_date: weekStart,
-                days: daysPayload
-            };
-
-            try {
-                const btn = document.getElementById('submitOrderBtn');
-                btn.disabled = true;
-                btn.innerText = "Оформление...";
-
-                const res = await apiRequest('/orders', 'POST', payload);
-                alert("Заказ успешно создан!");
-
-                // Сброс и переход в историю
-                selections = {};
-                calculateTotal();
-                showTab('history');
-                loadOrdersHistory();
-            } catch (e) {
-                alert(e.message);
-            } finally {
-                const btn = document.getElementById('submitOrderBtn');
-                btn.disabled = false;
-                btn.innerText = "Оформить заказ";
-            }
-        }
-
-        function showTab(tabName) {
-            document.getElementById('tab-history').classList.toggle('hidden', tabName !== 'history');
-            document.getElementById('tab-newOrder').classList.toggle('hidden', tabName !== 'newOrder');
-        }
-
-        initDashboard();
-    </script>
+    <script src="dashboard.js"></script>
 </body>
 </html>

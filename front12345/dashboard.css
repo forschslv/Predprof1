@@ -1,0 +1,178 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --bg-primary: #0a0a0a;
+    --bg-secondary: #1a1a2e;
+    --accent-cyan: #00d4ff;
+    --accent-purple: #8b5cf6;
+    --accent-blue: #3b82f6;
+    --text-primary: #f0f9ff;
+    --text-secondary: #94a3b8;
+    --border-color: rgba(139, 92, 246, 0.2);
+    --success: #10b981;
+    --danger: #ef4444;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 30px;
+}
+
+.user-info h1 { margin: 0; font-size: 1.5rem; }
+.user-info span { color: var(--accent-cyan); font-size: 0.9rem; }
+
+.header-controls { display: flex; gap: 10px; }
+
+/* Buttons */
+button {
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-secondary { background: rgba(255,255,255,0.1); color: white; }
+.btn-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+.btn-danger:hover { background: var(--danger); color: white; }
+
+/* Navigation */
+.navigation-links {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    background: var(--bg-secondary);
+    padding: 5px;
+    border-radius: 12px;
+    width: fit-content;
+}
+
+.nav-btn {
+    background: transparent;
+    color: var(--text-secondary);
+    padding: 10px 20px;
+}
+
+.nav-btn.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--accent-cyan);
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.1);
+}
+
+.hidden { display: none !important; }
+
+/* Grid & Cards */
+.week-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+    padding-bottom: 100px;
+}
+
+.day-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.day-header {
+    background: rgba(139, 92, 246, 0.1);
+    padding: 15px;
+    text-align: center;
+    color: var(--accent-purple);
+    font-weight: bold;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.day-content { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+
+/* Dish Item */
+.dish-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+
+.dish-card:hover { border-color: var(--accent-blue); }
+.dish-card.selected {
+    background: rgba(0, 212, 255, 0.1);
+    border-color: var(--accent-cyan);
+}
+
+.dish-name { font-weight: 500; display: block; }
+.dish-meta { font-size: 0.8rem; color: var(--text-secondary); }
+.dish-price { color: var(--accent-cyan); font-weight: bold; margin-left: 10px; }
+
+/* Footer Cart */
+.order-summary-bar {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 15, 40, 0.95);
+    border: 1px solid var(--accent-cyan);
+    padding: 15px 30px;
+    border-radius: 50px;
+    display: flex;
+    gap: 30px;
+    align-items: center;
+    z-index: 100;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.3s;
+}
+
+.order-summary-bar.visible { opacity: 1; pointer-events: auto; }
+
+.btn-order {
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+    color: #000;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-weight: bold;
+}
+
+/* History Table */
+.history-table { width: 100%; border-collapse: collapse; background: var(--bg-secondary); border-radius: 12px; }
+.history-table th, .history-table td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
+.history-table th { color: var(--accent-purple); }
+.status-paid { color: var(--success); }
+.status-pending { color: orange; }
+
+/* Date Picker */
+input[type="date"] {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: white;
+    padding: 8px;
+    border-radius: 6px;
+    color-scheme: dark;
+}
