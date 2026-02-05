@@ -49,7 +49,7 @@ async function request(endpoint, method = 'GET', body = null) {
 
         if (!response.ok) {
             const errorDetail = data.detail || 'Неизвестная ошибка сервера';
-            const msg = (typeof errorDetail === 'object') ? JSON.stringify(errorDetail) : errorDetail;
+            const msg = (typeof errorDetail === 'object') ? JSON.stringify(errorDetail, null, 2) : errorDetail;
             throw new Error(`Ошибка ${response.status}: ${msg}`);
         }
         return data;
@@ -111,7 +111,7 @@ async function init() {
     }
 }
 
-// === 3. Загрузка Меню (С ИСПРАВЛЕНИЕМ) ===
+// === 3. Загрузка Меню ===
 async function loadMenuData() {
     const container = document.getElementById('menuContainer');
     if(!container) return;
@@ -143,15 +143,13 @@ async function loadMenuData() {
             tempSchedule = moduleData.schedule;
         }
 
-        // --- ЛОГИКА FALLBACK (ЕСЛИ РАСПИСАНИЕ ПУСТОЕ) ---
+        // --- FALLBACK (ЕСЛИ РАСПИСАНИЕ ПУСТОЕ) ---
         if (tempSchedule.length === 0) {
             console.warn("Расписание пустое! Показываем все блюда на каждый день.");
-            alert("Загруженное расписание пустое! Показываем все блюда на каждый день. Возможны ошибки!")
-
-            // Собираем ID всех существующих блюд
+            alert("Внимание: Расписание пустое! Показываем все блюда на каждый день. " +
+                "\nНе гарантируем присутствие данных товаров в данный день." +
+                "\nВернём деньги за ошибочные товары.");
             const allDishIds = Object.keys(state.globalMenuMap).map(id => parseInt(id));
-
-            // Генерируем искусственное расписание на 7 дней (0-6)
             for (let day = 0; day <= 6; day++) {
                 tempSchedule.push({
                     day_of_week: day,
@@ -174,7 +172,6 @@ function renderMenu() {
     container.innerHTML = '';
 
     if (!state.schedule || state.schedule.length === 0) {
-        // Сюда мы попадем только если и Глобальное меню пустое
         container.innerHTML = '<p>Меню полностью пусто.</p>';
         return;
     }
@@ -185,7 +182,6 @@ function renderMenu() {
         const dayIdx = dayEntry.day_of_week;
         const dishIds = dayEntry.dish_ids || [];
 
-        // Получаем реальные объекты блюд
         const dayDishes = dishIds
             .map(id => state.globalMenuMap[id])
             .filter(dish => dish !== undefined);
@@ -199,7 +195,6 @@ function renderMenu() {
         const content = document.createElement('div');
         content.className = 'day-content';
 
-        // Группировка
         const groups = {};
         dayDishes.forEach(dish => {
             const type = dish.type || 'OTHER';
@@ -207,14 +202,12 @@ function renderMenu() {
             groups[type].push(dish);
         });
 
-        // Сначала выводим известные типы в нужном порядке
         TYPE_ORDER.forEach(typeKey => {
             if (!groups[typeKey]) return;
             renderCategory(typeKey, groups[typeKey], content, dayIdx);
-            delete groups[typeKey]; // Удаляем, чтобы не вывести дважды
+            delete groups[typeKey];
         });
 
-        // Выводим оставшиеся типы (если есть что-то нестандартное)
         Object.keys(groups).forEach(typeKey => {
             renderCategory(typeKey, groups[typeKey], content, dayIdx);
         });
@@ -224,7 +217,6 @@ function renderMenu() {
     });
 }
 
-// Вспомогательная функция для рендера категории
 function renderCategory(typeKey, dishes, container, dayIdx) {
     const catHeader = document.createElement('div');
     catHeader.className = 'dish-category-title';
@@ -254,7 +246,7 @@ function renderCategory(typeKey, dishes, container, dayIdx) {
     });
 }
 
-// === 4. Корзина и Заказ ===
+// === 4. Корзина и Заказ (ИСПРАВЛЕНО) ===
 function toggleDish(day, dish, element) {
     if (!state.selections[day]) state.selections[day] = {};
 
@@ -303,8 +295,18 @@ async function submitOrder() {
         for (const dayStr in state.selections) {
             const dayInt = parseInt(dayStr, 10);
             const itemIds = Object.keys(state.selections[dayStr]).map(Number);
+
             if (itemIds.length > 0) {
-                daysPayload.push({ day_of_week: dayInt, items: itemIds });
+                // ИСПРАВЛЕНИЕ 1: Превращаем просто ID в объекты {dish_id: ..., quantity: 1}
+                const itemsObjects = itemIds.map(id => ({
+                    dish_id: id,
+                    quantity: 1
+                }));
+
+                daysPayload.push({
+                    day_of_week: dayInt,
+                    items: itemsObjects // Было просто itemIds
+                });
             }
         }
 
@@ -315,10 +317,10 @@ async function submitOrder() {
             days: daysPayload
         });
 
-        alert('Заказ принят!');
+        alert('Заказ принят! 🎉');
         state.selections = {};
         updateFooter();
-        renderMenu(); // Перерисовка снимет выделения
+        renderMenu();
         switchTab('history');
 
     } catch (e) {
@@ -329,27 +331,31 @@ async function submitOrder() {
     }
 }
 
-// === 5. История ===
+// === 5. История (ИСПРАВЛЕНО) ===
 async function loadHistory() {
     const list = document.getElementById('ordersList');
     if(!list) return;
     list.innerHTML = 'Загрузка...';
 
     try {
-        const orders = await request('/orders/me', 'GET');
+        // ИСПРАВЛЕНИЕ 2: Запрос на /orders вместо /orders/me
+        // Обычно GET /orders возвращает заказы текущего пользователя
+        const orders = await request('/orders', 'GET');
+
         if (!orders || !orders.length) {
-            list.innerHTML = '<p>История пуста</p>';
+            list.innerHTML = '<p>История заказов пуста</p>';
             return;
         }
 
         let html = `<table class="history-table">
             <thead><tr><th>Дата</th><th>Статус</th><th>Сумма</th><th>Чек</th></tr></thead><tbody>`;
 
+        // Сортировка по дате (новые сверху)
         orders.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
 
         orders.forEach(o => {
             const d = new Date(o.created_at).toLocaleDateString('ru-RU');
-            const statusMap = { 'PAID': 'Оплачено', 'PENDING': 'Не оплачено', 'CANCELED': 'Отмена' };
+            const statusMap = { 'PAID': 'Оплачено', 'PENDING': 'Ожидает оплаты', 'CANCELED': 'Отмена' };
             const statusClass = o.status === 'PAID' ? 'status-paid' : 'status-pending';
 
             html += `<tr>
@@ -362,7 +368,13 @@ async function loadHistory() {
         html += '</tbody></table>';
         list.innerHTML = html;
     } catch (e) {
-        list.innerHTML = `<span style="color:red">Ошибка: ${e.message}</span>`;
+        console.error(e);
+        // Если вдруг эндпоинт /orders недоступен (404), выведем подсказку
+        if (e.message.includes('404')) {
+             list.innerHTML = `<span style="color:red">Ошибка: маршрут /orders не найден. Проверьте бэкенд.</span>`;
+        } else {
+             list.innerHTML = `<span style="color:red">Ошибка загрузки истории: ${e.message}</span>`;
+        }
     }
 }
 
