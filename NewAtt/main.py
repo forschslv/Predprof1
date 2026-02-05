@@ -190,7 +190,9 @@ def verify_code(data: VerifyCodeRequest, db: Session = Depends(get_db)):
 
 @app.get("/menu", response_model=List[DishResponse])
 def get_global_menu(db: Session = Depends(get_db)):
-    return db.query(Dish).all()
+    temp = db.query(Dish).all()
+    logger.debug(f"Global menu: {temp}")
+    return temp
 
 
 @app.post("/menu/dish", response_model=DishResponse)
