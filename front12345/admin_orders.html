@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Заказы - Админ</title>
+    <link rel="stylesheet" href="cafeteria_styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Проверка оплат и отчеты</h1>
+
+        <div class="stats-box">
+            <h3>Скачать ведомость для столовой (DOCX)</h3>
+            <input type="date" id="reportDate">
+            <button onclick="downloadDocx()">Скачать Report.docx</button>
+        </div>
+
+        <div class="inventory-item">
+            <h3>Изменить статус заказа вручную</h3>
+            <input type="number" id="orderIdInp" placeholder="ID заказа">
+            <select id="newStatus">
+                <option value="PAID">Оплачено (PAID)</option>
+                <option value="PROBLEM">Проблема (PROBLEM)</option>
+                <option value="PENDING">Ожидает (PENDING)</option>
+            </select>
+            <button onclick="updateStatus()">Сменить статус</button>
+        </div>
+        <button onclick="window.location.href='admin.html'" class="secondary">Назад</button>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        checkAuth(); requireAdmin();
+        document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
+
+        async function downloadDocx() {
+            const date = document.getElementById('reportDate').value;
+            downloadFile(`/admin/reports/docx?date_query=${date}`, `Table_Report_${date}.docx`);
+        }
+
+        async function updateStatus() {
+            const id = document.getElementById('orderIdInp').value;
+            const status = document.getElementById('newStatus').value;
+            await apiRequest(`/admin/orders/${id}/status?status=${status}`, 'PATCH');
+            alert("Статус изменен");
+        }
+    </script>
+</body>
+</html>

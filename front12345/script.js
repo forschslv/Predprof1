@@ -70,14 +70,14 @@ async function downloadFile(endpoint, filename) {
 }
 
 function logout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.href = 'index.html';
+    localStorage.clear();
+    window.location.href = 'login.html';
 }
 
-// Проверка авторизации при загрузке страниц (кроме входа)
 function checkAuth() {
-    if (!localStorage.getItem('token')) {
-        window.location.href = 'index.html';
-    }
+    if (!localStorage.getItem('token')) window.location.href = 'login.html';
+}
+function requireAdmin() {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (!user.is_admin) window.location.href = 'dashboard.html';
 }

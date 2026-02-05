@@ -57,6 +57,10 @@
                     if(order.status === 'PAID') statusColor = '#10b981';
                     if(order.status === 'PROBLEM') statusColor = '#ef4444';
 
+                    // Делаем весь блок кликабельным для перехода на страницу деталей
+                    div.onclick = () => window.location.href = `order_details.html?id=${order.id}`;
+                    div.style.cursor = 'pointer'; // Чтобы было видно, что это кликабельно
+
                     div.innerHTML = `
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <div>
@@ -69,7 +73,9 @@
                             </div>
                         </div>
                         ${order.status === 'PENDING' ?
-                            `<button class="secondary" style="margin-top:10px;" onclick="openPayModal(${order.id})">Подтвердить оплату</button>`
+                            // Кнопка остается, но клик по ней не нужен, так как кликабелен весь div
+                            // Для удобства можно убрать или оставить:
+                            `<button class="secondary" style="margin-top:10px;" onclick="event.stopPropagation(); window.location.href='order_details.html?id=${order.id}'">Детали/Оплата</button>`
                             : ''}
                     `;
                     list.appendChild(div);

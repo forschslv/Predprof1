@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Детали заказа</title>
+    <link rel="stylesheet" href="cafeteria_styles.css">
+</head>
+<body>
+    <div class="container" style="max-width: 600px;">
+        <h1 id="orderTitle">Заказ ...</h1>
+        <div id="orderDetails" class="profile-box">
+            <p>Загрузка данных...</p>
+        </div>
+
+        <div id="paymentSection" class="hidden">
+            <h2 style="margin-top:20px;">Подтверждение оплаты</h2>
+            <div class="stats-box">
+                <p>Переведите сумму по реквизитам Л2Ш и прикрепите чек.</p>
+                <input type="file" id="payFile">
+                <button onclick="uploadPayment()">Отправить подтверждение</button>
+            </div>
+        </div>
+
+        <button onclick="window.location.href='dashboard.html'" class="secondary" style="margin-top:20px;">К списку заказов</button>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        checkAuth();
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('id');
+
+        async function loadOrder() {
+            const order = await apiRequest(`/orders/${orderId}`);
+            document.getElementById('orderTitle').innerText = `Заказ #${order.id}`;
+            document.getElementById('orderDetails').innerHTML = `
+                <p><b>Дата недели:</b> ${order.week_start_date}</p>
+                <p><b>Сумма:</b> ${order.total_amount} ₽</p>
+                <p><b>Статус:</b> <span class="price">${order.status}</span></p>
+            `;
+            if (order.status === 'PENDING') {
+                document.getElementById('paymentSection').classList.remove('hidden');
+            }
+        }
+
+        async function uploadPayment() {
+            const fileInput = document.getElementById('payFile');
+            if (!fileInput.files[0]) return alert("Выберите файл");
+            const fd = new FormData();
+            fd.append('file', fileInput.files[0]);
+            await apiRequest(`/orders/${orderId}/pay`, 'POST', fd, true);
+            alert("Чек отправлен на проверку!");
+            location.reload();
+        }
+
+        loadOrder();
+    </script>
+</body>
+</html>
