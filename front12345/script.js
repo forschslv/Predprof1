@@ -91,3 +91,21 @@ async function requireAdmin() {
         window.location.href = 'login.html';
     }
 }
+
+async function validateAccess(needAdmin = false) {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = 'login.html';
+        return;
+    }
+    try {
+        const user = await apiRequest('/users/me');
+        localStorage.setItem('user', JSON.stringify(user));
+        if (needAdmin && !user.is_admin) {
+            window.location.href = 'dashboard.html';
+        }
+        return user;
+    } catch (e) {
+        logout();
+    }
+}
