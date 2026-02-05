@@ -146,6 +146,7 @@ async function loadMenuData() {
         // --- ЛОГИКА FALLBACK (ЕСЛИ РАСПИСАНИЕ ПУСТОЕ) ---
         if (tempSchedule.length === 0) {
             console.warn("Расписание пустое! Показываем все блюда на каждый день.");
+            alert("Загруженное расписание пустое! Показываем все блюда на каждый день. Возможны ошибки!")
 
             // Собираем ID всех существующих блюд
             const allDishIds = Object.keys(state.globalMenuMap).map(id => parseInt(id));
