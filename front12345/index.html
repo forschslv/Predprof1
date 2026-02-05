@@ -7,19 +7,18 @@
     <link rel="stylesheet" href="cafeteria_styles.css">
 </head>
 <body>
-    <div class="container" style="max-width: 500px; margin-top: 10vh;">
+    <div class="container" style="max-width: 500px; margin-top: 5vh;">
         <h1>Регистрация</h1>
-        <div id="welcomeMsg" class="hidden"></div>
 
         <form id="registerForm">
             <input type="text" id="name" placeholder="Имя" required>
             <input type="text" id="secondary_name" placeholder="Фамилия" required>
             <input type="text" id="status" placeholder="Класс (например, 10А)" required>
-            <input type="email" id="email" placeholder="Email (Лицейский)" required>
-            <button type="submit">Зарегистрироваться</button>
+            <input type="email" id="email" placeholder="Почта @students.sch2.ru" required>
+            <button type="submit" id="regBtn">Создать аккаунт</button>
         </form>
 
-        <div class="navigation-links" style="justify-content: center; background: none; border: none;">
+        <div id="toggleText">
             <a href="login.html" style="color: var(--accent-cyan); text-decoration: none;">Уже есть аккаунт? Войти</a>
         </div>
     </div>
@@ -28,12 +27,21 @@
     <script>
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const btn = document.getElementById('regBtn');
             const data = {
-                name: document.getElementById('name').value,
-                secondary_name: document.getElementById('secondary_name').value,
-                status: document.getElementById('status').value,
-                email: document.getElementById('email').value
+                name: document.getElementById('name').value.trim(),
+                secondary_name: document.getElementById('secondary_name').value.trim(),
+                status: document.getElementById('status').value.trim(),
+                email: document.getElementById('email').value.trim()
             };
+
+            if (!data.email.endsWith("@students.sch2.ru")) {
+                alert("Требуется почта @students.sch2.ru");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = "Обработка...";
 
             try {
                 const response = await fetch(`${API_URL}/register`, {
@@ -42,19 +50,24 @@
                     body: JSON.stringify(data)
                 });
 
+                const result = await response.json();
+
                 if (response.ok) {
-                    // ТОЛЬКО если статус 200-299 (Успех), переходим к вводу кода
+                    // Успешная регистрация или переотправка кода
                     localStorage.setItem('pending_email', data.email);
                     window.location.href = 'verify.html';
                 } else {
-                    // Если 400 (User exists) или другая ошибка - остаемся здесь и показываем alert
-                    const err = await response.json();
-                    alert(err.detail || "Ошибка регистрации");
+                    // ОШИБКА: Остаемся на странице
+                    // В main.py при существующем юзере возвращается 201 "Code resent",
+                    // так что сюда попадем только при реальных ошибках (валидация и т.д.)
+                    alert("Ошибка регистрации: " + (result.detail || "Проверьте данные"));
+                    btn.disabled = false;
+                    btn.innerText = "Создать аккаунт";
                 }
-
-            } catch (e) {
-                console.error(e);
-                alert("Не удалось соединиться с сервером");
+            } catch (err) {
+                alert("Ошибка соединения с сервером.");
+                btn.disabled = false;
+                btn.innerText = "Создать аккаунт";
             }
         });
     </script>

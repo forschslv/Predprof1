@@ -106,34 +106,37 @@ SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
 
 def send_verification_email(to_email: str, code: str) -> None:
-
-    msg = MIMEMultipart()
-    msg['From'] = SMTP_USER
-    msg['To'] = to_email
-    msg['Subject'] = "Ваш код подтверждения"
-
-    body = f"""
-    <html>
-        <body>
-            <h2>Код подтверждения</h2>
-            <p>Ваш код для входа: <b>{code}</b></p>
-            <p>Никому не сообщайте этот код.</p>
-        </body>
-    </html>
-    """
-
-    msg.attach(MIMEText(body, 'html'))
-
-    server = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
-    server.ehlo()
-    server.starttls()
-    server.ehlo()
-
-    server.login(SMTP_USER, SMTP_PASSWORD)
-
-    server.sendmail(SMTP_USER, to_email, msg.as_string())
-
-    server.quit()
+        print(f"--- EMAIL SIMULATION (No Credentials): Code for {to_email} is {code} ---")
+    # print(to_email, code)
+    # if not SMTP_USER or not SMTP_PASSWORD:
+    #     return
+    # msg = MIMEMultipart()
+    # msg['From'] = SMTP_USER
+    # msg['To'] = to_email
+    # msg['Subject'] = "Ваш код подтверждения"
+    #
+    # body = f"""
+    # <html>
+    #     <body>
+    #         <h2>Код подтверждения</h2>
+    #         <p>Ваш код для входа: <b>{code}</b></p>
+    #         <p>Никому не сообщайте этот код.</p>
+    #     </body>
+    # </html>
+    # """
+    #
+    # msg.attach(MIMEText(body, 'html'))
+    #
+    # server = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
+    # server.ehlo()
+    # server.starttls()
+    # server.ehlo()
+    #
+    # server.login(SMTP_USER, SMTP_PASSWORD)
+    #
+    # server.sendmail(SMTP_USER, to_email, msg.as_string())
+    #
+    # server.quit()
 
 
 
