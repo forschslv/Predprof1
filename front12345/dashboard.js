@@ -3,13 +3,12 @@ const API_URL = 'http://localhost:8000';
 // === Глобальное состояние ===
 let state = {
     user: null,
-    globalMenuMap: {}, // ID -> Объект блюда
-    schedule: [],      // Статичное расписание из /module-menu
-    selections: {},    // { dayIndex: { dishId: {price, dishObject} } }
-    weekStart: null    // Date object (всегда понедельник)
+    globalMenuMap: {},
+    schedule: [],
+    selections: {},
+    weekStart: null
 };
 
-// Словари для красивого отображения
 const DISH_TYPES = {
     'MAIN': '🍛 Основные блюда',
     'SOUP': '🍜 Супы',
@@ -23,12 +22,12 @@ const DISH_TYPES = {
 const TYPE_ORDER = ['SOUP', 'MAIN', 'GARNISH', 'SALAD', 'DRINK', 'BREAD', 'DESSERT'];
 const DAYS_NAMES = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
 
-// === 1. Базовая функция запроса ===
+// === 1. Функция запроса с улучшенным логированием ===
 async function request(endpoint, method = 'GET', body = null) {
     const token = localStorage.getItem('token');
     if (!token) {
         window.location.href = 'index.html';
-        throw new Error('No token');
+        throw new Error('Нет токена авторизации');
     }
 
     const headers = { 'Authorization': `Bearer ${token}` };
@@ -39,25 +38,23 @@ async function request(endpoint, method = 'GET', body = null) {
 
     try {
         const response = await fetch(`${API_URL}${endpoint}`, config);
+
         if (response.status === 401) {
             localStorage.removeItem('token');
             window.location.href = 'index.html';
             return;
         }
+
         const data = await response.json();
+
         if (!response.ok) {
-            if (response.status === 422 && data.detail) {
-                const msg = Array.isArray(data.detail)
-                    ? data.detail.map(e => `${e.loc.join('.')} : ${e.msg}`).join('\n')
-                    : JSON.stringify(data.detail);
-                throw new Error(`Ошибка данных:\n${msg}`);
-            }
-            throw new Error(data.detail || 'Ошибка сервера');
+            const errorDetail = data.detail || 'Неизвестная ошибка сервера';
+            const msg = (typeof errorDetail === 'object') ? JSON.stringify(errorDetail) : errorDetail;
+            throw new Error(`Ошибка ${response.status}: ${msg}`);
         }
         return data;
     } catch (error) {
-        console.error('API Error:', error);
-        alert(error.message);
+        console.error(`API Error [${endpoint}]:`, error);
         throw error;
     }
 }
@@ -66,94 +63,106 @@ async function request(endpoint, method = 'GET', body = null) {
 document.addEventListener('DOMContentLoaded', init);
 
 async function init() {
-    // Настройка кнопок
-    document.getElementById('logoutBtn').onclick = () => {
-        localStorage.clear();
-        window.location.href = 'index.html';
-    };
-    document.getElementById('nav-newOrder').onclick = () => switchTab('newOrder');
-    document.getElementById('nav-history').onclick = () => switchTab('history');
-    document.getElementById('submitOrderBtn').onclick = submitOrder;
-
-    // Настройка даты (Запрет прошлого)
+    // Настройка даты
     const today = new Date();
-    const currentMonday = getMonday(today);
-    state.weekStart = currentMonday;
-
+    state.weekStart = getMonday(today);
     const picker = document.getElementById('weekPicker');
-    // Форматируем дату для input type="date" (YYYY-MM-DD)
-    const minDateStr = currentMonday.toISOString().split('T')[0];
+    if (picker) {
+        picker.valueAsDate = state.weekStart;
+        picker.min = state.weekStart.toISOString().split('T')[0];
+        picker.onchange = (e) => {
+            if (e.target.value) state.weekStart = getMonday(new Date(e.target.value));
+        };
+    }
 
-    picker.min = minDateStr;
-    picker.value = minDateStr;
-    updateDateHint(currentMonday);
+    // Кнопки
+    const btnLogout = document.getElementById('logoutBtn');
+    if(btnLogout) btnLogout.onclick = () => { localStorage.clear(); window.location.href = 'index.html'; };
 
-    picker.onchange = (e) => {
-        if (!e.target.value) return;
-        const selectedDate = new Date(e.target.value);
+    const btnOrder = document.getElementById('submitOrderBtn');
+    if(btnOrder) btnOrder.onclick = submitOrder;
 
-        // Всегда приводим к понедельнику выбранной недели
-        state.weekStart = getMonday(selectedDate);
+    const navNew = document.getElementById('nav-newOrder');
+    const navHist = document.getElementById('nav-history');
+    if(navNew) navNew.onclick = () => switchTab('newOrder');
+    if(navHist) navHist.onclick = () => switchTab('history');
 
-        // Если пользователь выбрал вторник, инпут визуально оставим как выбрал пользователь,
-        // но логически мы считаем от понедельника.
-        updateDateHint(state.weekStart);
-    };
-
-    // Загрузка данных
+    // Загрузка
     try {
         state.user = await request('/users/me');
-        document.getElementById('welcomeUser').innerText = `Привет, ${state.user.full_name || 'Студент'}`;
-        document.getElementById('userEmail').innerText = state.user.email;
+        const welcome = document.getElementById('welcomeUser');
+        if(welcome) welcome.innerText = `Привет, ${state.user.full_name || 'Студент'}`;
 
         if (state.user.is_admin) {
             const adminBtn = document.getElementById('adminBtn');
-            adminBtn.classList.remove('hidden');
-            adminBtn.onclick = () => window.location.href = 'admin.html';
+            if(adminBtn) {
+                adminBtn.classList.remove('hidden');
+                adminBtn.onclick = () => window.location.href = 'admin.html';
+            }
         }
 
-        // Загружаем меню ОДИН РАЗ
         await loadMenuData();
 
     } catch (e) {
-        console.error("Init failed", e);
+        console.error("Critical Init Error:", e);
+        // Если ошибка авторизации, request уже перенаправил. Иначе показываем alert.
+        if (!e.message.includes('Нет токена')) {
+            alert("Не удалось загрузить профиль: " + e.message);
+        }
     }
 }
 
-function updateDateHint(mondayDate) {
-    const sundayDate = new Date(mondayDate);
-    sundayDate.setDate(mondayDate.getDate() + 6);
-
-    const startStr = mondayDate.toLocaleDateString('ru-RU', {day: 'numeric', month: 'long'});
-    const endStr = sundayDate.toLocaleDateString('ru-RU', {day: 'numeric', month: 'long'});
-
-    document.getElementById('dateHint').innerText = `(Заказ на неделю: ${startStr} — ${endStr})`;
-}
-
-// === 3. Загрузка и Рендер Меню ===
+// === 3. Загрузка Меню ===
 async function loadMenuData() {
     const container = document.getElementById('menuContainer');
-    container.innerHTML = '<p class="loading-text">Загрузка меню...</p>';
+    if(!container) return;
+
+    container.innerHTML = '<p class="loading-text">Загружаем меню и расписание...</p>';
 
     try {
+        // Параллельная загрузка
         const [globalMenuRes, moduleData] = await Promise.all([
             request('/menu', 'GET'),
             request('/module-menu', 'GET')
         ]);
 
-        // 1. Создаем карту блюд
+        console.log("Global Menu:", globalMenuRes);
+        console.log("Module Schedule:", moduleData);
+
+        // 1. Обработка Глобального Меню
         state.globalMenuMap = {};
+        // API может вернуть массив или объект {items: []}
         const items = Array.isArray(globalMenuRes) ? globalMenuRes : (globalMenuRes.items || []);
+
+        if (items.length === 0) {
+            container.innerHTML = '<p style="color: orange">Глобальное меню пусто. Попросите администратора загрузить блюда.</p>';
+            return;
+        }
+
         items.forEach(d => state.globalMenuMap[d.id] = d);
 
-        // 2. Сохраняем расписание
-        state.schedule = moduleData.schedule || moduleData || [];
+        // 2. Обработка Расписания Модуля
+        // API может вернуть массив, null, или объект {schedule: []}
+        if (!moduleData) {
+            state.schedule = [];
+        } else if (Array.isArray(moduleData)) {
+            state.schedule = moduleData;
+        } else if (moduleData.schedule) {
+            state.schedule = moduleData.schedule;
+        } else {
+            state.schedule = [];
+        }
 
         renderMenu();
 
     } catch (e) {
-        console.error("Load menu failed", e);
-        container.innerHTML = `<p style="color:red">Не удалось загрузить меню: ${e.message}</p>`;
+        container.innerHTML = `
+            <div style="color: #ef4444; padding: 20px; border: 1px solid #ef4444; border-radius: 8px;">
+                <h3>Ошибка загрузки меню</h3>
+                <p>${e.message}</p>
+                <p style="font-size: 0.8em; color: #999">Проверьте консоль (F12) для деталей.</p>
+                <button onclick="location.reload()" class="btn-secondary" style="margin-top:10px">Попробовать снова</button>
+            </div>`;
     }
 }
 
@@ -161,33 +170,40 @@ function renderMenu() {
     const container = document.getElementById('menuContainer');
     container.innerHTML = '';
 
+    // Если расписание пустое
     if (!state.schedule || state.schedule.length === 0) {
-        container.innerHTML = '<p>Меню на этот модуль еще не сформировано.</p>';
+        container.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
+                <h3>📅 Меню не сформировано</h3>
+                <p style="color: var(--text-secondary)">Администратор еще не составил расписание на этот модуль.</p>
+                <p style="font-size: 0.9em; margin-top: 10px;">(Технически: эндпоинт /module-menu вернул пустое расписание)</p>
+            </div>`;
         return;
     }
 
-    // Сортировка дней (0=Пн)
     const sortedSchedule = [...state.schedule].sort((a, b) => a.day_of_week - b.day_of_week);
+    let hasDishes = false;
 
     sortedSchedule.forEach(dayEntry => {
         const dayIdx = dayEntry.day_of_week;
         const dishIds = dayEntry.dish_ids || [];
 
-        if (dishIds.length === 0) return;
+        // Фильтруем ID, которых нет в глобальном меню (на всякий случай)
+        const dayDishes = dishIds
+            .map(id => state.globalMenuMap[id])
+            .filter(dish => dish !== undefined);
+
+        if (dayDishes.length === 0) return;
+        hasDishes = true;
 
         const dayCard = document.createElement('div');
         dayCard.className = 'day-card';
-        dayCard.innerHTML = `<div class="day-header">${DAYS_NAMES[dayIdx] || 'День ' + (dayIdx+1)}</div>`;
+        dayCard.innerHTML = `<div class="day-header">${DAYS_NAMES[dayIdx] || 'День ' + dayIdx}</div>`;
 
         const content = document.createElement('div');
         content.className = 'day-content';
 
-        // Группировка блюд
-        const dayDishes = [];
-        dishIds.forEach(id => {
-            if (state.globalMenuMap[id]) dayDishes.push(state.globalMenuMap[id]);
-        });
-
+        // Группировка
         const groups = {};
         dayDishes.forEach(dish => {
             const type = dish.type || 'OTHER';
@@ -195,7 +211,6 @@ function renderMenu() {
             groups[type].push(dish);
         });
 
-        // Вывод по категориям
         TYPE_ORDER.forEach(typeKey => {
             if (!groups[typeKey]) return;
 
@@ -207,26 +222,21 @@ function renderMenu() {
             groups[typeKey].forEach(dish => {
                 const dishEl = document.createElement('div');
                 dishEl.className = 'dish-card';
-
-                // Проверка, выбрано ли блюдо (при перерисовке)
                 if (state.selections[dayIdx] && state.selections[dayIdx][dish.id]) {
                     dishEl.classList.add('selected');
                 }
 
-                const compositionShort = dish.composition
+                const comp = dish.composition
                     ? dish.composition.slice(0, 45) + (dish.composition.length > 45 ? '...' : '')
                     : 'Состав не указан';
 
                 dishEl.innerHTML = `
                     <div class="dish-info-block">
                         <span class="dish-name">${dish.name}</span>
-                        <span class="dish-meta" title="${dish.composition || ''}">
-                            ${dish.quantity_grams}г • ${compositionShort}
-                        </span>
+                        <span class="dish-meta" title="${dish.composition || ''}">${dish.quantity_grams}г • ${comp}</span>
                     </div>
                     <div class="dish-price">${dish.price_rub} ₽</div>
                 `;
-
                 dishEl.onclick = () => toggleDish(dayIdx, dish, dishEl);
                 content.appendChild(dishEl);
             });
@@ -235,9 +245,13 @@ function renderMenu() {
         dayCard.appendChild(content);
         container.appendChild(dayCard);
     });
+
+    if (!hasDishes) {
+        container.innerHTML = '<p>В расписании есть дни, но блюда для них не найдены в базе.</p>';
+    }
 }
 
-// === 4. Управление корзиной ===
+// === 4. Корзина и Заказ ===
 function toggleDish(day, dish, element) {
     if (!state.selections[day]) state.selections[day] = {};
 
@@ -261,21 +275,21 @@ function updateFooter() {
             total += state.selections[day][id].price_rub;
         }
     }
-    document.getElementById('countDisplay').innerText = count;
-    document.getElementById('totalDisplay').innerText = total;
-
+    const countEl = document.getElementById('countDisplay');
+    const totalEl = document.getElementById('totalDisplay');
     const bar = document.getElementById('orderSummary');
-    if (count > 0) bar.classList.add('visible');
-    else bar.classList.remove('visible');
+
+    if(countEl) countEl.innerText = count;
+    if(totalEl) totalEl.innerText = total;
+
+    if(bar) {
+        if (count > 0) bar.classList.add('visible');
+        else bar.classList.remove('visible');
+    }
 }
 
-// === 5. Оформление заказа ===
 async function submitOrder() {
-    // Проверка даты
-    if (!state.weekStart) {
-        alert("Пожалуйста, выберите дату начала недели.");
-        return;
-    }
+    if (!state.weekStart) return alert("Не выбрана дата");
 
     const btn = document.getElementById('submitOrderBtn');
     btn.disabled = true;
@@ -285,80 +299,67 @@ async function submitOrder() {
         const daysPayload = [];
         for (const dayStr in state.selections) {
             const dayInt = parseInt(dayStr, 10);
-            const itemIds = Object.keys(state.selections[dayStr]).map(id => parseInt(id, 10));
-
+            const itemIds = Object.keys(state.selections[dayStr]).map(Number);
             if (itemIds.length > 0) {
-                daysPayload.push({
-                    day_of_week: dayInt,
-                    items: itemIds
-                });
+                daysPayload.push({ day_of_week: dayInt, items: itemIds });
             }
         }
 
-        if (daysPayload.length === 0) {
-            alert("Корзина пуста!");
-            return;
-        }
+        if (daysPayload.length === 0) throw new Error("Корзина пуста");
 
-        const payload = {
+        await request('/orders', 'POST', {
             week_start_date: state.weekStart.toISOString().split('T')[0],
             days: daysPayload
-        };
+        });
 
-        await request('/orders', 'POST', payload);
-
-        alert('Заказ успешно создан! 🎉');
+        alert('Заказ принят!');
         state.selections = {};
         updateFooter();
-        // Перерисовываем меню, чтобы сбросить визуальные выделения
         renderMenu();
         switchTab('history');
 
     } catch (e) {
-        console.error("Submit order failed", e);
-        alert(`Ошибка оформления заказа: ${e.message}`);
+        alert(e.message);
     } finally {
         btn.disabled = false;
         btn.innerText = "Оформить заказ";
     }
 }
 
-// === 6. История и Утилиты ===
+// === 5. История ===
 async function loadHistory() {
     const list = document.getElementById('ordersList');
+    if(!list) return;
     list.innerHTML = 'Загрузка...';
 
     try {
         const orders = await request('/orders/me', 'GET');
-
         if (!orders || !orders.length) {
-            list.innerHTML = '<p>История заказов пуста</p>';
+            list.innerHTML = '<p>История пуста</p>';
             return;
         }
 
         let html = `<table class="history-table">
-            <thead><tr><th>Дата заказа</th><th>Статус</th><th>Сумма</th><th>Чек</th></tr></thead><tbody>`;
+            <thead><tr><th>Дата</th><th>Статус</th><th>Сумма</th><th>Чек</th></tr></thead><tbody>`;
 
         orders.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
 
         orders.forEach(o => {
-            const date = new Date(o.created_at).toLocaleDateString('ru-RU');
-            const statusMap = { 'PAID': 'Оплачено', 'PENDING': 'Ожидает оплаты', 'CANCELED': 'Отмена' };
+            const d = new Date(o.created_at).toLocaleDateString('ru-RU');
+            const statusMap = { 'PAID': 'Оплачено', 'PENDING': 'Не оплачено', 'CANCELED': 'Отмена' };
             const statusClass = o.status === 'PAID' ? 'status-paid' : 'status-pending';
 
             html += `<tr>
-                <td>${date}</td>
+                <td>${d}</td>
                 <td><span class="${statusClass}">${statusMap[o.status] || o.status}</span></td>
                 <td>${o.total_amount} ₽</td>
-                <td><button onclick="downloadReceipt(${o.id})" class="btn-secondary" style="font-size: 0.8em; padding: 5px 10px;">Скачать</button></td>
+                <td><button onclick="downloadReceipt(${o.id})" class="btn-secondary" style="font-size:0.8em">Скачать</button></td>
             </tr>`;
         });
         html += '</tbody></table>';
         list.innerHTML = html;
-
     } catch (e) {
-        console.error("Load history failed", e);
-        list.innerHTML = 'Ошибка загрузки истории';
+        list.innerHTML = `<span style="color:red">Ошибка: ${e.message}</span>`;
     }
 }
 
@@ -368,7 +369,7 @@ async function downloadReceipt(orderId) {
         const res = await fetch(`${API_URL}/orders/${orderId}/receipt`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (!res.ok) throw new Error("Не удалось скачать чек");
+        if (!res.ok) throw new Error("Ошибка скачивания");
         const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -377,17 +378,16 @@ async function downloadReceipt(orderId) {
         document.body.appendChild(a);
         a.click();
         a.remove();
-    } catch (e) {
-        console.error("Download receipt failed", e);
-        alert(`Ошибка скачивания чека: ${e.message}`);
-    }
+    } catch (e) { alert(e.message); }
 }
 
 function switchTab(tab) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
     document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-    document.getElementById(`tab-${tab}`).classList.remove('hidden');
-    document.getElementById(`nav-${tab}`).classList.add('active');
+    const content = document.getElementById(`tab-${tab}`);
+    const btn = document.getElementById(`nav-${tab}`);
+    if(content) content.classList.remove('hidden');
+    if(btn) btn.classList.add('active');
     if (tab === 'history') loadHistory();
 }
 
