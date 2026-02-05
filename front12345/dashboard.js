@@ -22,7 +22,7 @@ const DISH_TYPES = {
 const TYPE_ORDER = ['SOUP', 'MAIN', 'GARNISH', 'SALAD', 'DRINK', 'BREAD', 'DESSERT'];
 const DAYS_NAMES = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
 
-// === 1. Функция запроса с улучшенным логированием ===
+// === 1. Функция запроса ===
 async function request(endpoint, method = 'GET', body = null) {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -105,64 +105,66 @@ async function init() {
 
     } catch (e) {
         console.error("Critical Init Error:", e);
-        // Если ошибка авторизации, request уже перенаправил. Иначе показываем alert.
         if (!e.message.includes('Нет токена')) {
             alert("Не удалось загрузить профиль: " + e.message);
         }
     }
 }
 
-// === 3. Загрузка Меню ===
+// === 3. Загрузка Меню (С ИСПРАВЛЕНИЕМ) ===
 async function loadMenuData() {
     const container = document.getElementById('menuContainer');
     if(!container) return;
 
-    container.innerHTML = '<p class="loading-text">Загружаем меню и расписание...</p>';
+    container.innerHTML = '<p class="loading-text">Загружаем меню...</p>';
 
     try {
-        // Параллельная загрузка
         const [globalMenuRes, moduleData] = await Promise.all([
             request('/menu', 'GET'),
             request('/module-menu', 'GET')
         ]);
 
-        console.log("Global Menu:", globalMenuRes);
-        console.log("Module Schedule:", moduleData);
-
         // 1. Обработка Глобального Меню
         state.globalMenuMap = {};
-        // API может вернуть массив или объект {items: []}
         const items = Array.isArray(globalMenuRes) ? globalMenuRes : (globalMenuRes.items || []);
 
         if (items.length === 0) {
-            container.innerHTML = '<p style="color: orange">Глобальное меню пусто. Попросите администратора загрузить блюда.</p>';
+            container.innerHTML = '<p style="color: orange">Глобальное меню пусто.</p>';
             return;
         }
 
         items.forEach(d => state.globalMenuMap[d.id] = d);
 
-        // 2. Обработка Расписания Модуля
-        // API может вернуть массив, null, или объект {schedule: []}
-        if (!moduleData) {
-            state.schedule = [];
-        } else if (Array.isArray(moduleData)) {
-            state.schedule = moduleData;
-        } else if (moduleData.schedule) {
-            state.schedule = moduleData.schedule;
-        } else {
-            state.schedule = [];
+        // 2. Обработка Расписания
+        let tempSchedule = [];
+        if (moduleData && Array.isArray(moduleData)) {
+            tempSchedule = moduleData;
+        } else if (moduleData && moduleData.schedule) {
+            tempSchedule = moduleData.schedule;
         }
 
+        // --- ЛОГИКА FALLBACK (ЕСЛИ РАСПИСАНИЕ ПУСТОЕ) ---
+        if (tempSchedule.length === 0) {
+            console.warn("Расписание пустое! Показываем все блюда на каждый день.");
+
+            // Собираем ID всех существующих блюд
+            const allDishIds = Object.keys(state.globalMenuMap).map(id => parseInt(id));
+
+            // Генерируем искусственное расписание на 7 дней (0-6)
+            for (let day = 0; day <= 6; day++) {
+                tempSchedule.push({
+                    day_of_week: day,
+                    dish_ids: allDishIds
+                });
+            }
+        }
+        // ------------------------------------------------
+
+        state.schedule = tempSchedule;
         renderMenu();
 
     } catch (e) {
-        container.innerHTML = `
-            <div style="color: #ef4444; padding: 20px; border: 1px solid #ef4444; border-radius: 8px;">
-                <h3>Ошибка загрузки меню</h3>
-                <p>${e.message}</p>
-                <p style="font-size: 0.8em; color: #999">Проверьте консоль (F12) для деталей.</p>
-                <button onclick="location.reload()" class="btn-secondary" style="margin-top:10px">Попробовать снова</button>
-            </div>`;
+        container.innerHTML = `<p style="color:red">Ошибка: ${e.message}</p>`;
     }
 }
 
@@ -170,31 +172,24 @@ function renderMenu() {
     const container = document.getElementById('menuContainer');
     container.innerHTML = '';
 
-    // Если расписание пустое
     if (!state.schedule || state.schedule.length === 0) {
-        container.innerHTML = `
-            <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
-                <h3>📅 Меню не сформировано</h3>
-                <p style="color: var(--text-secondary)">Администратор еще не составил расписание на этот модуль.</p>
-                <p style="font-size: 0.9em; margin-top: 10px;">(Технически: эндпоинт /module-menu вернул пустое расписание)</p>
-            </div>`;
+        // Сюда мы попадем только если и Глобальное меню пустое
+        container.innerHTML = '<p>Меню полностью пусто.</p>';
         return;
     }
 
     const sortedSchedule = [...state.schedule].sort((a, b) => a.day_of_week - b.day_of_week);
-    let hasDishes = false;
 
     sortedSchedule.forEach(dayEntry => {
         const dayIdx = dayEntry.day_of_week;
         const dishIds = dayEntry.dish_ids || [];
 
-        // Фильтруем ID, которых нет в глобальном меню (на всякий случай)
+        // Получаем реальные объекты блюд
         const dayDishes = dishIds
             .map(id => state.globalMenuMap[id])
             .filter(dish => dish !== undefined);
 
         if (dayDishes.length === 0) return;
-        hasDishes = true;
 
         const dayCard = document.createElement('div');
         dayCard.className = 'day-card';
@@ -211,44 +206,51 @@ function renderMenu() {
             groups[type].push(dish);
         });
 
+        // Сначала выводим известные типы в нужном порядке
         TYPE_ORDER.forEach(typeKey => {
             if (!groups[typeKey]) return;
+            renderCategory(typeKey, groups[typeKey], content, dayIdx);
+            delete groups[typeKey]; // Удаляем, чтобы не вывести дважды
+        });
 
-            const catHeader = document.createElement('div');
-            catHeader.className = 'dish-category-title';
-            catHeader.innerText = DISH_TYPES[typeKey] || typeKey;
-            content.appendChild(catHeader);
-
-            groups[typeKey].forEach(dish => {
-                const dishEl = document.createElement('div');
-                dishEl.className = 'dish-card';
-                if (state.selections[dayIdx] && state.selections[dayIdx][dish.id]) {
-                    dishEl.classList.add('selected');
-                }
-
-                const comp = dish.composition
-                    ? dish.composition.slice(0, 45) + (dish.composition.length > 45 ? '...' : '')
-                    : 'Состав не указан';
-
-                dishEl.innerHTML = `
-                    <div class="dish-info-block">
-                        <span class="dish-name">${dish.name}</span>
-                        <span class="dish-meta" title="${dish.composition || ''}">${dish.quantity_grams}г • ${comp}</span>
-                    </div>
-                    <div class="dish-price">${dish.price_rub} ₽</div>
-                `;
-                dishEl.onclick = () => toggleDish(dayIdx, dish, dishEl);
-                content.appendChild(dishEl);
-            });
+        // Выводим оставшиеся типы (если есть что-то нестандартное)
+        Object.keys(groups).forEach(typeKey => {
+            renderCategory(typeKey, groups[typeKey], content, dayIdx);
         });
 
         dayCard.appendChild(content);
         container.appendChild(dayCard);
     });
+}
 
-    if (!hasDishes) {
-        container.innerHTML = '<p>В расписании есть дни, но блюда для них не найдены в базе.</p>';
-    }
+// Вспомогательная функция для рендера категории
+function renderCategory(typeKey, dishes, container, dayIdx) {
+    const catHeader = document.createElement('div');
+    catHeader.className = 'dish-category-title';
+    catHeader.innerText = DISH_TYPES[typeKey] || typeKey;
+    container.appendChild(catHeader);
+
+    dishes.forEach(dish => {
+        const dishEl = document.createElement('div');
+        dishEl.className = 'dish-card';
+        if (state.selections[dayIdx] && state.selections[dayIdx][dish.id]) {
+            dishEl.classList.add('selected');
+        }
+
+        const comp = dish.composition
+            ? dish.composition.slice(0, 45) + (dish.composition.length > 45 ? '...' : '')
+            : 'Состав не указан';
+
+        dishEl.innerHTML = `
+            <div class="dish-info-block">
+                <span class="dish-name">${dish.name}</span>
+                <span class="dish-meta" title="${dish.composition || ''}">${dish.quantity_grams}г • ${comp}</span>
+            </div>
+            <div class="dish-price">${dish.price_rub} ₽</div>
+        `;
+        dishEl.onclick = () => toggleDish(dayIdx, dish, dishEl);
+        container.appendChild(dishEl);
+    });
 }
 
 // === 4. Корзина и Заказ ===
@@ -315,7 +317,7 @@ async function submitOrder() {
         alert('Заказ принят!');
         state.selections = {};
         updateFooter();
-        renderMenu();
+        renderMenu(); // Перерисовка снимет выделения
         switchTab('history');
 
     } catch (e) {
