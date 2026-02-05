@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Новый заказ</title>
+    <link rel="stylesheet" href="cafeteria_styles.css">
+</head>
+<body>
+    <div class="container">
+        <div style="display:flex; justify-content:space-between;">
+            <h1>Оформление заказа</h1>
+            <button onclick="window.location.href='dashboard.html'" class="secondary" style="width: auto;">Назад</button>
+        </div>
+
+        <div class="filter-section">
+            <label>Дата начала недели (Понедельник):</label>
+            <input type="date" id="weekStart">
+        </div>
+
+        <div id="menuContainer" class="week-menu">
+            <!-- Дни недели генерируются JS -->
+        </div>
+
+        <div class="balance-box" style="position: sticky; bottom: 20px; z-index: 100;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 1.5rem;">Итого: <span id="totalPrice" class="price">0</span> ₽</span>
+                <button onclick="submitOrder()" style="width: auto; margin:0;">Подтвердить заказ</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        checkAuth();
+
+        let globalDishes = {};
+        let selections = {}; // { dayIdx: { dishId: qty } }
+        const DAYS = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"];
+
+        // Установка даты следующего понедельника
+        const d = new Date();
+        d.setDate(d.getDate() + (1 + 7 - d.getDay()) % 7);
+        document.getElementById('weekStart').value = d.toISOString().split('T')[0];
+
+        async function init() {
+            // 1. Получить глобальное меню для цен и названий
+            const dishes = await apiRequest('/menu');
+            dishes.forEach(d => globalDishes[d.id] = d);
+
+            // 2. Получить модульное меню
+            const moduleMenu = await apiRequest('/module-menu');
+
+            renderMenu(moduleMenu);
+        }
+
+        function renderMenu(moduleMenu) {
+            const container = document.getElementById('menuContainer');
+            container.innerHTML = '';
+
+            // Группировка
+            const menuByDay = Array(6).fill(null).map(() => []);
+            moduleMenu.forEach(item => {
+                if(item.day_of_week < 6) menuByDay[item.day_of_week].push(item.dish_id);
+            });
+
+            DAYS.forEach((dayName, dayIdx) => {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'week-day-container';
+
+                let dishesHtml = '';
+                const dayDishes = menuByDay[dayIdx];
+
+                if (dayDishes.length === 0) {
+                    dishesHtml = '<p style="color:var(--text-secondary)">Меню не составлено</p>';
+                } else {
+                    dayDishes.forEach(dishId => {
+                        const dish = globalDishes[dishId];
+                        if(!dish) return;
+
+                        dishesHtml += `
+                        <div class="dish-item">
+                            <div class="dish-info">
+                                <div class="dish-name">${dish.name}</div>
+                                <div class="dish-type">${dish.type} | <span class="price">${dish.price_rub} ₽</span></div>
+                            </div>
+                            <div style="display:flex; align-items:center;">
+                                <button class="secondary" style="width:30px; height:30px; padding:0; line-height:0;"
+                                    onclick="updateQty(${dayIdx}, ${dish.id}, -1)">-</button>
+                                <span id="qty-${dayIdx}-${dish.id}" class="order-quantity">0</span>
+                                <button class="secondary" style="width:30px; height:30px; padding:0; line-height:0;"
+                                    onclick="updateQty(${dayIdx}, ${dish.id}, 1)">+</button>
+                            </div>
+                        </div>
+                        `;
+                    });
+                }
+
+                dayDiv.innerHTML = `<div class="week-day-title">${dayName}</div>${dishesHtml}`;
+                container.appendChild(dayDiv);
+            });
+        }
+
+        window.updateQty = function(dayIdx, dishId, delta) {
+            if (!selections[dayIdx]) selections[dayIdx] = {};
+            const current = selections[dayIdx][dishId] || 0;
+            const newVal = Math.max(0, current + delta);
+            selections[dayIdx][dishId] = newVal;
+
+            document.getElementById(`qty-${dayIdx}-${dishId}`).innerText = newVal;
+            recalcTotal();
+        }
+
+        function recalcTotal() {
+            let total = 0;
+            for(let d in selections) {
+                for(let id in selections[d]) {
+                    const dish = globalDishes[id];
+                    if(dish) total += dish.price_rub * selections[d][id];
+                }
+            }
+            document.getElementById('totalPrice').innerText = total;
+        }
+
+        window.submitOrder = async function() {
+            const daysData = [];
+            for(let d in selections) {
+                const items = [];
+                for(let id in selections[d]) {
+                    if(selections[d][id] > 0) {
+                        items.push({ dish_id: parseInt(id), quantity: selections[d][id] });
+                    }
+                }
+                if(items.length > 0) {
+                    daysData.push({ day_of_week: parseInt(d), items: items });
+                }
+            }
+
+            const payload = {
+                week_start_date: document.getElementById('weekStart').value,
+                days: daysData
+            };
+
+            try {
+                await apiRequest('/orders', 'POST', payload);
+                alert("Заказ создан!");
+                window.location.href = 'dashboard.html';
+            } catch(e) {}
+        }
+
+        init();
+    </script>
+</body>
+</html>

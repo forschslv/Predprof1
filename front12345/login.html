@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход - Столовая Л2Ш</title>
+    <link rel="stylesheet" href="cafeteria_styles.css">
+</head>
+<body>
+    <div class="container" style="max-width: 400px; margin-top: 10vh;">
+        <h1>Вход</h1>
+        <p style="text-align: center; margin-bottom: 20px; color: var(--text-secondary);">
+            Введите ваш лицейский email, чтобы получить код доступа.
+        </p>
+
+        <form id="loginForm">
+            <input type="email" id="email" placeholder="Email" required>
+            <button type="submit">Получить код</button>
+        </form>
+
+        <div class="navigation-links" style="justify-content: center; background: none; border: none;">
+            <a href="index.html" style="color: var(--accent-cyan); text-decoration: none;">Нет аккаунта? Зарегистрироваться</a>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+
+            // ВАЖНО: Текущий API требует имя/фамилию для валидации схемы UserCreate.
+            // Мы отправляем заглушки. Если юзер существует, бэкенд отправит код на email
+            // и не будет менять имя (согласно логике main.py).
+            const dummyData = {
+                name: "LoginRequest",
+                secondary_name: "User",
+                status: "N/A",
+                email: email
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/register`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(dummyData)
+                });
+
+                // Обработка ответа
+                if (response.ok) {
+                    // Код успешно отправлен (200 или 201)
+                    localStorage.setItem('pending_email', email);
+                    window.location.href = 'verify.html';
+                } else {
+                    // Ошибка (например, пользователь заблокирован или другая проблема API)
+                    const err = await response.json();
+
+                    // Специфичная проверка для вашего бэкенда:
+                    // Если бэкенд возвращает 400 "User exists" для УЖЕ верифицированного юзера,
+                    // то с текущим кодом main.py войти нельзя (нужна доработка API).
+                    // Но мы покажем ошибку пользователю:
+                    alert("Ошибка: " + (err.detail || "Не удалось отправить код"));
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Ошибка соединения с сервером");
+            }
+        });
+    </script>
+</body>
+</html>

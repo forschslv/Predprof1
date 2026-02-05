@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Мои заказы</title>
+    <link rel="stylesheet" href="cafeteria_styles.css">
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h1>Мои заказы</h1>
+            <button onclick="logout()" class="logout" style="width: auto; margin: 0;">Выйти</button>
+        </div>
+
+        <div class="navigation-links">
+            <button onclick="window.location.href='order.html'">+ Новый заказ</button>
+        </div>
+
+        <div id="ordersList">
+            <!-- Заказы загрузятся сюда -->
+            <div class="order-item" style="text-align: center;">Загрузка...</div>
+        </div>
+    </div>
+
+    <!-- Модальное окно загрузки чека -->
+    <div id="uploadModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="document.getElementById('uploadModal').style.display='none'">&times;</span>
+            <h2>Оплата заказа #<span id="modalOrderId"></span></h2>
+            <p>Загрузите скриншот или PDF подтверждения оплаты.</p>
+            <input type="file" id="paymentFile">
+            <button onclick="submitPayment()">Отправить</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        checkAuth();
+        let currentOrderId = null;
+
+        async function loadOrders() {
+            try {
+                const orders = await apiRequest('/orders');
+                const list = document.getElementById('ordersList');
+                list.innerHTML = '';
+
+                if (orders.length === 0) {
+                    list.innerHTML = '<p style="text-align:center;">У вас пока нет заказов</p>';
+                    return;
+                }
+
+                orders.forEach(order => {
+                    const div = document.createElement('div');
+                    div.className = 'order-item';
+
+                    let statusColor = '#f59e0b'; // PENDING
+                    if(order.status === 'PAID') statusColor = '#10b981';
+                    if(order.status === 'PROBLEM') statusColor = '#ef4444';
+
+                    div.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <div class="dish-name">Заказ #${order.id}</div>
+                                <div class="dish-composition">Неделя: ${order.week_start_date}</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div class="price">${order.total_amount} ₽</div>
+                                <div style="color: ${statusColor}; font-weight: bold;">${order.status}</div>
+                            </div>
+                        </div>
+                        ${order.status === 'PENDING' ?
+                            `<button class="secondary" style="margin-top:10px;" onclick="openPayModal(${order.id})">Подтвердить оплату</button>`
+                            : ''}
+                    `;
+                    list.appendChild(div);
+                });
+            } catch (e) {}
+        }
+
+        function openPayModal(id) {
+            currentOrderId = id;
+            document.getElementById('modalOrderId').innerText = id;
+            document.getElementById('uploadModal').style.display = 'block';
+        }
+
+        async function submitPayment() {
+            const fileInput = document.getElementById('paymentFile');
+            if(fileInput.files.length === 0) return alert("Выберите файл");
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                await apiRequest(`/orders/${currentOrderId}/pay`, 'POST', formData, true);
+                alert("Файл загружен");
+                document.getElementById('uploadModal').style.display = 'none';
+                loadOrders();
+            } catch(e) {}
+        }
+
+        loadOrders();
+    </script>
+</body>
+</html>

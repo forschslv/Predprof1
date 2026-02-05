@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Админ панель</title>
+    <link rel="stylesheet" href="cafeteria_styles.css">
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h1>Панель Администратора</h1>
+            <button onclick="logout()" class="logout" style="width:auto;">Выйти</button>
+        </div>
+
+        <div class="button-group" style="margin-bottom: 30px;">
+            <button onclick="showTab('menu')">Загрузка Меню</button>
+            <button onclick="showTab('module')">Конструктор Модуля</button>
+            <button onclick="showTab('reports')">Отчеты</button>
+        </div>
+
+        <!-- 1. Загрузка Меню -->
+        <div id="tab-menu" class="hidden">
+            <h2>Глобальное меню</h2>
+            <div class="inventory-item">
+                <p>Загрузить файл меню (.txt)</p>
+                <div style="margin: 10px 0;">
+                    <label><input type="radio" name="provider" value="true" checked> Меню поставщика</label>
+                    <label style="margin-left: 20px;"><input type="radio" name="provider" value="false"> Собственное меню</label>
+                </div>
+                <input type="file" id="menuFile">
+                <button onclick="uploadMenu()">Загрузить</button>
+            </div>
+        </div>
+
+        <!-- 2. Конструктор модуля -->
+        <div id="tab-module" class="hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2>Меню на модуль</h2>
+                <div>
+                    <button class="secondary" onclick="downloadFile('/module-menu/export', 'module_menu.csv')" style="width:auto;">Скачать CSV</button>
+                    <button onclick="saveModuleMenu()" style="width:auto;">Сохранить изменения</button>
+                </div>
+            </div>
+            <div id="moduleBuilder" class="week-menu">
+                <!-- Генерируется JS -->
+            </div>
+        </div>
+
+        <!-- 3. Отчеты -->
+        <div id="tab-reports" class="hidden">
+            <h2>Отчеты и Заказы</h2>
+            <div class="stats-box">
+                <h3>Скачать отчет для накрытия (DOCX)</h3>
+                <input type="date" id="reportDate">
+                <button onclick="downloadReport()" style="width:auto; margin-top:10px;">Скачать</button>
+            </div>
+
+            <div class="request-item">
+                <h3>Управление статусом заказа (Ручное)</h3>
+                <input type="number" id="orderId" placeholder="ID заказа">
+                <div class="button-group">
+                    <button onclick="setOrderStatus('PAID')" style="background: var(--accent-cyan); color: #000;">Оплачено</button>
+                    <button onclick="setOrderStatus('PROBLEM')" class="danger">Проблема</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        checkAuth();
+        let allDishes = [];
+        let moduleSchedule = [[], [], [], [], [], []]; // 6 дней
+
+        function showTab(tabName) {
+            ['menu', 'module', 'reports'].forEach(t => {
+                document.getElementById('tab-' + t).classList.add('hidden');
+            });
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+            if(tabName === 'module') loadModuleBuilder();
+        }
+
+        // --- Logic: Menu Upload ---
+        async function uploadMenu() {
+            const file = document.getElementById('menuFile').files[0];
+            const isProvider = document.querySelector('input[name="provider"]:checked').value;
+            if(!file) return alert("Файл не выбран");
+
+            const fd = new FormData();
+            fd.append('file', file);
+
+            try {
+                await apiRequest(`/menu/upload?is_provider=${isProvider}`, 'POST', fd, true);
+                alert("Меню обновлено");
+            } catch(e) {}
+        }
+
+        // --- Logic: Module Builder ---
+        async function loadModuleBuilder() {
+            allDishes = await apiRequest('/menu');
+            const currentMenu = await apiRequest('/module-menu');
+
+            // Сброс и заполнение
+            moduleSchedule = [[], [], [], [], [], []];
+            currentMenu.forEach(m => {
+                if(m.day_of_week < 6) moduleSchedule[m.day_of_week].push(m.dish_id);
+            });
+
+            const container = document.getElementById('moduleBuilder');
+            container.innerHTML = '';
+
+            const DAYS = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"];
+            DAYS.forEach((day, idx) => {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'week-day-container';
+                dayDiv.style.maxHeight = '400px';
+                dayDiv.style.overflowY = 'auto';
+
+                let listHtml = '';
+                allDishes.forEach(dish => {
+                    const isChecked = moduleSchedule[idx].includes(dish.id) ? 'checked' : '';
+                    listHtml += `
+                    <div class="day-dish-selector">
+                        <label style="display:flex; align-items:center; cursor:pointer;">
+                            <input type="checkbox" ${isChecked} onchange="toggleDish(${idx}, ${dish.id})">
+                            <span style="${isChecked ? 'color:var(--accent-cyan); font-weight:bold;' : ''}">${dish.name} (${dish.type})</span>
+                        </label>
+                    </div>`;
+                });
+
+                dayDiv.innerHTML = `<div class="week-day-title">${day}</div>${listHtml}`;
+                container.appendChild(dayDiv);
+            });
+        }
+
+        window.toggleDish = function(dayIdx, dishId) {
+            const index = moduleSchedule[dayIdx].indexOf(dishId);
+            if(index > -1) {
+                moduleSchedule[dayIdx].splice(index, 1);
+            } else {
+                moduleSchedule[dayIdx].push(dishId);
+            }
+        }
+
+        window.saveModuleMenu = async function() {
+            const payload = {
+                schedule: moduleSchedule.map((ids, idx) => ({
+                    day_of_week: idx,
+                    dish_ids: ids
+                }))
+            };
+            try {
+                await apiRequest('/module-menu', 'POST', payload);
+                alert("Сохранено!");
+            } catch(e) {}
+        }
+
+        // --- Logic: Reports ---
+        window.downloadReport = function() {
+            const date = document.getElementById('reportDate').value;
+            if(!date) return alert("Выберите дату");
+            downloadFile(`/admin/reports/docx?date_query=${date}`, `Report_${date}.docx`);
+        }
+
+        window.setOrderStatus = async function(status) {
+            const id = document.getElementById('orderId').value;
+            if(!id) return;
+            try {
+                await apiRequest(`/admin/orders/${id}/status?status=${status}`, 'PATCH');
+                alert(`Статус заказа ${id} изменен на ${status}`);
+            } catch(e) {}
+        }
+
+        // Init defaults
+        showTab('menu');
+        document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
+    </script>
+</body>
+</html>

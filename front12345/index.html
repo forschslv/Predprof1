@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация - Столовая Л2Ш</title>
+    <link rel="stylesheet" href="cafeteria_styles.css">
+</head>
+<body>
+    <div class="container" style="max-width: 500px; margin-top: 10vh;">
+        <h1>Регистрация</h1>
+        <div id="welcomeMsg" class="hidden"></div>
+
+        <form id="registerForm">
+            <input type="text" id="name" placeholder="Имя" required>
+            <input type="text" id="secondary_name" placeholder="Фамилия" required>
+            <input type="text" id="status" placeholder="Класс (например, 10А)" required>
+            <input type="email" id="email" placeholder="Email (Лицейский)" required>
+            <button type="submit">Зарегистрироваться</button>
+        </form>
+
+        <div class="navigation-links" style="justify-content: center; background: none; border: none;">
+            <a href="login.html" style="color: var(--accent-cyan); text-decoration: none;">Уже есть аккаунт? Войти</a>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                name: document.getElementById('name').value,
+                secondary_name: document.getElementById('secondary_name').value,
+                status: document.getElementById('status').value,
+                email: document.getElementById('email').value
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/register`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    // ТОЛЬКО если статус 200-299 (Успех), переходим к вводу кода
+                    localStorage.setItem('pending_email', data.email);
+                    window.location.href = 'verify.html';
+                } else {
+                    // Если 400 (User exists) или другая ошибка - остаемся здесь и показываем alert
+                    const err = await response.json();
+                    alert(err.detail || "Ошибка регистрации");
+                }
+
+            } catch (e) {
+                console.error(e);
+                alert("Не удалось соединиться с сервером");
+            }
+        });
+    </script>
+</body>
+</html>
