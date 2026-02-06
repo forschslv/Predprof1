@@ -71,14 +71,17 @@ async function loadHistory() {
                                hidden>
                     </label>
                 `;
-            } else if (o.status === 'PAID') {
+            } else if (o.status === 'PAID' || o.status === 'ON_REVIEW') {
                 actionHtml = `
                     <button onclick="downloadReceipt(${o.id})" class="btn-secondary">
                         📄 Скачать
                     </button>
                 `;
-            } else {
+            } else if (o.status === 'CANCELED') {
                 actionHtml = `<span class="text-muted">-</span>`;
+            } else {
+                console.warn(`Неизвестный статус заказа #${o.id}: ${o.status}`);
+                actionHtml = `<span class="text-muted">error</span>`;
             }
 
             html += `
