@@ -20,6 +20,8 @@ class OrderStatus(str, enum.Enum):
     PENDING = "PENDING"
     PAID = "PAID"
     PROBLEM = "PROBLEM"
+    CANCELED = "CANCELED"
+    ON_REVIEW = "ON_REVIEW"
 
 
 class User(Base):

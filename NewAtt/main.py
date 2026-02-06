@@ -345,6 +345,7 @@ async def pay_order(
         file_object.write(await file.read())
 
     order.payment_proof_path = file_location
+    order.status = OrderStatus.ON_REVIEW
 
     db.commit()
     return {"message": "Payment proof uploaded"}
