@@ -109,3 +109,21 @@ async function validateAccess(needAdmin = false) {
         logout();
     }
 }
+
+async function checkAvailability(url) {
+    try {
+        const response = await fetch(url, {
+            method: 'HEAD',
+            cache: 'no-cache' // Чтобы не кэшировать старые статусы
+        });
+
+        // Свойство .ok истинно, если статус 200-299.
+        // Если статус 404, .ok будет false.
+        return response.ok;
+
+    } catch (error) {
+        // Сюда мы попадаем, если сервер вообще лежит (Network Error)
+        console.warn("Сервер недоступен или ошибка сети:", error);
+        return false;
+    }
+}

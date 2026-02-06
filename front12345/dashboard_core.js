@@ -1,6 +1,14 @@
 // === КОНСТАНТЫ И НАСТРОЙКИ ===
-const API_URL = 'http://localhost:8000';
-
+// try {
+//     API_URL = 'http://localhost:8000';
+// } catch (error) {
+//     console.error("Ошибка подключения к API:", error);
+// }
+try {
+    token = localStorage.getItem('token');
+} catch (error) {
+    console.error("Ошибка получения токена:", error);
+}
 const DISH_TYPES = {
     'MAIN': '🍛 Основные блюда',
     'SOUP': '🍜 Супы',

@@ -2,9 +2,9 @@
 
 async function loadHistory() {
     const list = document.getElementById('ordersList');
-    if(!list) return;
+    if (!list) return;
     list.innerHTML = '<p class="loading-text">Загрузка истории...</p>';
-    
+
     try {
         // GET /orders - Получаем список заказов
         const orders = await request('/orders', 'GET');
@@ -32,33 +32,31 @@ async function loadHistory() {
             return (a.id - b.id);
         });
 
-        orders.forEach(o => {
-            // Исправленная работа с датой
+        // Используем map + Promise.all для параллельной проверки всех чеков
+        const rowPromises = orders.map(async (o) => {
+            // 1. Форматирование даты
             let dateDisplay = "—";
             if (o.week_start_date) {
                 const d = new Date(o.week_start_date);
-                // Форматируем как "6 февраля 2026"
                 dateDisplay = d.toLocaleDateString('ru-RU', {
                     day: 'numeric',
                     month: 'long',
                     year: 'numeric'
                 });
             } else if (o.created_at) {
-                // Фоллбэк, если вдруг вернется старое поле
                 dateDisplay = new Date(o.created_at).toLocaleDateString('ru-RU');
             }
 
-            // Статусы
+            // 2. Статусы
             const statusMap = {
                 'PAID': { text: 'Оплачено', class: 'status-paid' },
                 'PENDING': { text: 'Ожидает оплаты', class: 'status-pending' },
                 'CANCELED': { text: 'Отменен', class: 'status-canceled' },
                 'ON_REVIEW': { text: 'На проверке', class: 'status-pending' }
             };
-
             const st = statusMap[o.status] || { text: o.status, class: '' };
 
-            // Кнопки действий
+            // 3. Логика кнопок (Асинхронная часть)
             let actionHtml = '';
 
             if (o.status === 'PENDING') {
@@ -72,11 +70,19 @@ async function loadHistory() {
                     </label>
                 `;
             } else if (o.status === 'PAID' || o.status === 'ON_REVIEW') {
-                actionHtml = `
+                // Асинхронная проверка наличия файла
+                const url = `${API_URL}/orders/${o.id}/receipt`;
+                const allowed = await checkAvailability(url);
+
+                if (!allowed) {
+                    actionHtml = `<span class="text-muted">Скачивание недоступно</span>`;
+                } else {
+                    actionHtml = `
                     <button onclick="downloadReceipt(${o.id})" class="btn-secondary">
                         📄 Скачать
                     </button>
-                `;
+                    `;
+                }
             } else if (o.status === 'CANCELED') {
                 actionHtml = `<span class="text-muted">-</span>`;
             } else {
@@ -84,7 +90,8 @@ async function loadHistory() {
                 actionHtml = `<span class="text-muted">error</span>`;
             }
 
-            html += `
+            // Возвращаем HTML одной строки
+            return `
             <tr>
                 <td>#${o.id}</td>
                 <td>${dateDisplay}</td>
@@ -94,6 +101,11 @@ async function loadHistory() {
             </tr>`;
         });
 
+        // Ждем выполнения всех асинхронных операций
+        const rows = await Promise.all(rowPromises);
+
+        // Собираем таблицу
+        html += rows.join('');
         html += '</tbody></table>';
         list.innerHTML = html;
 
