@@ -44,7 +44,14 @@ async function loadHistory() {
             };
             
             const st = statusMap[o.status] || { text: o.status, class: '' };
-
+            if (!st.text) {
+                console.warn(`Неизвестный текст статуса заказа ${o.id}: ${st.text} (${o.status})`);
+                st.text = o.status;
+            }
+            if (!st.class) {
+                console.warn(`Неизвестный класс статуса заказа ${o.id}: ${st.class} (${o.status})`);
+                st.class = '';
+            }
             // Генерируем кнопки действий в зависимости от статуса
             let actionHtml = '';
             
