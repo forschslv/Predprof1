@@ -29,9 +29,7 @@ async function loadHistory() {
 
         // Сортировка: Сначала по дате недели (новые сверху), потом по ID
         orders.sort((a, b) => {
-            const dateA = new Date(a.week_start_date || 0);
-            const dateB = new Date(b.week_start_date || 0);
-            return (dateB - dateA) || (b.id - a.id);
+            return (a.id - b.id);
         });
 
         orders.forEach(o => {
