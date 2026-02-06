@@ -113,9 +113,9 @@ async function uploadPaymentProof(orderId, inputElement) {
         const formData = new FormData();
         formData.append('file', file); // Важно: имя поля должно совпадать со Swagger ('file')
 
-        // POST /orders/{id}/payment
+        // POST /orders/{id}/pay
         // Функция request в dashboard_core.js сама определит FormData и уберет Content-Type JSON
-        await request(`/orders/${orderId}/payment`, 'POST', formData);
+        await request(`/orders/${orderId}/pay`, 'POST', formData);
 
         alert("Чек успешно загружен! Статус заказа обновится после проверки.");
         loadHistory(); // Перезагружаем таблицу
