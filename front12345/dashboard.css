@@ -209,3 +209,34 @@ input[type="date"] {
 .dish-card {
     gap: 10px; /* Отступ между ценой и названием */
 }
+/* Стили для кнопки загрузки */
+.btn-upload {
+    display: inline-block;
+    background: rgba(139, 92, 246, 0.2); /* Фиолетовый оттенок */
+    color: var(--accent-purple);
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    border: 1px solid var(--accent-purple);
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.btn-upload:hover {
+    background: var(--accent-purple);
+    color: white;
+}
+
+/* Статусы */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+.status-paid { background: rgba(16, 185, 129, 0.2); color: #34d399; } /* Зеленый */
+.status-pending { background: rgba(245, 158, 11, 0.2); color: #fbbf24; } /* Оранжевый */
+.status-canceled { background: rgba(239, 68, 68, 0.2); color: #f87171; } /* Красный */
+
+.text-muted { color: var(--text-secondary); }
