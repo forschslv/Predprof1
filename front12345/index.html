@@ -15,16 +15,39 @@
             <input type="text" id="secondary_name" placeholder="Фамилия" required>
             <input type="text" id="status" placeholder="Класс (например, 10А)" required>
             <input type="email" id="email" placeholder="Почта @students.sch2.ru" required>
-            <button type="submit" id="regBtn">Создать аккаунт</button>
+            <button type="submit" id="regBtn">Зарегистрироваться</button>
         </form>
 
         <div id="toggleText">
-            <a href="login.html" style="color: var(--accent-cyan); text-decoration: none;">Уже есть аккаунт? Войти</a>
+            <a href="login.html" style="color: var(--accent-cyan); text-decoration: none;">Уже есть аккаунт? <br>Войти можно тут (игнорируя поля для регистрации) и по ссылке.</a>
         </div>
     </div>
 
     <script src="script.js"></script>
     <script>
+        // Function to update button text based on input fields
+        function updateButtonText() {
+            const nameInput = document.getElementById('name');
+            const secondaryNameInput = document.getElementById('secondary_name');
+            const statusInput = document.getElementById('status');
+            const regBtn = document.getElementById('regBtn');
+
+            // Check if any of the required fields are empty
+            if (nameInput.value.trim() === '' || secondaryNameInput.value.trim() === '' || statusInput.value.trim() === '') {
+                regBtn.textContent = 'Войти';
+            } else {
+                regBtn.textContent = 'Зарегистрироваться';
+            }
+        }
+
+        // Add event listeners to input fields to update button text dynamically
+        document.getElementById('name').addEventListener('input', updateButtonText);
+        document.getElementById('secondary_name').addEventListener('input', updateButtonText);
+        document.getElementById('status').addEventListener('input', updateButtonText);
+
+        // Set initial button text based on current field values
+        updateButtonText();
+
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('regBtn');
