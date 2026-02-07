@@ -83,23 +83,31 @@
                     const err = await response.json();
                     throw new Error(err.detail || "Чек не найден");
                 }
+                const contentType = response.headers.get('content-type');
                 const blob = await response.blob();
-                const blobUrl = window.URL.createObjectURL(blob);
-                previousBlobUrl = blobUrl;
-                // Устанавливаем blob URL в iframe
-                iframe.src = blobUrl;
-                iframe.style.display = 'block';
-                // Показать кнопку скачивания
-                if (downloadBtn) {
-                    downloadBtn.style.display = 'inline-block';
-                    downloadBtn.onclick = () => {
-                        const a = document.createElement('a');
-                        a.href = blobUrl;
-                        a.download = `receipt_${orderId}.pdf`;
-                        document.body.appendChild(a);
-                        a.click();
-                        a.remove();
-                    };
+                // Проверяем, является ли файл PDF (по заголовку или типу blob)
+                const isPdf = (contentType && contentType.includes('application/pdf')) || blob.type.includes('pdf');
+                if (isPdf) {
+                    const blobUrl = window.URL.createObjectURL(blob);
+                    previousBlobUrl = blobUrl;
+                    // Устанавливаем blob URL в iframe
+                    iframe.src = blobUrl;
+                    iframe.style.display = 'block';
+                    // Показать кнопку скачивания
+                    if (downloadBtn) {
+                        downloadBtn.style.display = 'inline-block';
+                        downloadBtn.onclick = () => {
+                            const a = document.createElement('a');
+                            a.href = blobUrl;
+                            a.download = `receipt_${orderId}.pdf`;
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                        };
+                    }
+                } else {
+                    // Если файл не PDF, показываем сообщение об ошибке
+                    throw new Error("Файл не является PDF и не может быть отображён. Возможно, это архив (.zip) или исполняемый файл (.exe).");
                 }
             } catch (e) {
                 alert("Ошибка: " + e.message);
