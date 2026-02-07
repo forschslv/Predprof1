@@ -116,9 +116,13 @@ async function checkAvailability(url) {
             method: 'HEAD',
             cache: 'no-cache' // Чтобы не кэшировать старые статусы
         });
-
         // Свойство .ok истинно, если статус 200-299.
         // Если статус 404, .ok будет false.
+        // В случае 404, .ok будет false.
+        if (response.status === 405) {
+            return true; // Сервер отвечает, но метод не разрешён - значит метод HEAD не поддерживается, но сервер поддерживает API
+        }
+
         return response.ok;
 
     } catch (error) {
