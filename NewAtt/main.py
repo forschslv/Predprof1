@@ -363,7 +363,10 @@ async def download_receipt(
         db: Session = Depends(get_db)
 ):
     user = get_current_user(request, db)
-    order = db.query(Order).filter(Order.id == order_id, Order.user_id == user.id).first()
+    if user.is_admin:
+        order = db.query(Order).filter(Order.id == order_id).first()
+    else:
+        order = db.query(Order).filter(Order.id == order_id, Order.user_id == user.id).first()
 
     if not order:
         logger.debug(f"Order not found for user {user.id}: {order_id}")
