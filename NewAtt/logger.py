@@ -1,10 +1,8 @@
 import logging
 import sys, os
 from logging.handlers import RotatingFileHandler
-try:
-    is_server = os.uname().nodename == "SERVERNYA"
-except AttributeError:
-    is_server = True
+
+is_server = False
 # Создание логгера
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
