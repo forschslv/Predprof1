@@ -3,14 +3,15 @@
 Обслуживает статические файлы из front12345 и подключает API из NewAtt.
 API доступно по тем же путям, что и раньше (без префикса /api).
 """
+from __future__ import annotations
+
 import sys
-import os
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from fastapi.responses import FileResponse
+from starlette.responses import FileResponse
 
 from NewAtt.logger import logger
 
@@ -57,11 +58,12 @@ HTML_MAPPING = {
     "order": "order.html",
     "order_details": "order_details.html",
     "verify": "verify.html",
+    "404": "404.html",
 }
 
 
 @app.get("/{path:path}")
-async def catch_all(path: str):
+async def catch_all(path: str):#-> FileResponse | tuple[dict[str, str], int]
     html_file = HTML_MAPPING.get(path) or HTML_MAPPING.get(path[:-5]) if path.endswith(".html") else None
     logger.debug(f"Request for path {path}, HTML file: {html_file}")
     if html_file:
@@ -72,10 +74,13 @@ async def catch_all(path: str):
             file_path = frontend_path / path
             if file_path.is_file():
                 return FileResponse(file_path)
+            else:
+                # Файл не найден, возвращаем 404.html
+                return FileResponse(frontend_path / "404.html", status_code=404)
         except Exception as e:
             logger.warning(f"Error serving file {path}: {e}")
             try:
-                return FileResponse(frontend_path / "404.html")
+                return FileResponse(frontend_path / "404.html", status_code=404)
             except Exception as e:
                 logger.error(f"Error serving 404.html: {e}")
                 return {"error": "Internal server error: 404.html not found, please try again later."}, 500
