@@ -147,22 +147,27 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Email must be a @students.sch2.ru address")
 
 
-
-    code = generate_verification_code()
     if existing:
+        code = generate_verification_code()
         existing.verification_code = code
         db.commit()
         db.refresh(existing)
         send_verification_email(user_data.email, code)
         return RegisterResponse(message="Code resent", user=UserResponse.model_validate(existing))
+    else:
+        if not user_data.name or not user_data.secondary_name:
+            raise HTTPException(status_code=400, detail="Name and secondary name are required for new users")
+        if user_data.status not in {"active", "inactive"}:
+            raise HTTPException(status_code=400, detail="Status must be 'active' or 'inactive'")
+        code = generate_verification_code()
 
-    new_user = User(
-        name=user_data.name,
-        secondary_name=user_data.secondary_name,
-        email=user_data.email,
-        status=user_data.status,
-        verification_code=code
-    )
+        new_user = User(
+            name=user_data.name,
+            secondary_name=user_data.secondary_name,
+            email=user_data.email,
+            status=user_data.status,
+            verification_code=code
+        )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)

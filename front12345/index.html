@@ -11,15 +11,14 @@
         <h1>Регистрация</h1>
 
         <form id="registerForm">
-            <input type="text" id="name" placeholder="Имя" required>
-            <input type="text" id="secondary_name" placeholder="Фамилия" required>
-            <input type="text" id="status" placeholder="Класс (например, 10А)" required>
+            <input type="text" id="name" placeholder="Имя">
+            <input type="text" id="secondary_name" placeholder="Фамилия">
             <input type="email" id="email" placeholder="Почта @students.sch2.ru" required>
             <button type="submit" id="regBtn">Зарегистрироваться</button>
         </form>
 
         <div id="toggleText">
-            <a href="login.html" style="color: var(--accent-cyan); text-decoration: none;">Уже есть аккаунт? <br>Войти можно тут (игнорируя поля для регистрации) и по ссылке.</a>
+            <a href="login" style="color: var(--accent-cyan); text-decoration: none;">Уже есть аккаунт? <br>Войти можно тут (игнорируя поля для регистрации) и по ссылке.</a>
         </div>
     </div>
 
@@ -29,11 +28,10 @@
         function updateButtonText() {
             const nameInput = document.getElementById('name');
             const secondaryNameInput = document.getElementById('secondary_name');
-            const statusInput = document.getElementById('status');
             const regBtn = document.getElementById('regBtn');
 
             // Check if any of the required fields are empty
-            if (nameInput.value.trim() === '' || secondaryNameInput.value.trim() === '' || statusInput.value.trim() === '') {
+            if (nameInput.value.trim() === '' || secondaryNameInput.value.trim() === '') {
                 regBtn.textContent = 'Войти';
             } else {
                 regBtn.textContent = 'Зарегистрироваться';
@@ -43,7 +41,6 @@
         // Add event listeners to input fields to update button text dynamically
         document.getElementById('name').addEventListener('input', updateButtonText);
         document.getElementById('secondary_name').addEventListener('input', updateButtonText);
-        document.getElementById('status').addEventListener('input', updateButtonText);
 
         // Set initial button text based on current field values
         updateButtonText();
@@ -54,7 +51,7 @@
             const data = {
                 name: document.getElementById('name').value.trim(),
                 secondary_name: document.getElementById('secondary_name').value.trim(),
-                status: document.getElementById('status').value.trim(),
+                status: document.getElementById('status')?.value.trim() || "active", // Default to "active" if not provided
                 email: document.getElementById('email').value.trim()
             };
 
@@ -78,12 +75,13 @@
                 if (response.ok) {
                     // Успешная регистрация или переотправка кода
                     localStorage.setItem('pending_email', data.email);
-                    window.location.href = 'verify.html';
+                    window.location.href = 'verify';
                 } else {
                     // ОШИБКА: Остаемся на странице
                     // В main.py при существующем юзере возвращается 201 "Code resent",
                     // так что сюда попадем только при реальных ошибках (валидация и т.д.)
                     alert("Ошибка регистрации: " + (result.detail || "Проверьте данные"));
+                    console.log(result);
                     btn.disabled = false;
                     btn.innerText = "Создать аккаунт";
                 }
