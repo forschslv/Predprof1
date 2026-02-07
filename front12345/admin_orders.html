@@ -29,11 +29,12 @@
         </div>
 
         <div class="inventory-item">
-            <h3>Просмотр чека (PDF)</h3>
+            <h3>Просмотр чека (PDF/изображения)</h3>
             <input type="number" id="pdfOrderId" placeholder="ID заказа">
             <button onclick="viewReceipt()">Просмотреть чек</button>
             <div style="margin-top: 20px;">
                 <iframe id="pdfViewer" width="100%" height="600px" style="border: 1px solid #ccc; display: none;"></iframe>
+                <img id="imageViewer" style="max-width: 100%; max-height: 600px; border: 1px solid #ccc; display: none;">
                 <button id="downloadReceiptBtn" class="btn" style="display: none; margin-top: 10px;">Скачать чек</button>
             </div>
         </div>
@@ -65,9 +66,11 @@
             const token = localStorage.getItem('token');
             const url = `${API_URL}/orders/${orderId}/receipt`;
             const iframe = document.getElementById('pdfViewer');
+            const imageViewer = document.getElementById('imageViewer');
             const downloadBtn = document.getElementById('downloadReceiptBtn');
-            // Скрыть iframe и кнопку скачивания перед новым запросом
+            // Скрыть все элементы просмотра перед новым запросом
             iframe.style.display = 'none';
+            imageViewer.style.display = 'none';
             if (downloadBtn) downloadBtn.style.display = 'none';
             // Освободить предыдущий blob URL, если есть
             if (previousBlobUrl) {
@@ -85,12 +88,25 @@
                 }
                 const contentType = response.headers.get('content-type');
                 const blob = await response.blob();
-                // Проверяем, является ли файл PDF (по заголовку или типу blob)
+                // Определяем тип файла
                 const isPdf = (contentType && contentType.includes('application/pdf')) || blob.type.includes('pdf');
+                const isImage = (contentType && (
+                    contentType.includes('image/jpeg') ||
+                    contentType.includes('image/jpg') ||
+                    contentType.includes('image/png') ||
+                    contentType.includes('image/bmp') ||
+                    contentType.includes('image/webp')
+                )) || (
+                    blob.type.includes('jpeg') ||
+                    blob.type.includes('jpg') ||
+                    blob.type.includes('png') ||
+                    blob.type.includes('bmp') ||
+                    blob.type.includes('webp')
+                );
                 if (isPdf) {
                     const blobUrl = window.URL.createObjectURL(blob);
                     previousBlobUrl = blobUrl;
-                    // Устанавливаем blob URL в iframe
+                    // Устанавливаем blob URL в iframe для PDF
                     iframe.src = blobUrl;
                     iframe.style.display = 'block';
                     // Показать кнопку скачивания
@@ -105,9 +121,27 @@
                             a.remove();
                         };
                     }
+                } else if (isImage) {
+                    const blobUrl = window.URL.createObjectURL(blob);
+                    previousBlobUrl = blobUrl;
+                    // Устанавливаем blob URL в img для изображений
+                    imageViewer.src = blobUrl;
+                    imageViewer.style.display = 'block';
+                    // Показать кнопку скачивания
+                    if (downloadBtn) {
+                        downloadBtn.style.display = 'inline-block';
+                        downloadBtn.onclick = () => {
+                            const a = document.createElement('a');
+                            a.href = blobUrl;
+                            a.download = `receipt_${orderId}.${blob.type.split('/')[1] || 'img'}`;
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                        };
+                    }
                 } else {
-                    // Если файл не PDF, показываем сообщение об ошибке
-                    throw new Error("Файл не является PDF и не может быть отображён. Возможно, это архив (.zip) или исполняемый файл (.exe).");
+                    // Если файл не PDF и не разрешённое изображение, показываем сообщение об ошибке
+                    throw new Error("Файл не является PDF или разрешённым изображением (JPEG, PNG, BMP, WEBP) и не может быть отображён. Возможно, это архив (.zip), исполняемый файл (.exe), GIF или SVG.");
                 }
             } catch (e) {
                 alert("Ошибка: " + e.message);

@@ -344,6 +344,24 @@ async def pay_order(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
+    # Проверка типа файла
+    allowed_mime_types = [
+        "application/pdf",
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/bmp",
+        "image/webp",
+    ]
+    if file.content_type not in allowed_mime_types:
+        raise HTTPException(status_code=400, detail="Недопустимый тип файла. Разрешены только PDF и изображения (JPEG, PNG, JPG, BMP, WEBP).")
+
+    # Дополнительная проверка по расширению
+    forbidden_extensions = {".exe", ".zip", ".rar", ".7z", ".tar", ".gz", ".sh", ".bat", ".cmd", ".msi", ".dmg"}
+    file_ext = os.path.splitext(file.filename)[1].lower()
+    if file_ext in forbidden_extensions:
+        raise HTTPException(status_code=400, detail="Загрузка исполняемых файлов и архивов запрещена.")
+
     os.makedirs("uploads", exist_ok=True)
     file_location = f"uploads/{order_id}_{file.filename}"
     with open(file_location, "wb+") as file_object:
@@ -381,8 +399,17 @@ async def download_receipt(
         raise HTTPException(status_code=404, detail="Receipt file not found")
     logger.debug(f"Returning receipt file for order {order_id}: {order.payment_proof_path}")
     # Определяем Content-Type по расширению файла
-    if order.payment_proof_path.lower().endswith('.pdf'):
+    file_path_lower = order.payment_proof_path.lower()
+    if file_path_lower.endswith('.pdf'):
         media_type = "application/pdf"
+    elif file_path_lower.endswith('.png'):
+        media_type = "image/png"
+    elif file_path_lower.endswith('.jpg') or file_path_lower.endswith('.jpeg'):
+        media_type = "image/jpeg"
+    elif file_path_lower.endswith('.bmp'):
+        media_type = "image/bmp"
+    elif file_path_lower.endswith('.webp'):
+        media_type = "image/webp"
     else:
         media_type = "application/octet-stream"
     return FileResponse(
