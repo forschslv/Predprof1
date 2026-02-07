@@ -64,7 +64,7 @@ HTML_MAPPING = {
 
 @app.get("/{path:path}")
 async def catch_all(path: str):#-> FileResponse | tuple[dict[str, str], int]
-    html_file = HTML_MAPPING.get(path) or HTML_MAPPING.get(path[:-5]) if path.endswith(".html") else None
+    html_file = HTML_MAPPING.get(path) or (HTML_MAPPING.get(path[:-5]) if path.endswith(".html") else None)
     logger.debug(f"Request for path {path}, HTML file: {html_file}")
     if html_file:
         return FileResponse(frontend_path / html_file)
