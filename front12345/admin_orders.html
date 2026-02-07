@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
     <title>Заказы - Админ</title>
@@ -43,7 +43,8 @@
     <script src="script.js"></script>
     <script>
         checkAuth(); requireAdmin();
-        document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
+    </script>
+    <script>        document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
 
         async function downloadDocx() {
             const date = document.getElementById('reportDate').value;
@@ -95,6 +96,6 @@
                 alert("Ошибка: " + e.message);
             }
         }
-    </script>
+</script>
 </body>
 </html>
