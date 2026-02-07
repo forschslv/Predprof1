@@ -149,3 +149,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 });
+
+document.getElementById('userEmail').innerText = localStorage.getItem('pending_email') || 'no_email_found@error.err';

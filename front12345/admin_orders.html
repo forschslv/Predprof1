@@ -49,7 +49,7 @@
 
         async function downloadDocx() {
             const date = document.getElementById('reportDate').value;
-            downloadFile(`/admin/reports/docx?date_query=${date}`, `Table_Report_${date}.docx`);
+            await downloadFile(`/admin/reports/docx?date_query=${date}`, `Table_Report_${date}.docx`);
         }
 
         async function updateStatus() {
@@ -141,7 +141,8 @@
                     }
                 } else {
                     // Если файл не PDF и не разрешённое изображение, показываем сообщение об ошибке
-                    throw new Error("Файл не является PDF или разрешённым изображением (JPEG, PNG, BMP, WEBP) и не может быть отображён. Возможно, это архив (.zip), исполняемый файл (.exe), GIF или SVG.");
+                    throw new Error("Файл не является PDF или разрешённым изображением (JPEG, PNG, BMP, WEBP) и не может быть отображён.\n" +
+                        "Возможно, это архив (.zip), исполняемый файл (.exe), GIF или SVG, В любом случае, это внутренняя ошибка сервера, что он сохранён.");
                 }
             } catch (e) {
                 alert("Ошибка: " + e.message);

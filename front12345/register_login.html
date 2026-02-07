@@ -87,6 +87,7 @@
                 }
             } catch (err) {
                 alert("Ошибка соединения с сервером.");
+                console.error("Ошибка:", err);
                 btn.disabled = false;
                 btn.innerText = "Создать аккаунт";
             }
