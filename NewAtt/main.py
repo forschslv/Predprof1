@@ -380,10 +380,15 @@ async def download_receipt(
         logger.debug(f"Receipt file not found for order {order_id}: {order.payment_proof_path}")
         raise HTTPException(status_code=404, detail="Receipt file not found")
     logger.debug(f"Returning receipt file for order {order_id}: {order.payment_proof_path}")
+    # Определяем Content-Type по расширению файла
+    if order.payment_proof_path.lower().endswith('.pdf'):
+        media_type = "application/pdf"
+    else:
+        media_type = "application/octet-stream"
     return FileResponse(
         order.payment_proof_path,
         filename=os.path.basename(order.payment_proof_path),
-        media_type="application/octet-stream"
+        media_type=media_type
     )
 
 
