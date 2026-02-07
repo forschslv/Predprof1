@@ -58,6 +58,7 @@
             alert("Статус изменен");
         }
 
+        let previousBlobUrl = null;
         async function viewReceipt() {
             const orderId = document.getElementById('pdfOrderId').value;
             if (!orderId) return alert("Введите ID заказа");
@@ -68,8 +69,13 @@
             // Скрыть iframe и кнопку скачивания перед новым запросом
             iframe.style.display = 'none';
             if (downloadBtn) downloadBtn.style.display = 'none';
+            // Освободить предыдущий blob URL, если есть
+            if (previousBlobUrl) {
+                window.URL.revokeObjectURL(previousBlobUrl);
+                previousBlobUrl = null;
+            }
             try {
-                // Проверим, доступен ли файл
+                // Загружаем файл с заголовком Authorization
                 const response = await fetch(url, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -77,15 +83,18 @@
                     const err = await response.json();
                     throw new Error(err.detail || "Чек не найден");
                 }
-                // Установить src для iframe
-                iframe.src = url + '?token=' + encodeURIComponent(token);
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                previousBlobUrl = blobUrl;
+                // Устанавливаем blob URL в iframe
+                iframe.src = blobUrl;
                 iframe.style.display = 'block';
                 // Показать кнопку скачивания
                 if (downloadBtn) {
                     downloadBtn.style.display = 'inline-block';
                     downloadBtn.onclick = () => {
                         const a = document.createElement('a');
-                        a.href = url + '?token=' + encodeURIComponent(token);
+                        a.href = blobUrl;
                         a.download = `receipt_${orderId}.pdf`;
                         document.body.appendChild(a);
                         a.click();
