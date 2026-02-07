@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
@@ -54,6 +54,7 @@ HTML_MAPPING = {
     "admin_orders": "admin_orders.html",
     "admin_users": "admin_users.html",
     "dashboard": "main.html",
+    "register_login": "register_login.html",
     "login": "login.html",
     "order": "order.html",
     "order_details": "order_details.html",
@@ -64,26 +65,37 @@ HTML_MAPPING = {
 
 @app.get("/{path:path}")
 async def catch_all(path: str):#-> FileResponse | tuple[dict[str, str], int]
-    html_file = HTML_MAPPING.get(path) or (HTML_MAPPING.get(path[:-5]) if path.endswith(".html") else None)
+    if (path.endswith(".js") or
+        path.endswith(".css") or
+        path.endswith(".png") or
+        path.endswith(".jpg") or
+        path.endswith(".jpeg") or
+        path.endswith(".svg") or
+        path.endswith(".ico")):
+        # Если запрашивается статический файл, пробуем его отдать
+        logger.debug(f"Request for static file: {path}")
+        file_path = frontend_path / path
+        if file_path.is_file():
+            return FileResponse(file_path)
+        else:
+            logger.warning(f"Static file not found: {file_path}")
+            raise HTTPException(status_code=404, detail="Static file not found")
+    if path.endswith(".html"):
+        path = path[:-5]
+    elif "." in path:
+        logger.warning(f"Unsupported file type requested: {path}")
+        raise HTTPException(status_code=404, detail="This file type is not supported")
+    html_file = HTML_MAPPING.get(path)
     logger.debug(f"Request for path {path}, HTML file: {html_file}")
     if html_file:
         return FileResponse(frontend_path / html_file)
     else:
         try:
-            # Проверяем, существует ли файл в статических ресурсах
-            file_path = frontend_path / path
-            if file_path.is_file():
-                return FileResponse(file_path)
-            else:
-                # Файл не найден, возвращаем 404.html
-                return FileResponse(frontend_path / "404.html", status_code=404)
+            logger.warning(f"File {path} not found, serving 404.html")
+            return FileResponse(frontend_path / "404.html", status_code=404)
         except Exception as e:
-            logger.warning(f"Error serving file {path}: {e}")
-            try:
-                return FileResponse(frontend_path / "404.html", status_code=404)
-            except Exception as e:
-                logger.error(f"Error serving 404.html: {e}")
-                return {"error": "Internal server error: 404.html not found, please try again later."}, 500
+            logger.error(f"Error serving 404.html: {e}")
+            return {"error": "Internal server error: 404.html not found, please try again later."}, 500
 
 
 # Статические файлы (CSS, JS, etc.) обслуживаем через StaticFiles
