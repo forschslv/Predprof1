@@ -356,6 +356,34 @@ async def pay_order(
     return {"message": "Payment proof uploaded"}
 
 
+@app.get("/orders/{order_id}/receipt")
+async def download_receipt(
+        order_id: int,
+        request: Request,
+        db: Session = Depends(get_db)
+):
+    user = get_current_user(request, db)
+    order = db.query(Order).filter(Order.id == order_id, Order.user_id == user.id).first()
+
+    if not order:
+        logger.debug(f"Order not found for user {user.id}: {order_id}")
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    if not order.payment_proof_path:
+        logger.debug(f"Receipt not found for order {order_id}")
+        raise HTTPException(status_code=404, detail="Receipt not found")
+    
+    if not os.path.exists(order.payment_proof_path):
+        logger.debug(f"Receipt file not found for order {order_id}: {order.payment_proof_path}")
+        raise HTTPException(status_code=404, detail="Receipt file not found")
+    logger.debug(f"Returning receipt file for order {order_id}: {order.payment_proof_path}")
+    return FileResponse(
+        order.payment_proof_path,
+        filename=os.path.basename(order.payment_proof_path),
+        media_type="application/octet-stream"
+    )
+
+
 @app.get("/orders", response_model=List[OrderResponse])
 def get_my_orders(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
