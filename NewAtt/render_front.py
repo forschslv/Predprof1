@@ -10,12 +10,16 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+from fastapi.responses import FileResponse
 
 # Добавляем путь к модулям бэкенда
 sys.path.insert(0, str(Path(__file__).parent / "NewAtt"))
 
 # Импортируем основное приложение из NewAtt.main
 from main import app as api_app
+
+# Определяем путь к фронтенду
+frontend_path = Path(__file__).parent.parent / "front12345"
 
 # Создаём основное приложение
 app = FastAPI(title="Canteen API with Frontend", version="1.0")
@@ -34,17 +38,70 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Включаем все маршруты из api_app в корневое приложение
-# Это позволяет API работать по тем же путям, что и раньше
-# app.include_router(api_app.router)
-
 # Монтируем API приложение под префиксом /api
 app.mount("/api", api_app)
 
-# Монтируем статические файлы фронтенда под корень
-# Статика будет обслуживаться для путей, не занятых API
-frontend_path = Path(__file__).parent.parent / "front12345"
-app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="frontend")
+# Маппинг путей к HTML файлам
+HTML_MAPPING = {
+    "/": "index.html",
+    "/main": "index.html",
+    "/admin": "admin.html",
+    "/admin_menu": "admin_menu.html",
+    "/admin_orders": "admin_orders.html",
+    "/admin_users": "admin_users.html",
+    "/dashboard": "dashboard.html",
+    "/login": "login.html",
+    "/order": "order.html",
+    "/order_details": "order_details.html",
+    "/verify": "verify.html",
+}
+
+@app.get("/")
+async def root():
+    return FileResponse(frontend_path / "index.html")
+
+@app.get("/main")
+async def main_page():
+    return FileResponse(frontend_path / "index.html")
+
+@app.get("/admin")
+async def admin_page():
+    return FileResponse(frontend_path / "admin.html")
+
+@app.get("/admin_menu")
+async def admin_menu_page():
+    return FileResponse(frontend_path / "admin_menu.html")
+
+@app.get("/admin_orders")
+async def admin_orders_page():
+    return FileResponse(frontend_path / "admin_orders.html")
+
+@app.get("/admin_users")
+async def admin_users_page():
+    return FileResponse(frontend_path / "admin_users.html")
+
+@app.get("/dashboard")
+async def dashboard_page():
+    return FileResponse(frontend_path / "dashboard.html")
+
+@app.get("/login")
+async def login_page():
+    return FileResponse(frontend_path / "login.html")
+
+@app.get("/order")
+async def order_page():
+    return FileResponse(frontend_path / "order.html")
+
+@app.get("/order_details")
+async def order_details_page():
+    return FileResponse(frontend_path / "order_details.html")
+
+@app.get("/verify")
+async def verify_page():
+    return FileResponse(frontend_path / "verify.html")
+
+# Статические файлы (CSS, JS, etc.) обслуживаем через StaticFiles
+app.mount("/static", StaticFiles(directory=str(frontend_path)), name="static")
 
 if __name__ == "__main__":
     # Инициализируем базу данных (если нужно)
