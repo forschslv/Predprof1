@@ -1,6 +1,6 @@
 /* --- START OF FILE script.js --- */
 
-const API_URL = 'http://localhost:8000';
+const API_URL = '/api';
 
 // Хелпер для запросов
 async function apiRequest(endpoint, method = 'GET', body = null, isFile = false) {
