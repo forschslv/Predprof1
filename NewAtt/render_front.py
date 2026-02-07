@@ -101,7 +101,7 @@ async def verify_page():
     return FileResponse(frontend_path / "verify.html")
 
 # Статические файлы (CSS, JS, etc.) обслуживаем через StaticFiles
-app.mount("/static", StaticFiles(directory=str(frontend_path)), name="static")
+app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="static_root")
 
 if __name__ == "__main__":
     # Инициализируем базу данных (если нужно)
