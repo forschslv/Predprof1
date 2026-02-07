@@ -30,7 +30,7 @@ async function apiRequest(endpoint, method = 'GET', body = null, isFile = false)
         if (response.status === 401) {
             alert("Сессия истекла");
             localStorage.removeItem('token');
-            window.location.href = 'index.html';
+            window.location.href = 'register_login.html';
             return;
         }
 
@@ -82,7 +82,7 @@ async function requireAdmin() {
     try {
         const userData = await apiRequest('/users/me', 'GET');
         if (!userData.is_admin) {
-            window.location.href = 'dashboard.html';
+            window.location.href = 'main.html';
         }
     } catch (error) {
         console.error('Error checking admin status:', error);
@@ -95,14 +95,14 @@ async function requireAdmin() {
 async function validateAccess(needAdmin = false) {
     const token = localStorage.getItem('token');
     if (!token) {
-        window.location.href = 'index.html';
+        window.location.href = 'register_login.html';
         return;
     }
     try {
         const user = await apiRequest('/users/me');
         localStorage.setItem('user', JSON.stringify(user));
         if (needAdmin && !user.is_admin) {
-            window.location.href = 'dashboard.html';
+            window.location.href = 'main.html';
         }
         return user;
     } catch (e) {

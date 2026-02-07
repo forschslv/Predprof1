@@ -12,6 +12,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from fastapi.responses import FileResponse
 
+from NewAtt.logger import logger
+
 # Добавляем путь к модулям бэкенда
 sys.path.insert(0, str(Path(__file__).parent / "NewAtt"))
 
@@ -43,62 +45,41 @@ app.mount("/api", api_app)
 
 # Маппинг путей к HTML файлам
 HTML_MAPPING = {
-    "/": "index.html",
-    "/main": "index.html",
-    "/admin": "admin.html",
-    "/admin_menu": "admin_menu.html",
-    "/admin_orders": "admin_orders.html",
-    "/admin_users": "admin_users.html",
-    "/dashboard": "dashboard.html",
-    "/login": "login.html",
-    "/order": "order.html",
-    "/order_details": "order_details.html",
-    "/verify": "verify.html",
+    "": "main.html",
+    "index": "main.html",
+    "main": "main.html",
+    "admin": "admin.html",
+    "admin_menu": "admin_menu.html",
+    "admin_orders": "admin_orders.html",
+    "admin_users": "admin_users.html",
+    "dashboard": "main.html",
+    "login": "login.html",
+    "order": "order.html",
+    "order_details": "order_details.html",
+    "verify": "verify.html",
 }
 
-@app.get("/")
-async def root():
-    return FileResponse(frontend_path / "index.html")
 
-@app.get("/main")
-async def main_page():
-    return FileResponse(frontend_path / "index.html")
+@app.get("/{path:path}")
+async def catch_all(path: str):
+    html_file = HTML_MAPPING.get(path) or HTML_MAPPING.get(path[:-5]) if path.endswith(".html") else None
+    logger.debug(f"Request for path {path}, HTML file: {html_file}")
+    if html_file:
+        return FileResponse(frontend_path / html_file)
+    else:
+        try:
+            # Проверяем, существует ли файл в статических ресурсах
+            file_path = frontend_path / path
+            if file_path.is_file():
+                return FileResponse(file_path)
+        except Exception as e:
+            logger.warning(f"Error serving file {path}: {e}")
+            try:
+                return FileResponse(frontend_path / "404.html")
+            except Exception as e:
+                logger.error(f"Error serving 404.html: {e}")
+                return {"error": "Internal server error: 404.html not found, please try again later."}, 500
 
-@app.get("/admin")
-async def admin_page():
-    return FileResponse(frontend_path / "admin.html")
-
-@app.get("/admin_menu")
-async def admin_menu_page():
-    return FileResponse(frontend_path / "admin_menu.html")
-
-@app.get("/admin_orders")
-async def admin_orders_page():
-    return FileResponse(frontend_path / "admin_orders.html")
-
-@app.get("/admin_users")
-async def admin_users_page():
-    return FileResponse(frontend_path / "admin_users.html")
-
-@app.get("/dashboard")
-async def dashboard_page():
-    return FileResponse(frontend_path / "dashboard.html")
-
-@app.get("/login")
-async def login_page():
-    return FileResponse(frontend_path / "login.html")
-
-@app.get("/order")
-async def order_page():
-    return FileResponse(frontend_path / "order.html")
-
-@app.get("/order_details")
-async def order_details_page():
-    return FileResponse(frontend_path / "order_details.html")
-
-@app.get("/verify")
-async def verify_page():
-    return FileResponse(frontend_path / "verify.html")
 
 # Статические файлы (CSS, JS, etc.) обслуживаем через StaticFiles
 app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="static_root")
