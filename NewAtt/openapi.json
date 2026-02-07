@@ -980,7 +980,9 @@
         "enum": [
           "PENDING",
           "PAID",
-          "PROBLEM"
+          "PROBLEM",
+          "CANCELED",
+          "ON_REVIEW"
         ],
         "title": "OrderStatus"
       },

@@ -51,6 +51,7 @@ async function loadHistory() {
             const statusMap = {
                 'PAID': { text: 'Оплачено', class: 'status-paid' },
                 'PENDING': { text: 'Ожидает оплаты', class: 'status-pending' },
+                'PROBLEM': { text: 'Проблема', class: 'status-pending' },
                 'CANCELED': { text: 'Отменен', class: 'status-canceled' },
                 'ON_REVIEW': { text: 'На проверке', class: 'status-pending' }
             };
