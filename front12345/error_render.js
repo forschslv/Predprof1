@@ -71,9 +71,9 @@ function getErrorParams() {
     const urlParams = new URLSearchParams(window.location.search);
     const storedError = localStorage.getItem('last_error');
     
-    let code = urlParams.get('code') || '500';
-    let message = urlParams.get('message') || '';
-    let details = urlParams.get('details') || '';
+    let code = urlParams.get('code') || 'ERROR';
+    let message = urlParams.get('message') || 'No description provided';
+    let details = urlParams.get('details') || 'No details provided';
     let timestamp = urlParams.get('timestamp') || new Date().toISOString();
     
     // Если есть сохранённая ошибка в localStorage, используем её
