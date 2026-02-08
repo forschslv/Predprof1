@@ -451,6 +451,19 @@ def update_order_status(
     return {"message": f"Order marked as {status}"}
 
 
+@app.get("/admin/orders/ids")
+def get_order_ids_by_status(
+        status: OrderStatus,
+        db: Session = Depends(get_db),
+        admin: User = Depends(get_admin_user)
+):
+    """
+    Возвращает список ID заказов с указанным статусом.
+    """
+    orders = db.query(Order.id).filter(Order.status == status).order_by(Order.id).all()
+    return {"order_ids": [order_id for (order_id,) in orders]}
+
+
 @app.get("/admin/reports/docx")
 def download_table_report(date_query: date, db: Session = Depends(get_db), admin: User = Depends(get_admin_user)):
     day_idx = date_query.weekday()

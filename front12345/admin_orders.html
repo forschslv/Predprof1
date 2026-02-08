@@ -38,6 +38,23 @@
                 <button id="downloadReceiptBtn" class="btn" style="display: none; margin-top: 10px;">Скачать чек</button>
             </div>
         </div>
+
+        <div class="inventory-item">
+            <h3>Получить ID заказов по статусу</h3>
+            <select id="statusFilter">
+                <option value="PAID">Оплачено (PAID)</option>
+                <option value="PROBLEM">Проблема (PROBLEM)</option>
+                <option value="PENDING">Ожидает (PENDING)</option>
+                <option value="CANCELED">Отменён (CANCELED)</option>
+                <option value="ON_REVIEW">На проверке (ON_REVIEW)</option>
+            </select>
+            <button onclick="loadOrderIdsByStatus()">Загрузить ID</button>
+            <div id="orderIdsResult" class="order-ids-result" style="display: none;">
+                <h4>ID заказов:</h4>
+                <ul id="orderIdsList"></ul>
+            </div>
+        </div>
+
         <button onclick="window.location.href='admin.html'" class="secondary">Назад</button>
     </div>
 
@@ -146,6 +163,29 @@
                 }
             } catch (e) {
                 alert("Ошибка: " + e.message);
+            }
+        }
+
+        async function loadOrderIdsByStatus() {
+            const status = document.getElementById('statusFilter').value;
+            try {
+                const response = await apiRequest(`/admin/orders/ids?status=${status}`, 'GET');
+                const orderIds = response.order_ids;
+                const listElement = document.getElementById('orderIdsList');
+                const resultDiv = document.getElementById('orderIdsResult');
+                listElement.innerHTML = '';
+                if (orderIds.length === 0) {
+                    listElement.innerHTML = '<li>Нет заказов с выбранным статусом</li>';
+                } else {
+                    orderIds.forEach(id => {
+                        const li = document.createElement('li');
+                        li.textContent = id;
+                        listElement.appendChild(li);
+                    });
+                }
+                resultDiv.style.display = 'block';
+            } catch (error) {
+                alert('Ошибка загрузки ID заказов: ' + error.message);
             }
         }
 </script>
