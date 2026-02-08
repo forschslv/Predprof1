@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест страницы ошибок | Столовая</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+            background: var(--bg-secondary);
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+        }
+        .test-title {
+            color: var(--text-primary);
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .error-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .error-btn {
+            padding: 12px 20px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .error-btn:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+        .error-code {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+        .error-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .custom-error {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+        .custom-input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            color: var(--text-primary);
+        }
+        .btn-test {
+            background: linear-gradient(45deg, var(--accent-blue), var(--accent-cyan));
+            color: #000;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="dashboard-header">
+            <div class="user-info">
+                <h1>Столовая</h1>
+                <span>Тест страницы ошибок</span>
+            </div>
+            <div class="header-controls">
+                <a href="main.html" class="btn-secondary">На главную</a>
+            </div>
+        </header>
+
+        <div class="test-container">
+            <h2 class="test-title">Тестирование универсальной страницы ошибок</h2>
+            
+            <p style="text-align: center; margin-bottom: 25px; color: var(--text-secondary);">
+                Нажмите на любую кнопку ниже, чтобы увидеть соответствующую страницу ошибки.
+                Все ошибки рендерятся динамически через JavaScript.
+            </p>
+            
+            <div class="error-list">
+                <div class="error-btn" onclick="testError('400')">
+                    <div class="error-code">400</div>
+                    <div class="error-desc">Некорректный запрос</div>
+                </div>
+                <div class="error-btn" onclick="testError('401')">
+                    <div class="error-code">401</div>
+                    <div class="error-desc">Неавторизованный доступ</div>
+                </div>
+                <div class="error-btn" onclick="testError('403')">
+                    <div class="error-code">403</div>
+                    <div class="error-desc">Доступ запрещён</div>
+                </div>
+                <div class="error-btn" onclick="testError('404')">
+                    <div class="error-code">404</div>
+                    <div class="error-desc">Страница не найдена</div>
+                </div>
+                <div class="error-btn" onclick="testError('500')">
+                    <div class="error-code">500</div>
+                    <div class="error-desc">Внутренняя ошибка сервера</div>
+                </div>
+                <div class="error-btn" onclick="testError('503')">
+                    <div class="error-code">503</div>
+                    <div class="error-desc">Сервис недоступен</div>
+                </div>
+                <div class="error-btn" onclick="testError('network')">
+                    <div class="error-code">Сеть</div>
+                    <div class="error-desc">Ошибка сети</div>
+                </div>
+            </div>
+            
+            <div class="custom-error">
+                <h3 style="margin-top: 0;">Кастомная ошибка</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                    Создайте свою ошибку с произвольным сообщением и деталями:
+                </p>
+                
+                <input type="text" id="customCode" class="custom-input" placeholder="Код ошибки (например: 418)" value="418">
+                <input type="text" id="customMessage" class="custom-input" placeholder="Сообщение об ошибке" value="Я - чайник">
+                <textarea id="customDetails" class="custom-input" placeholder="Детали ошибки" rows="3">Попытка заварить кофе в чайнике привела к неожиданным последствиям.</textarea>
+                
+                <button class="btn-test" onclick="testCustomError()">Показать кастомную ошибку</button>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <a href="error.html" class="btn-secondary" style="display: inline-block;">Перейти на страницу ошибок напрямую</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="error_render.js"></script>
+    <script>
+        // Функция для тестирования стандартных ошибок
+        function testError(code) {
+            if (window.showErrorPage) {
+                const config = {
+                    '400': { message: 'Сервер не может обработать ваш запрос из-за синтаксической ошибки.', details: 'Проверьте правильность отправляемых данных.' },
+                    '401': { message: 'Для доступа к этой странице требуется авторизация.', details: 'Пожалуйста, войдите в систему.' },
+                    '403': { message: 'У вас недостаточно прав для доступа к этой странице.', details: 'Требуются права администратора.' },
+                    '404': { message: 'Запрашиваемая страница не существует или была перемещена.', details: 'Проверьте URL адрес.' },
+                    '500': { message: 'Произошла непредвиденная ошибка на сервере.', details: 'Подробности в логах сервера.' },
+                    '503': { message: 'Сервер временно не может обработать запрос.', details: 'Ведутся технические работы.' },
+                    'network': { message: 'Не удалось подключиться к серверу.', details: 'Проверьте интернет-соединение.' }
+                }[code] || { message: 'Неизвестная ошибка', details: '' };
+                
+                window.showErrorPage(code, config.message, config.details);
+            } else {
+                // Fallback если error_render.js не загружен
+                window.location.href = `error.html?code=${code}&message=Тестовая ошибка ${code}&details=Это тестовая ошибка для демонстрации`;
+            }
+        }
+        
+        // Функция для тестирования кастомных ошибок
+        function testCustomError() {
+            const code = document.getElementById('customCode').value || '500';
+            const message = document.getElementById('customMessage').value || 'Произошла ошибка';
+            const details = document.getElementById('customDetails').value || '';
+            
+            if (window.showErrorPage) {
+                window.showErrorPage(code, message, details);
+            } else {
+                const params = new URLSearchParams({
+                    code: code,
+                    message: message,
+                    details: details
+                });
+                window.location.href = `error.html?${params.toString()}`;
+            }
+        }
+        
+        // Инициализация тестовой страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Test error page loaded');
+        });
+    </script>
+</body>
+</html>

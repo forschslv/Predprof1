@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ошибка | Столовая</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <style>
+        .error-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .error-code {
+            font-size: 8rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 20px;
+        }
+        .error-title {
+            font-size: 2rem;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+        .error-description {
+            color: var(--text-secondary);
+            max-width: 500px;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+        .error-details {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            max-width: 600px;
+            text-align: left;
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            overflow-x: auto;
+        }
+        .error-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .btn-home {
+            background: linear-gradient(45deg, var(--accent-blue), var(--accent-cyan));
+            color: #000;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        .btn-home:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 212, 255, 0.3);
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .error-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.7;
+        }
+        .error-meta {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="dashboard-header">
+            <div class="user-info">
+                <h1>Столовая</h1>
+                <span>Ошибка</span>
+            </div>
+            <div class="header-controls">
+                <a href="main.html" class="btn-secondary">Вернуться на главную</a>
+            </div>
+        </header>
+
+        <div id="errorContent" class="error-container">
+            <!-- Динамическое содержимое будет вставлено через JS -->
+            <div class="error-icon">⚠️</div>
+            <div class="error-code" id="errorCode">500</div>
+            <h2 class="error-title" id="errorTitle">Внутренняя ошибка сервера</h2>
+            <p class="error-description" id="errorDescription">
+                Произошла непредвиденная ошибка. Пожалуйста, попробуйте позже или обратитесь к администратору.
+            </p>
+            <div id="errorDetails" class="error-details" style="display:none;">
+                <strong>Детали ошибки:</strong>
+                <pre id="errorDetailsText"></pre>
+            </div>
+            <div class="error-actions">
+                <a href="main.html" class="btn-home">🏠 Перейти на главную</a>
+                <a href="register_login.html" class="btn-secondary">🔐 Войти в систему</a>
+                <button id="toggleDetailsBtn" class="btn-secondary">📋 Показать детали</button>
+            </div>
+            <div class="error-meta" id="errorMeta"></div>
+        </div>
+    </div>
+
+    <script src="error_render.js"></script>
+</body>
+</html>

@@ -58,6 +58,8 @@ HTML_MAPPING = {
     "order_details": "order_details.html",
     "verify": "verify.html",
     "404": "404.html",
+    "test_error": "test_error.html",
+    "error": "error.html",
 }
 
 

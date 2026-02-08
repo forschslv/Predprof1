@@ -102,11 +102,17 @@ async function validateAccess(needAdmin = false) {
         const user = await apiRequest('/users/me');
         localStorage.setItem('user', JSON.stringify(user));
         if (needAdmin && !user.is_admin) {
-            window.location.href = 'main.html';
+            window.showErrorPage('403', 'Доступ запрещён', 'Требуются права администратора');
+            return;
         }
         return user;
     } catch (e) {
-        logout();
+        // Используем универсальную страницу ошибок вместо logout
+        if (window.showErrorPage) {
+            window.showErrorPage('401', 'Ошибка авторизации', e.message);
+        } else {
+            logout();
+        }
     }
 }
 
