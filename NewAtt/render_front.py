@@ -85,7 +85,7 @@ async def catch_all(path: str):#-> FileResponse | tuple[dict[str, str], int]
         path = path[:-5]
     elif "." in path:
         logger.warning(f"Unsupported file type requested: {path}")
-        raise HTTPException(status_code=404, detail="This file type is not supported")
+        return FileResponse(frontend_path / "404.html", status_code=404)
     html_file = HTML_MAPPING.get(path)
     logger.debug(f"Request for path {path}, HTML file: {html_file}")
     if html_file:
