@@ -34,9 +34,8 @@ def main():
         ("jwt", "python-jose[cryptography]"),
         ("passlib", "passlib[bcrypt]"),
         ("pydantic", "pydantic"),
-        ("pydantic_settings", "pydantic-settings"),
         ("starlette", "starlette"),
-        ("python_dotenv", "python-dotenv"),
+        ("dotenv", "python-dotenv"),
         ("docx", "python-docx"),
         ("email_validator", "email-validator"),
     ]
