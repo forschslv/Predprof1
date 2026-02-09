@@ -18,9 +18,17 @@
             <p style="color:var(--text-secondary); margin-bottom:10px;">
                 Загрузите текстовый файл. <b>Внимание:</b> при загрузке все старые блюда выбранного типа будут удалены!
             </p>
-            <div style="margin: 10px 0;">
-                <label><input type="radio" name="uploadType" value="true" checked> Меню поставщика</label>
-                <label style="margin-left: 20px;"><input type="radio" name="uploadType" value="false"> Собственное меню</label>
+            <div class="radio-group" style="margin: 15px 0; display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+                <label class="radio-label">
+                    <input type="radio" name="uploadType" value="true" checked>
+                    <span class="radio-custom"></span>
+                    <span class="radio-text">Меню поставщика</span>
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="uploadType" value="false">
+                    <span class="radio-custom"></span>
+                    <span class="radio-text">Собственное меню</span>
+                </label>
             </div>
             <input type="file" id="menuFileInput">
             <button onclick="uploadMenuFile()" id="uploadBtn">Заменить всё меню из файла</button>
