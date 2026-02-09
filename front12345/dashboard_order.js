@@ -43,7 +43,7 @@ async function loadMenuData() {
 
         // FALLBACK: Если расписание пустое ничего не показываем
         if (tempSchedule.length === 0) {
-            console.warn("Расписание пустое! Показываем все блюда.");
+            console.warn("Расписание пустое! Ничего не показываем.");
             container.innerHTML = '<p style="color: orange">Модульное меню пусто.</p>';
             return;
             //const allDishIds = Object.keys(state.globalMenuMap).map(id => parseInt(id));
