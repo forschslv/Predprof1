@@ -58,6 +58,7 @@ class ModuleMenu(Base):
     id = Column(Integer, primary_key=True, index=True)
     day_of_week = Column(Integer)
     dish_id = Column(Integer, ForeignKey("dishes.id"))
+    week_start_date = Column(Date)
 
     dish = relationship("Dish")
 

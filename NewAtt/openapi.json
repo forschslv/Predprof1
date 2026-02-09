@@ -25,7 +25,7 @@
             "content": {
               "application/json": {
                 "schema": {
-
+                  "$ref": "#/components/schemas/MessageResponse"
                 }
               }
             }
@@ -243,13 +243,39 @@
       "get": {
         "summary": "Get Module Menu",
         "operationId": "get_module_menu_module_menu_get",
+        "parameters": [
+          {
+            "name": "week_start_date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "Week Start Date"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-
+                  "items": {
+                    "$ref": "#/components/schemas/ModuleMenuResponse"
+                  },
+                  "type": "array",
+                  "title": "Response Get Module Menu Module Menu Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -893,6 +919,11 @@
       },
       "ModuleMenuRequest": {
         "properties": {
+          "week_start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Week Start Date"
+          },
           "schedule": {
             "items": {
               "$ref": "#/components/schemas/ModuleMenuEntry"
@@ -903,9 +934,52 @@
         },
         "type": "object",
         "required": [
+          "week_start_date",
           "schedule"
         ],
         "title": "ModuleMenuRequest"
+      },
+      "ModuleMenuResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "day_of_week": {
+            "type": "integer",
+            "title": "Day Of Week"
+          },
+          "dish_id": {
+            "type": "integer",
+            "title": "Dish Id"
+          },
+          "week_start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Week Start Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "day_of_week",
+          "dish_id",
+          "week_start_date"
+        ],
+        "title": "ModuleMenuResponse"
+      },
+      "MessageResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "MessageResponse"
       },
       "OrderCreate": {
         "properties": {

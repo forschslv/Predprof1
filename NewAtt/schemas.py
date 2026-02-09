@@ -51,6 +51,16 @@ class ModuleMenuEntry(BaseModel):
 
 class ModuleMenuRequest(BaseModel):
     schedule: List[ModuleMenuEntry]
+    week_start_date: date
+
+class ModuleMenuResponse(BaseModel):
+    id: int
+    day_of_week: int
+    dish_id: int
+    week_start_date: date
+
+    class Config:
+        from_attributes = True
 
 class OrderItemRequest(BaseModel):
     dish_id: int

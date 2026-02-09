@@ -33,7 +33,8 @@ from schemas import (
     DishCreate, DishResponse, DishUpdate, RegisterResponse, UserCreate,
     UserResponse, VerifyCodeRequest, VerifyCodeResponse, ResendCodeRequest,
     ResendCodeResponse, AdminUpdateRequest, ModuleMenuRequest,
-    OrderCreate, OrderResponse, DishBase, AdminUpdateByEmailRequest
+    OrderCreate, OrderResponse, DishBase, AdminUpdateByEmailRequest,
+    ModuleMenuResponse
 )
 import docx_utils
 
@@ -259,7 +260,7 @@ def set_module_menu(
         db: Session = Depends(get_db),
         admin: User = Depends(get_admin_user)
 ):
-    db.query(ModuleMenu).delete()
+    db.query(ModuleMenu).filter(ModuleMenu.week_start_date == menu_data.week_start_date).delete()
 
     for day_entry in menu_data.schedule:
         day_idx = day_entry.day_of_week
@@ -277,16 +278,16 @@ def set_module_menu(
                 )
 
         for d_id in day_entry.dish_ids:
-            mm = ModuleMenu(day_of_week=day_idx, dish_id=d_id)
+            mm = ModuleMenu(day_of_week=day_idx, dish_id=d_id, week_start_date=menu_data.week_start_date)
             db.add(mm)
 
     db.commit()
-    return {"message": "Module menu saved successfully"}
+    return {"message": "Module menu saved successfully for week starting " + str(menu_data.week_start_date)}
 
 
-@app.get("/module-menu")
-def get_module_menu(db: Session = Depends(get_db)):
-    menu_items = db.query(ModuleMenu).all()
+@app.get("/module-menu", response_model=List[ModuleMenuResponse])
+def get_module_menu(week_start_date: date, db: Session = Depends(get_db)):
+    menu_items = db.query(ModuleMenu).filter(ModuleMenu.week_start_date == week_start_date).all()
     return menu_items
 
 
