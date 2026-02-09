@@ -6,9 +6,11 @@ async function loadMenuData() {
     container.innerHTML = '<p class="loading-text">Загружаем меню...</p>';
 
     try {
+        // Формируем URL с параметром week_start_date
+        const weekStartParam = state.weekStart ? `?week_start_date=${state.weekStart.toISOString().split('T')[0]}` : '';
         const [globalMenuRes, moduleData] = await Promise.all([
             request('/menu', 'GET'),
-            request('/module-menu', 'GET')
+            request(`/module-menu${weekStartParam}`, 'GET')
         ]);
 
         // 1. Глобальное меню
@@ -32,10 +34,12 @@ async function loadMenuData() {
         // FALLBACK: Если расписание пустое, показываем все блюда
         if (tempSchedule.length === 0) {
             console.warn("Расписание пустое! Показываем все блюда.");
-            const allDishIds = Object.keys(state.globalMenuMap).map(id => parseInt(id));
-            for (let day = 0; day <= 6; day++) {
-                tempSchedule.push({ day_of_week: day, dish_ids: allDishIds });
-            }
+            container.innerHTML = '<p style="color: orange">Модульное меню пусто.</p>';
+            return;
+            //const allDishIds = Object.keys(state.globalMenuMap).map(id => parseInt(id));
+            //for (let day = 0; day <= 6; day++) {
+            //    tempSchedule.push({ day_of_week: day, dish_ids: allDishIds });
+            // }
         }
 
         state.schedule = tempSchedule;

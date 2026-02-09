@@ -1,9 +1,9 @@
 // === КОНСТАНТЫ И НАСТРОЙКИ ===
-// try {
-//     API_URL = 'http://localhost:8000';
-// } catch (error) {
-//     console.error("Ошибка подключения к API:", error);
-// }
+try {
+    API_URL = 'http://localhost:8000';
+} catch (error) {
+    console.error("Ошибка подключения к API:", error);
+}
 try {
     token = localStorage.getItem('token');
 } catch (error) {
@@ -102,8 +102,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (picker) {
         picker.valueAsDate = state.weekStart;
         picker.min = state.weekStart.toISOString().split('T')[0];
-        picker.onchange = (e) => {
-            if (e.target.value) state.weekStart = getMonday(new Date(e.target.value));
+        picker.onchange = async (e) => {
+            if (e.target.value) {
+                state.weekStart = getMonday(new Date(e.target.value));
+                // Перезагружаем меню для новой недели
+                if (typeof loadMenuData === 'function') {
+                    await loadMenuData();
+                }
+            }
         };
     }
 
