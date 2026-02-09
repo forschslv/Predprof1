@@ -100,62 +100,82 @@
                 const types = [...new Set(dishes.map(d => d.type))];
 
                 types.forEach(type => {
-                    // Создаем контейнер для типа меню
-                    const typeContainer = document.createElement('div');
-                    typeContainer.className = 'menu-type-container';
+                    // Фильтруем блюда по типу
+                    const typeDishes = dishes.filter(d => d.type === type);
                     
-                    // Создаем заголовок с иконкой сворачивания
-                    const typeHeader = document.createElement('div');
-                    typeHeader.className = 'menu-type-header';
-                    typeHeader.style.cssText = 'display: flex; align-items: center; cursor: pointer; padding: 8px 0; border-bottom: 1px solid var(--border-color); margin-bottom: 8px;';
+                    // Разделяем на поставщика и собственные
+                    const providerDishes = typeDishes.filter(d => d.is_provider);
+                    const ownDishes = typeDishes.filter(d => !d.is_provider);
                     
-                    const toggleIcon = document.createElement('span');
-                    toggleIcon.innerHTML = '▼';
-                    toggleIcon.style.cssText = 'margin-right: 8px; font-size: 12px; transition: transform 0.2s;';
+                    // Если есть блюда от поставщика
+                    if (providerDishes.length > 0) {
+                        createTypeSection(type, providerDishes, list, true);
+                    }
                     
-                    const typeTitle = document.createElement('h3');
-                    typeTitle.innerText = type;
-                    typeTitle.style.cssText = 'margin: 0; color: var(--accent-purple);';
-                    
-                    typeHeader.appendChild(toggleIcon);
-                    typeHeader.appendChild(typeTitle);
-                    
-                    // Создаем контейнер для блюд
-                    const dishesContainer = document.createElement('div');
-                    dishesContainer.className = 'menu-dishes-container';
-                    dishesContainer.style.cssText = 'margin-left: 20px;';
-                    
-                    // Добавляем блюда
-                    dishes.filter(d => d.type === type).forEach(dish => {
-                        const div = document.createElement('div');
-                        div.className = 'menu-item';
-                        div.innerHTML = `
-                            <div style="display:flex; justify-content:space-between;">
-                                <strong>${dish.name}</strong>
-                                <span class="price">${dish.price_rub} ₽</span>
-                            </div>
-                            <div class="dish-composition">${dish.composition} (${dish.quantity_grams}г)</div>
-                            <div style="font-size:10px; color:var(--text-secondary)">${dish.is_provider ? 'Поставщик' : 'Собственное'}</div>
-                        `;
-                        dishesContainer.appendChild(div);
-                    });
-                    
-                    // Добавляем обработчик клика для сворачивания/разворачивания
-                    typeHeader.addEventListener('click', () => {
-                        const isCollapsed = dishesContainer.style.display === 'none';
-                        dishesContainer.style.display = isCollapsed ? 'block' : 'none';
-                        toggleIcon.style.transform = isCollapsed ? 'rotate(0deg)' : 'rotate(-90deg)';
-                    });
-                    
-                    // Сворачиваем по умолчанию
-                    dishesContainer.style.display = 'none';
-                    toggleIcon.style.transform = 'rotate(-90deg)';
-                    
-                    typeContainer.appendChild(typeHeader);
-                    typeContainer.appendChild(dishesContainer);
-                    list.appendChild(typeContainer);
+                    // Если есть собственные блюда
+                    if (ownDishes.length > 0) {
+                        createTypeSection(type, ownDishes, list, false);
+                    }
                 });
             } catch (e) {}
+        }
+        
+        // Функция создания секции для типа меню
+        function createTypeSection(type, dishes, container, isProvider) {
+            // Создаем контейнер для типа меню
+            const typeContainer = document.createElement('div');
+            typeContainer.className = 'menu-type-container';
+            
+            // Создаем заголовок с иконкой сворачивания
+            const typeHeader = document.createElement('div');
+            typeHeader.className = 'menu-type-header';
+            typeHeader.style.cssText = 'display: flex; align-items: center; cursor: pointer; padding: 8px 0; border-bottom: 1px solid var(--border-color); margin-bottom: 8px;';
+            
+            const toggleIcon = document.createElement('span');
+            toggleIcon.innerHTML = '▼';
+            toggleIcon.style.cssText = 'margin-right: 8px; font-size: 12px; transition: transform 0.2s;';
+            
+            const typeTitle = document.createElement('h3');
+            typeTitle.innerText = type + ' (' + (isProvider ? 'Поставщик' : 'Собственное') + ')';
+            typeTitle.style.cssText = 'margin: 0; color: ' + (isProvider ? 'var(--accent-blue)' : 'var(--accent-green)') + ';';
+            
+            typeHeader.appendChild(toggleIcon);
+            typeHeader.appendChild(typeTitle);
+            
+            // Создаем контейнер для блюд
+            const dishesContainer = document.createElement('div');
+            dishesContainer.className = 'menu-dishes-container';
+            dishesContainer.style.cssText = 'margin-left: 20px;';
+            
+            // Добавляем блюда
+            dishes.forEach(dish => {
+                const div = document.createElement('div');
+                div.className = 'menu-item';
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between;">
+                        <strong>${dish.name}</strong>
+                        <span class="price">${dish.price_rub} ₽</span>
+                    </div>
+                    <div class="dish-composition">${dish.composition} (${dish.quantity_grams}г)</div>
+                    <div class="dish-source" style="font-size:0.7rem; color:${dish.is_provider ? 'var(--accent-blue)' : 'var(--accent-green)'};">${dish.is_provider ? 'Поставщик' : 'Собственное'}</div>
+                `;
+                dishesContainer.appendChild(div);
+            });
+            
+            // Добавляем обработчик клика для сворачивания/разворачивания
+            typeHeader.addEventListener('click', () => {
+                const isCollapsed = dishesContainer.style.display === 'none';
+                dishesContainer.style.display = isCollapsed ? 'block' : 'none';
+                toggleIcon.style.transform = isCollapsed ? 'rotate(0deg)' : 'rotate(-90deg)';
+            });
+            
+            // Сворачиваем по умолчанию
+            dishesContainer.style.display = 'none';
+            toggleIcon.style.transform = 'rotate(-90deg)';
+            
+            typeContainer.appendChild(typeHeader);
+            typeContainer.appendChild(dishesContainer);
+            container.appendChild(typeContainer);
         }
 
         // Загрузка файла (/menu/upload)
