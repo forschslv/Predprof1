@@ -8,7 +8,7 @@ import sys
 import subprocess
 from importlib import import_module
 
-def test_import(module_name, pip_name=None):
+def verify_import(module_name, pip_name=None):
     """Test if a module can be imported."""
     try:
         import_module(module_name)
@@ -65,13 +65,13 @@ def main():
     print("Testing external dependencies:")
     print("=" * 40)
     for module_name, pip_name in dependencies:
-        if not test_import(module_name, pip_name):
+        if not verify_import(module_name, pip_name):
             all_passed = False
     
     print("\nTesting standard library modules:")
     print("=" * 40)
     for module_name in stdlib_modules:
-        if not test_import(module_name):
+        if not verify_import(module_name):
             all_passed = False
     
     # Test project-specific imports
