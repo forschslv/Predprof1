@@ -68,7 +68,12 @@
         </div>
 
         <!-- Секция 3: Просмотр текущего меню -->
-        <h2>Текущие блюда в базе</h2>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h2 style="margin:0;">Текущие блюда в базе</h2>
+            <button onclick="toggleAllMenuSections()" class="secondary" style="width:auto; padding:8px 16px;">
+                <span id="toggleAllText">Развернуть все</span>
+            </button>
+        </div>
         <div id="globalMenuList">
             <!-- Сюда загрузится список из /menu -->
             <p>Загрузка списка блюд...</p>
@@ -95,11 +100,32 @@
                 const types = [...new Set(dishes.map(d => d.type))];
 
                 types.forEach(type => {
-                    const typeHeader = document.createElement('h3');
-                    typeHeader.innerText = type;
-                    typeHeader.style.color = 'var(--accent-purple)';
-                    list.appendChild(typeHeader);
-
+                    // Создаем контейнер для типа меню
+                    const typeContainer = document.createElement('div');
+                    typeContainer.className = 'menu-type-container';
+                    
+                    // Создаем заголовок с иконкой сворачивания
+                    const typeHeader = document.createElement('div');
+                    typeHeader.className = 'menu-type-header';
+                    typeHeader.style.cssText = 'display: flex; align-items: center; cursor: pointer; padding: 8px 0; border-bottom: 1px solid var(--border-color); margin-bottom: 8px;';
+                    
+                    const toggleIcon = document.createElement('span');
+                    toggleIcon.innerHTML = '▼';
+                    toggleIcon.style.cssText = 'margin-right: 8px; font-size: 12px; transition: transform 0.2s;';
+                    
+                    const typeTitle = document.createElement('h3');
+                    typeTitle.innerText = type;
+                    typeTitle.style.cssText = 'margin: 0; color: var(--accent-purple);';
+                    
+                    typeHeader.appendChild(toggleIcon);
+                    typeHeader.appendChild(typeTitle);
+                    
+                    // Создаем контейнер для блюд
+                    const dishesContainer = document.createElement('div');
+                    dishesContainer.className = 'menu-dishes-container';
+                    dishesContainer.style.cssText = 'margin-left: 20px;';
+                    
+                    // Добавляем блюда
                     dishes.filter(d => d.type === type).forEach(dish => {
                         const div = document.createElement('div');
                         div.className = 'menu-item';
@@ -111,8 +137,23 @@
                             <div class="dish-composition">${dish.composition} (${dish.quantity_grams}г)</div>
                             <div style="font-size:10px; color:var(--text-secondary)">${dish.is_provider ? 'Поставщик' : 'Собственное'}</div>
                         `;
-                        list.appendChild(div);
+                        dishesContainer.appendChild(div);
                     });
+                    
+                    // Добавляем обработчик клика для сворачивания/разворачивания
+                    typeHeader.addEventListener('click', () => {
+                        const isCollapsed = dishesContainer.style.display === 'none';
+                        dishesContainer.style.display = isCollapsed ? 'block' : 'none';
+                        toggleIcon.style.transform = isCollapsed ? 'rotate(0deg)' : 'rotate(-90deg)';
+                    });
+                    
+                    // Сворачиваем по умолчанию
+                    dishesContainer.style.display = 'none';
+                    toggleIcon.style.transform = 'rotate(-90deg)';
+                    
+                    typeContainer.appendChild(typeHeader);
+                    typeContainer.appendChild(dishesContainer);
+                    list.appendChild(typeContainer);
                 });
             } catch (e) {}
         }
@@ -166,6 +207,38 @@
                 document.getElementById('dishName').value = '';
                 document.getElementById('dishComp').value = '';
             } catch (e) {}
+        }
+
+        // Переменная для хранения состояния всех разделов
+        let allMenuSectionsExpanded = false;
+        let menuTypeContainers = [];
+
+        // Функция для переключения всех разделов меню
+        function toggleAllMenuSections() {
+            const containers = document.querySelectorAll('.menu-type-container');
+            const toggleAllText = document.getElementById('toggleAllText');
+            
+            if (containers.length === 0) return;
+            
+            allMenuSectionsExpanded = !allMenuSectionsExpanded;
+            
+            containers.forEach(container => {
+                const header = container.querySelector('.menu-type-header');
+                const dishesContainer = container.querySelector('.menu-dishes-container');
+                const toggleIcon = container.querySelector('.menu-type-header span');
+                
+                if (header && dishesContainer && toggleIcon) {
+                    if (allMenuSectionsExpanded) {
+                        dishesContainer.style.display = 'block';
+                        toggleIcon.style.transform = 'rotate(0deg)';
+                    } else {
+                        dishesContainer.style.display = 'none';
+                        toggleIcon.style.transform = 'rotate(-90deg)';
+                    }
+                }
+            });
+            
+            toggleAllText.textContent = allMenuSectionsExpanded ? 'Свернуть все' : 'Развернуть все';
         }
 
         loadCurrentMenu();
