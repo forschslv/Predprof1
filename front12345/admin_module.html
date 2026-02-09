@@ -125,6 +125,13 @@
             <!-- Дни будут созданы динамически -->
         </div>
 
+        <!-- Выбор недели -->
+        <div style="margin-bottom: 30px; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--surface-color);">
+            <h3>Выберите неделю:</h3>
+            <p style="color:var(--text-secondary); margin-bottom:10px;">Укажите дату понедельника для недели, к которой относится меню.</p>
+            <input type="date" id="weekStartDate" style="padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem; width: 200px;" required>
+        </div>
+
         <!-- Кнопка создания -->
         <button onclick="createModuleMenu()" class="primary create-btn" id="createBtn">Создать модульное меню</button>
 
@@ -341,6 +348,27 @@
 
         // Создание модульного меню
         async function createModuleMenu() {
+            // Получаем дату начала недели
+            const weekStartInput = document.getElementById('weekStartDate');
+            const weekStartValue = weekStartInput.value;
+            
+            if (!weekStartValue) {
+                alert('Пожалуйста, выберите дату начала недели');
+                weekStartInput.focus();
+                return;
+            }
+            
+            // Проверяем, что выбранный день - понедельник (необязательно, но полезно)
+            const selectedDate = new Date(weekStartValue);
+            const dayOfWeek = selectedDate.getDay(); // 0 - воскресенье, 1 - понедельник, ..., 6 - суббота
+            if (dayOfWeek !== 1) {
+                const confirmMonday = confirm('Выбранная дата не является понедельником. Хотите продолжить?');
+                if (!confirmMonday) {
+                    weekStartInput.focus();
+                    return;
+                }
+            }
+            
             // Подготовка данных в формате API
             const schedule = [];
             
@@ -360,6 +388,7 @@
             }
             
             const data = {
+                week_start_date: weekStartValue,
                 schedule: schedule
             };
             
@@ -387,8 +416,30 @@
             }
         }
 
+        // Установка даты по умолчанию (ближайший понедельник)
+        function setDefaultWeekStartDate() {
+            const today = new Date();
+            const dayOfWeek = today.getDay(); // 0 - воскресенье, 1 - понедельник, ..., 6 - суббота
+            let daysUntilMonday = (7 - dayOfWeek + 1) % 7;
+            if (daysUntilMonday === 0) daysUntilMonday = 7; // если сегодня воскресенье, понедельник через 1 день
+            const nextMonday = new Date(today);
+            nextMonday.setDate(today.getDate() + daysUntilMonday);
+            
+            // Форматирование в YYYY-MM-DD
+            const yyyy = nextMonday.getFullYear();
+            const mm = String(nextMonday.getMonth() + 1).padStart(2, '0');
+            const dd = String(nextMonday.getDate()).padStart(2, '0');
+            const formattedDate = `${yyyy}-${mm}-${dd}`;
+            
+            const weekStartInput = document.getElementById('weekStartDate');
+            if (weekStartInput) {
+                weekStartInput.value = formattedDate;
+            }
+        }
+
         // Запуск инициализации
         init();
+        setDefaultWeekStartDate();
     </script>
 </body>
 </html>
