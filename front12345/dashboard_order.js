@@ -26,12 +26,22 @@ async function loadMenuData() {
         // 2. Расписание
         let tempSchedule = [];
         if (moduleData && Array.isArray(moduleData)) {
-            tempSchedule = moduleData;
+            // Преобразуем массив объектов {dish_id, day_of_week} в структуру {day_of_week, dish_ids: []}
+            const scheduleByDay = {};
+            moduleData.forEach(item => {
+                const day = item.day_of_week;
+                if (!scheduleByDay[day]) scheduleByDay[day] = [];
+                scheduleByDay[day].push(item.dish_id);
+            });
+            tempSchedule = Object.keys(scheduleByDay).map(day => ({
+                day_of_week: parseInt(day),
+                dish_ids: scheduleByDay[day]
+            }));
         } else if (moduleData && moduleData.schedule) {
             tempSchedule = moduleData.schedule;
         }
 
-        // FALLBACK: Если расписание пустое, показываем все блюда
+        // FALLBACK: Если расписание пустое ничего не показываем
         if (tempSchedule.length === 0) {
             console.warn("Расписание пустое! Показываем все блюда.");
             container.innerHTML = '<p style="color: orange">Модульное меню пусто.</p>';
@@ -43,6 +53,7 @@ async function loadMenuData() {
         }
 
         state.schedule = tempSchedule;
+        console.log(state.schedule)
         renderMenu();
 
     } catch (e) {
