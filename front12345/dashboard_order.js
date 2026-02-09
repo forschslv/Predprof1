@@ -118,6 +118,7 @@ function renderCategory(typeKey, dishes, container, dayIdx) {
             <div class="dish-info-block">
                 <span class="dish-name">${dish.name}</span>
                 <span class="dish-meta" title="${dish.composition || ''}">${dish.quantity_grams}г • ${comp}</span>
+                <span class="dish-source" style="font-size:0.7rem; color:${dish.is_provider ? 'var(--accent-blue)' : 'var(--accent-green)'};">${dish.is_provider ? 'Поставщик' : 'Собственное'}</span>
             </div>
             <div class="dish-price">${dish.price_rub} ₽</div>
         `;

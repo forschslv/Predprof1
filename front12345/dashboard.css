@@ -6,6 +6,7 @@
     --accent-cyan: #00d4ff;
     --accent-purple: #8b5cf6;
     --accent-blue: #3b82f6;
+    --accent-green: #10b981;
     --text-primary: #f0f9ff;
     --text-secondary: #94a3b8;
     --border-color: rgba(139, 92, 246, 0.2);
@@ -204,6 +205,12 @@ input[type="date"] {
     text-overflow: ellipsis;
     max-width: 200px;
     display: block;
+}
+
+/* Метка источника блюда */
+.dish-source {
+    font-size: 0.7rem;
+    margin-top: 2px;
 }
 
 .dish-card {
