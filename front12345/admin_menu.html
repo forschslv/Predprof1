@@ -37,6 +37,18 @@
         <!-- Секция 2: Добавление блюда вручную (Эндпоинт /menu/dish) -->
         <div class="inventory-item">
             <h2>Добавить блюдо вручную</h2>
+            <div class="radio-group" style="margin-bottom:15px;">
+                <label class="radio-label">
+                    <input type="radio" name="manualType" value="true" checked>
+                    <span class="radio-custom"></span>
+                    <span class="radio-text">Меню поставщика</span>
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="manualType" value="false">
+                    <span class="radio-custom"></span>
+                    <span class="radio-text">Собственное меню</span>
+                </label>
+            </div>
             <div class="button-group" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                 <input type="text" id="dishName" placeholder="Название блюда">
                 <select id="dishType">
@@ -134,12 +146,14 @@
 
         // Создание блюда вручную (/menu/dish)
         async function createDishManual() {
+            const isProvider = document.querySelector('input[name="manualType"]:checked').value === 'true';
             const data = {
                 name: document.getElementById('dishName').value,
                 type: document.getElementById('dishType').value,
                 composition: document.getElementById('dishComp').value,
                 quantity_grams: parseInt(document.getElementById('dishWeight').value),
-                price_rub: parseFloat(document.getElementById('dishPrice').value)
+                price_rub: parseFloat(document.getElementById('dishPrice').value),
+                is_provider: isProvider
             };
 
             if (!data.name || !data.price_rub) return alert("Заполните название и цену!");

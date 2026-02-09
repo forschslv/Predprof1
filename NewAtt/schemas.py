@@ -28,6 +28,7 @@ class DishBase(BaseModel):
     composition: str
     quantity_grams: int
     price_rub: float
+    is_provider: bool = True
 
 
 
