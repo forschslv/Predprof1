@@ -60,6 +60,7 @@ HTML_MAPPING = {
     "404": "404.html",
     "test_error": "test_error.html",
     "error": "error.html",
+    "admin_module": "admin_module.html",
 }
 
 

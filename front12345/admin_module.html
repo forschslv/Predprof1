@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Создание модульного меню - Админ</title>
+    <link rel="stylesheet" href="cafeteria_styles.css">
+    <style>
+        .day-section {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background: var(--surface-color);
+        }
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .day-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+        .dish-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 10px;
+        }
+        .dish-card {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px;
+            background: var(--background-color);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .dish-card:hover {
+            border-color: var(--accent-blue);
+            background: rgba(0, 123, 255, 0.05);
+        }
+        .dish-card.selected {
+            border-color: var(--accent-green);
+            background: rgba(40, 167, 69, 0.1);
+        }
+        .dish-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .dish-details {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+        .dish-price {
+            font-weight: bold;
+            color: var(--accent-green);
+        }
+        .dish-source {
+            font-size: 0.8rem;
+            color: var(--accent-blue);
+        }
+        .selected-dishes {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        .selected-dish-tag {
+            display: inline-block;
+            background: var(--accent-green);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            font-size: 0.8rem;
+        }
+        .type-filter {
+            margin-bottom: 20px;
+        }
+        .type-filter button {
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .type-filter button.active {
+            background: var(--accent-blue);
+            color: white;
+        }
+        .create-btn {
+            margin-top: 30px;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h1>Создание модульного меню</h1>
+            <button onclick="window.location.href='admin.html'" class="secondary" style="width:auto;">Назад в панель</button>
+        </div>
+
+        <p style="color:var(--text-secondary); margin-bottom:20px;">
+            Выберите блюда для каждого дня недели. Для каждого дня можно выбрать несколько блюд, но не более 2 блюд одного типа.
+        </p>
+
+        <!-- Фильтр по типам блюд -->
+        <div class="type-filter">
+            <h3>Фильтр по типам блюд:</h3>
+            <button onclick="filterByType('ALL')" class="active" id="filter-all">Все</button>
+            <button onclick="filterByType('MAIN')" id="filter-main">Основные</button>
+            <button onclick="filterByType('GARNISH')" id="filter-garnish">Гарниры</button>
+            <button onclick="filterByType('SALAD')" id="filter-salad">Салаты</button>
+            <button onclick="filterByType('SOUP')" id="filter-soup">Супы</button>
+            <button onclick="filterByType('DRINK')" id="filter-drink">Напитки</button>
+            <button onclick="filterByType('PREPARED')" id="filter-prepared">Готовые</button>
+            <button onclick="filterByType('BREAD')" id="filter-bread">Хлеб</button>
+        </div>
+
+        <!-- Дни недели -->
+        <div id="days-container">
+            <!-- Дни будут созданы динамически -->
+        </div>
+
+        <!-- Кнопка создания -->
+        <button onclick="createModuleMenu()" class="primary create-btn" id="createBtn">Создать модульное меню</button>
+
+        <!-- Информация о текущем выборе -->
+        <div style="margin-top: 30px; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--surface-color);">
+            <h3>Текущий выбор:</h3>
+            <div id="selection-summary">
+                <p>Выберите блюда для дней недели выше.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        checkAuth();
+
+        // Данные
+        let allDishes = [];
+        let selectedDishes = {}; // { day: [dishIds] }
+        let currentFilter = 'ALL';
+        const dayNames = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
+
+        // Инициализация
+        async function init() {
+            await loadAllDishes();
+            createDaySections();
+            updateSelectionSummary();
+        }
+
+        // Загрузка всех блюд
+        async function loadAllDishes() {
+            try {
+                allDishes = await apiRequest('/menu');
+                console.log('Загружено блюд:', allDishes.length);
+            } catch (e) {
+                console.error('Ошибка загрузки блюд:', e);
+                alert('Не удалось загрузить список блюд');
+            }
+        }
+
+        // Создание секций для дней недели
+        function createDaySections() {
+            const container = document.getElementById('days-container');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < 7; i++) {
+                const day = i + 1; // day_of_week от 1 до 7
+                const dayName = dayNames[i];
+                
+                const daySection = document.createElement('div');
+                daySection.className = 'day-section';
+                daySection.id = `day-${day}`;
+                
+                daySection.innerHTML = `
+                    <div class="day-header">
+                        <div class="day-title">${dayName} (День ${day})</div>
+                        <div class="selected-count">Выбрано: <span id="count-day-${day}">0</span></div>
+                    </div>
+                    <div class="dish-grid" id="dishes-day-${day}">
+                        <!-- Блюда будут добавлены динамически -->
+                    </div>
+                    <div class="selected-dishes" id="selected-day-${day}">
+                        <!-- Выбранные блюда будут отображены здесь -->
+                    </div>
+                `;
+                
+                container.appendChild(daySection);
+                renderDishesForDay(day);
+            }
+        }
+
+        // Рендер блюд для конкретного дня
+        function renderDishesForDay(day) {
+            const container = document.getElementById(`dishes-day-${day}`);
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            // Фильтрация блюд
+            let filteredDishes = allDishes;
+            if (currentFilter !== 'ALL') {
+                filteredDishes = allDishes.filter(dish => dish.type === currentFilter);
+            }
+            
+            if (filteredDishes.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-secondary); grid-column: span 2;">Нет блюд для отображения</p>';
+                return;
+            }
+            
+            // Получаем выбранные блюда для этого дня
+            const selectedForDay = selectedDishes[day] || [];
+            
+            // Создаем карточки блюд
+            filteredDishes.forEach(dish => {
+                const isSelected = selectedForDay.includes(dish.id);
+                
+                const card = document.createElement('div');
+                card.className = `dish-card ${isSelected ? 'selected' : ''}`;
+                card.dataset.dishId = dish.id;
+                card.dataset.dishType = dish.type;
+                
+                card.innerHTML = `
+                    <div class="dish-name">${dish.name}</div>
+                    <div class="dish-details">${dish.composition} (${dish.quantity_grams}г)</div>
+                    <div class="dish-price">${dish.price_rub} ₽</div>
+                    <div class="dish-source">${dish.is_provider ? 'Поставщик' : 'Собственное'}</div>
+                `;
+                
+                card.addEventListener('click', () => toggleDishForDay(day, dish.id));
+                container.appendChild(card);
+            });
+        }
+
+        // Переключение выбора блюда для дня
+        function toggleDishForDay(day, dishId) {
+            if (!selectedDishes[day]) {
+                selectedDishes[day] = [];
+            }
+            
+            const index = selectedDishes[day].indexOf(dishId);
+            if (index === -1) {
+                // Проверка ограничений по типам
+                const dish = allDishes.find(d => d.id === dishId);
+                if (!dish) return;
+                
+                // Подсчет блюд этого типа в выбранных для дня
+                const typeCount = selectedDishes[day].filter(id => {
+                    const d = allDishes.find(d => d.id === id);
+                    return d && d.type === dish.type;
+                }).length;
+                
+                if (typeCount >= 2) {
+                    alert(`Нельзя выбрать более 2 блюд типа ${dish.type} для одного дня`);
+                    return;
+                }
+                
+                selectedDishes[day].push(dishId);
+            } else {
+                selectedDishes[day].splice(index, 1);
+            }
+            
+            // Обновляем UI
+            updateDaySelection(day);
+            renderDishesForDay(day); // Перерисовываем для обновления состояния selected
+            updateSelectionSummary();
+        }
+
+        // Обновление отображения выбора для дня
+        function updateDaySelection(day) {
+            const selectedForDay = selectedDishes[day] || [];
+            
+            // Обновляем счетчик
+            const countElement = document.getElementById(`count-day-${day}`);
+            if (countElement) {
+                countElement.textContent = selectedForDay.length;
+            }
+            
+            // Обновляем список выбранных блюд
+            const selectedContainer = document.getElementById(`selected-day-${day}`);
+            if (selectedContainer) {
+                if (selectedForDay.length === 0) {
+                    selectedContainer.innerHTML = '<em>Блюда не выбраны</em>';
+                } else {
+                    let html = '';
+                    selectedForDay.forEach(dishId => {
+                        const dish = allDishes.find(d => d.id === dishId);
+                        if (dish) {
+                            html += `<span class="selected-dish-tag">${dish.name}</span>`;
+                        }
+                    });
+                    selectedContainer.innerHTML = html;
+                }
+            }
+        }
+
+        // Фильтрация по типу
+        function filterByType(type) {
+            currentFilter = type;
+            
+            // Обновляем активные кнопки
+            document.querySelectorAll('.type-filter button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`filter-${type.toLowerCase()}`).classList.add('active');
+            
+            // Перерисовываем блюда для всех дней
+            for (let day = 1; day <= 7; day++) {
+                renderDishesForDay(day);
+            }
+        }
+
+        // Обновление сводки выбора
+        function updateSelectionSummary() {
+            const summaryElement = document.getElementById('selection-summary');
+            let html = '';
+            
+            let totalSelected = 0;
+            for (let day = 1; day <= 7; day++) {
+                const selectedForDay = selectedDishes[day] || [];
+                if (selectedForDay.length > 0) {
+                    totalSelected += selectedForDay.length;
+                    html += `<p><strong>${dayNames[day-1]}:</strong> ${selectedForDay.length} блюд</p>`;
+                }
+            }
+            
+            if (totalSelected === 0) {
+                html = '<p>Выберите блюда для дней недели выше.</p>';
+            } else {
+                html = `<p><strong>Всего выбрано блюд:</strong> ${totalSelected}</p>` + html;
+            }
+            
+            summaryElement.innerHTML = html;
+        }
+
+        // Создание модульного меню
+        async function createModuleMenu() {
+            // Подготовка данных в формате API
+            const schedule = [];
+            
+            for (let day = 1; day <= 7; day++) {
+                const dishIds = selectedDishes[day] || [];
+                if (dishIds.length > 0) {
+                    schedule.push({
+                        day_of_week: day,
+                        dish_ids: dishIds
+                    });
+                }
+            }
+            
+            if (schedule.length === 0) {
+                alert('Выберите хотя бы одно блюдо для любого дня недели');
+                return;
+            }
+            
+            const data = {
+                schedule: schedule
+            };
+            
+            console.log('Отправка данных:', data);
+            
+            const btn = document.getElementById('createBtn');
+            btn.disabled = true;
+            btn.textContent = 'Создание...';
+            
+            try {
+                const result = await apiRequest('/module-menu', 'POST', data);
+                alert('Модульное меню успешно создано!');
+                // Сброс выбора
+                selectedDishes = {};
+                for (let day = 1; day <= 7; day++) {
+                    updateDaySelection(day);
+                }
+                updateSelectionSummary();
+            } catch (e) {
+                console.error('Ошибка создания модульного меню:', e);
+                alert('Ошибка при создании модульного меню: ' + (e.message || 'Неизвестная ошибка'));
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Создать модульное меню';
+            }
+        }
+
+        // Запуск инициализации
+        init();
+    </script>
+</body>
+</html>
