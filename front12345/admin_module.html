@@ -94,6 +94,97 @@
             padding: 12px 24px;
             font-size: 1.1rem;
         }
+        
+        /* Стили для группированного меню */
+        .menu-type-container {
+            margin-bottom: 20px;
+        }
+        
+        .menu-type-header {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 8px;
+        }
+        
+        .menu-type-header h3 {
+            margin: 0;
+        }
+        
+        .menu-dishes-container {
+            margin-left: 20px;
+        }
+        
+        .menu-item {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: var(--background-color);
+        }
+        
+        .day-btn {
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--surface-color);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .day-btn:hover {
+            border-color: var(--accent-blue);
+            background: rgba(0, 123, 255, 0.1);
+        }
+        
+        .day-btn.selected {
+            background: var(--accent-green);
+            color: white;
+            border-color: var(--accent-green);
+        }
+        
+        .day-btn.selected:hover {
+            background: #28a745;
+            border-color: #28a745;
+        }
+        
+        .day-buttons-container {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        
+        .day-buttons-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        
+        .dish-composition {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            margin-bottom: 4px;
+        }
+        
+        .dish-source {
+            font-size: 0.7rem;
+            margin-top: 4px;
+        }
+        
+        .price {
+            font-weight: bold;
+            color: var(--accent-green);
+        }
+        
+        .menu-item strong {
+            color: var(--text-primary);
+        }
     </style>
 </head>
 <body>
@@ -104,7 +195,7 @@
         </div>
 
         <p style="color:var(--text-secondary); margin-bottom:20px;">
-            Выберите блюда для каждого дня недели. Для каждого дня можно выбрать несколько блюд, но не более 2 блюд одного типа.
+            Выберите блюда для каждого дня недели. Нажмите на кнопки дней недели (ПН-ВС) для каждого блюда. Для каждого дня можно выбрать несколько блюд, но не более 2 блюд одного типа.
         </p>
 
         <!-- Фильтр по типам блюд -->
@@ -120,9 +211,16 @@
             <button onclick="filterByType('BREAD')" id="filter-bread">Хлеб</button>
         </div>
 
-        <!-- Дни недели -->
-        <div id="days-container">
-            <!-- Дни будут созданы динамически -->
+        <!-- Группированное меню -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h2 style="margin:0;">Выбор блюд для модульного меню</h2>
+            <button onclick="toggleAllMenuSections()" class="secondary" style="width:auto; padding:8px 16px;">
+                <span id="toggleAllText">Развернуть все</span>
+            </button>
+        </div>
+        <div id="menu-container">
+            <!-- Сюда загрузится список блюд с кнопками дней -->
+            <p>Загрузка списка блюд...</p>
         </div>
 
         <!-- Выбор недели -->
@@ -157,7 +255,7 @@
         // Инициализация
         async function init() {
             await loadAllDishes();
-            createDaySections();
+            renderGroupedMenu();
             updateSelectionSummary();
         }
 
@@ -172,77 +270,126 @@
             }
         }
 
-        // Создание секций для дней недели
-        function createDaySections() {
-            const container = document.getElementById('days-container');
-            container.innerHTML = '';
-            
-            for (let i = 0; i < 7; i++) {
-                const day = i + 1; // day_of_week от 1 до 7
-                const dayName = dayNames[i];
-                
-                const daySection = document.createElement('div');
-                daySection.className = 'day-section';
-                daySection.id = `day-${day}`;
-                
-                daySection.innerHTML = `
-                    <div class="day-header">
-                        <div class="day-title">${dayName} (День ${day})</div>
-                        <div class="selected-count">Выбрано: <span id="count-day-${day}">0</span></div>
-                    </div>
-                    <div class="dish-grid" id="dishes-day-${day}">
-                        <!-- Блюда будут добавлены динамически -->
-                    </div>
-                    <div class="selected-dishes" id="selected-day-${day}">
-                        <!-- Выбранные блюда будут отображены здесь -->
-                    </div>
-                `;
-                
-                container.appendChild(daySection);
-                renderDishesForDay(day);
-            }
-        }
-
-        // Рендер блюд для конкретного дня
-        function renderDishesForDay(day) {
-            const container = document.getElementById(`dishes-day-${day}`);
+        // Рендер группированного меню с кнопками дней
+        function renderGroupedMenu() {
+            const container = document.getElementById('menu-container');
             if (!container) return;
             
             container.innerHTML = '';
             
-            // Фильтрация блюд
-            let filteredDishes = allDishes;
-            if (currentFilter !== 'ALL') {
-                filteredDishes = allDishes.filter(dish => dish.type === currentFilter);
-            }
-            
-            if (filteredDishes.length === 0) {
-                container.innerHTML = '<p style="color:var(--text-secondary); grid-column: span 2;">Нет блюд для отображения</p>';
+            if (allDishes.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-secondary);">Нет блюд для отображения</p>';
                 return;
             }
             
-            // Получаем выбранные блюда для этого дня
-            const selectedForDay = selectedDishes[day] || [];
+            // Группировка по типу для удобства
+            const types = [...new Set(allDishes.map(d => d.type))];
             
-            // Создаем карточки блюд
-            filteredDishes.forEach(dish => {
-                const isSelected = selectedForDay.includes(dish.id);
+            types.forEach(type => {
+                // Фильтрация блюд по типу (учитываем текущий фильтр)
+                let typeDishes = allDishes.filter(dish => dish.type === type);
                 
-                const card = document.createElement('div');
-                card.className = `dish-card ${isSelected ? 'selected' : ''}`;
-                card.dataset.dishId = dish.id;
-                card.dataset.dishType = dish.type;
+                // Применяем текущий фильтр
+                if (currentFilter !== 'ALL') {
+                    if (type !== currentFilter) return;
+                }
                 
-                card.innerHTML = `
-                    <div class="dish-name">${dish.name}</div>
-                    <div class="dish-details">${dish.composition} (${dish.quantity_grams}г)</div>
-                    <div class="dish-price">${dish.price_rub} ₽</div>
-                    <div class="dish-source">${dish.is_provider ? 'Поставщик' : 'Собственное'}</div>
+                // Разделяем на поставщика и собственные
+                const providerDishes = typeDishes.filter(d => d.is_provider);
+                const ownDishes = typeDishes.filter(d => !d.is_provider);
+                
+                // Если есть блюда от поставщика
+                if (providerDishes.length > 0) {
+                    createTypeSection(type, providerDishes, container, true);
+                }
+                
+                // Если есть собственные блюда
+                if (ownDishes.length > 0) {
+                    createTypeSection(type, ownDishes, container, false);
+                }
+            });
+        }
+        
+        // Функция создания секции для типа меню
+        function createTypeSection(type, dishes, container, isProvider) {
+            // Создаем контейнер для типа меню
+            const typeContainer = document.createElement('div');
+            typeContainer.className = 'menu-type-container';
+            
+            // Создаем заголовок с иконкой сворачивания
+            const typeHeader = document.createElement('div');
+            typeHeader.className = 'menu-type-header';
+            
+            const toggleIcon = document.createElement('span');
+            toggleIcon.innerHTML = '▼';
+            toggleIcon.style.cssText = 'margin-right: 8px; font-size: 12px; transition: transform 0.2s;';
+            
+            const typeTitle = document.createElement('h3');
+            typeTitle.innerText = type + ' (' + (isProvider ? 'Поставщик' : 'Собственное') + ')';
+            typeTitle.style.cssText = 'margin: 0; color: ' + (isProvider ? 'var(--accent-blue)' : 'var(--accent-green)') + ';';
+            
+            typeHeader.appendChild(toggleIcon);
+            typeHeader.appendChild(typeTitle);
+            
+            // Создаем контейнер для блюд
+            const dishesContainer = document.createElement('div');
+            dishesContainer.className = 'menu-dishes-container';
+            
+            // Добавляем блюда
+            dishes.forEach(dish => {
+                const div = document.createElement('div');
+                div.className = 'menu-item';
+                
+                // Определяем, для каких дней выбрано это блюдо
+                const selectedDays = [];
+                for (let day = 1; day <= 7; day++) {
+                    if (selectedDishes[day] && selectedDishes[day].includes(dish.id)) {
+                        selectedDays.push(day);
+                    }
+                }
+                
+                // Создаем кнопки дней недели
+                const dayButtonsHtml = `
+                    <div style="margin-top: 8px;">
+                        <div class="day-buttons-label">Выбрать дни:</div>
+                        <div class="day-buttons-container">
+                            <button class="day-btn ${selectedDays.includes(1) ? 'selected' : ''}" data-day="1" data-dish-id="${dish.id}">ПН</button>
+                            <button class="day-btn ${selectedDays.includes(2) ? 'selected' : ''}" data-day="2" data-dish-id="${dish.id}">ВТ</button>
+                            <button class="day-btn ${selectedDays.includes(3) ? 'selected' : ''}" data-day="3" data-dish-id="${dish.id}">СР</button>
+                            <button class="day-btn ${selectedDays.includes(4) ? 'selected' : ''}" data-day="4" data-dish-id="${dish.id}">ЧТ</button>
+                            <button class="day-btn ${selectedDays.includes(5) ? 'selected' : ''}" data-day="5" data-dish-id="${dish.id}">ПТ</button>
+                            <button class="day-btn ${selectedDays.includes(6) ? 'selected' : ''}" data-day="6" data-dish-id="${dish.id}">СБ</button>
+                            <button class="day-btn ${selectedDays.includes(7) ? 'selected' : ''}" data-day="7" data-dish-id="${dish.id}">ВС</button>
+                        </div>
+                    </div>
                 `;
                 
-                card.addEventListener('click', () => toggleDishForDay(day, dish.id));
-                container.appendChild(card);
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between;">
+                        <strong>${dish.name}</strong>
+                        <span class="price">${dish.price_rub} ₽</span>
+                    </div>
+                    <div class="dish-composition">${dish.composition} (${dish.quantity_grams}г)</div>
+                    <div class="dish-source" style="color:${dish.is_provider ? 'var(--accent-blue)' : 'var(--accent-green)'};">${dish.is_provider ? 'Поставщик' : 'Собственное'}</div>
+                    ${dayButtonsHtml}
+                `;
+                dishesContainer.appendChild(div);
             });
+            
+            // Добавляем обработчик клика для сворачивания/разворачивания
+            typeHeader.addEventListener('click', () => {
+                const isCollapsed = dishesContainer.style.display === 'none';
+                dishesContainer.style.display = isCollapsed ? 'block' : 'none';
+                toggleIcon.style.transform = isCollapsed ? 'rotate(0deg)' : 'rotate(-90deg)';
+            });
+            
+            // Сворачиваем по умолчанию
+            dishesContainer.style.display = 'none';
+            toggleIcon.style.transform = 'rotate(-90deg)';
+            
+            typeContainer.appendChild(typeHeader);
+            typeContainer.appendChild(dishesContainer);
+            container.appendChild(typeContainer);
         }
 
         // Переключение выбора блюда для дня
@@ -274,37 +421,14 @@
             }
             
             // Обновляем UI
-            updateDaySelection(day);
-            renderDishesForDay(day); // Перерисовываем для обновления состояния selected
             updateSelectionSummary();
+            // Перерисовываем меню для обновления состояния кнопок
+            renderGroupedMenu();
         }
 
-        // Обновление отображения выбора для дня
+        // Обновление отображения выбора для дня (упрощенная версия)
         function updateDaySelection(day) {
-            const selectedForDay = selectedDishes[day] || [];
-            
-            // Обновляем счетчик
-            const countElement = document.getElementById(`count-day-${day}`);
-            if (countElement) {
-                countElement.textContent = selectedForDay.length;
-            }
-            
-            // Обновляем список выбранных блюд
-            const selectedContainer = document.getElementById(`selected-day-${day}`);
-            if (selectedContainer) {
-                if (selectedForDay.length === 0) {
-                    selectedContainer.innerHTML = '<em>Блюда не выбраны</em>';
-                } else {
-                    let html = '';
-                    selectedForDay.forEach(dishId => {
-                        const dish = allDishes.find(d => d.id === dishId);
-                        if (dish) {
-                            html += `<span class="selected-dish-tag">${dish.name}</span>`;
-                        }
-                    });
-                    selectedContainer.innerHTML = html;
-                }
-            }
+            // Функция оставлена для совместимости, но теперь UI обновляется через renderGroupedMenu()
         }
 
         // Фильтрация по типу
@@ -317,10 +441,8 @@
             });
             document.getElementById(`filter-${type.toLowerCase()}`).classList.add('active');
             
-            // Перерисовываем блюда для всех дней
-            for (let day = 1; day <= 7; day++) {
-                renderDishesForDay(day);
-            }
+            // Перерисовываем меню
+            renderGroupedMenu();
         }
 
         // Обновление сводки выбора
@@ -415,6 +537,43 @@
                 btn.textContent = 'Создать модульное меню';
             }
         }
+
+        // Функция для переключения всех разделов меню
+        function toggleAllMenuSections() {
+            const containers = document.querySelectorAll('.menu-type-container');
+            const toggleAllText = document.getElementById('toggleAllText');
+            
+            if (containers.length === 0) return;
+            
+            const allMenuSectionsExpanded = toggleAllText.textContent === 'Свернуть все';
+            
+            containers.forEach(container => {
+                const header = container.querySelector('.menu-type-header');
+                const dishesContainer = container.querySelector('.menu-dishes-container');
+                const toggleIcon = container.querySelector('.menu-type-header span');
+                
+                if (header && dishesContainer && toggleIcon) {
+                    if (!allMenuSectionsExpanded) {
+                        dishesContainer.style.display = 'block';
+                        toggleIcon.style.transform = 'rotate(0deg)';
+                    } else {
+                        dishesContainer.style.display = 'none';
+                        toggleIcon.style.transform = 'rotate(-90deg)';
+                    }
+                }
+            });
+            
+            toggleAllText.textContent = allMenuSectionsExpanded ? 'Развернуть все' : 'Свернуть все';
+        }
+
+        // Обработка кликов на кнопки дней (делегирование событий)
+        document.addEventListener('click', function(event) {
+            if (event.target.classList.contains('day-btn')) {
+                const day = parseInt(event.target.getAttribute('data-day'));
+                const dishId = parseInt(event.target.getAttribute('data-dish-id'));
+                toggleDishForDay(day, dishId);
+            }
+        });
 
         // Установка даты по умолчанию (ближайший понедельник)
         function setDefaultWeekStartDate() {
