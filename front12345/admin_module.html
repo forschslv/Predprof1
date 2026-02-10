@@ -126,14 +126,15 @@
         }
         
         .day-btn {
-            padding: 4px 8px;
-            font-size: 0.8rem;
+            padding: 2px 4px;
+            font-size: 0.7rem;
             border: 1px solid var(--border-color);
-            border-radius: 4px;
+            border-radius: 3px;
             background: var(--surface-color);
             color: var(--text-primary);
             cursor: pointer;
             transition: all 0.2s;
+            min-width: 28px;
         }
         
         .day-btn:hover {
@@ -154,8 +155,7 @@
         
         .day-buttons-container {
             display: flex;
-            gap: 4px;
-            flex-wrap: wrap;
+            gap: 1px;
             margin-top: 8px;
         }
         
@@ -424,6 +424,8 @@
             updateSelectionSummary();
             // Перерисовываем меню для обновления состояния кнопок
             renderGroupedMenu();
+            // Сворачиваем все разделы при выборе дня
+            collapseAllMenuSections();
         }
 
         // Обновление отображения выбора для дня (упрощенная версия)
@@ -564,6 +566,23 @@
             });
             
             toggleAllText.textContent = allMenuSectionsExpanded ? 'Развернуть все' : 'Свернуть все';
+        }
+        
+        // Функция для сворачивания всех разделов меню
+        function collapseAllMenuSections() {
+            const containers = document.querySelectorAll('.menu-type-container');
+            containers.forEach(container => {
+                const dishesContainer = container.querySelector('.menu-dishes-container');
+                const toggleIcon = container.querySelector('.menu-type-header span');
+                if (dishesContainer && toggleIcon) {
+                    dishesContainer.style.display = 'none';
+                    toggleIcon.style.transform = 'rotate(-90deg)';
+                }
+            });
+            const toggleAllText = document.getElementById('toggleAllText');
+            if (toggleAllText) {
+                toggleAllText.textContent = 'Развернуть все';
+            }
         }
 
         // Обработка кликов на кнопки дней (делегирование событий)
