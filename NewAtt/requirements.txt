@@ -9,7 +9,7 @@ uvicorn>=0.37.0
 sqlalchemy>=2.0.46
 
 # Authentication and security
-python-jose[cryptography]==3.5.0  # JWT tokens
+PyJWT  # JWT tokens
 passlib[bcrypt]>=1.7.4  # Password hashing
 python-multipart>=0.0.21  # File uploads
 
