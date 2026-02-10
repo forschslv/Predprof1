@@ -388,9 +388,9 @@
                 collapsedSections[sectionKey] = newIsCollapsed;
             });
             
-            // Проверяем, был ли раздел свёрнут ранее
+            // Проверяем, был ли раздел свёрнут ранее (по умолчанию всё свёрнуто)
             const sectionKey = type + '_' + isProvider;
-            const wasCollapsed = collapsedSections[sectionKey] === true;
+            const wasCollapsed = collapsedSections[sectionKey] !== false;
             dishesContainer.style.display = wasCollapsed ? 'none' : 'block';
             toggleIcon.style.transform = wasCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
             
