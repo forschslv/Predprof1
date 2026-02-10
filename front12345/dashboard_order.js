@@ -74,7 +74,8 @@ function renderMenu() {
     const sortedSchedule = [...state.schedule].sort((a, b) => a.day_of_week - b.day_of_week);
 
     sortedSchedule.forEach(dayEntry => {
-        const dayIdx = dayEntry.day_of_week;
+        const dayOfWeek = dayEntry.day_of_week; // 1-7
+        const dayIdx = dayOfWeek - 1; // Convert 1-7 to 0-6 for array access
         const dishIds = dayEntry.dish_ids || [];
 
         const dayDishes = dishIds
@@ -85,7 +86,7 @@ function renderMenu() {
 
         const dayCard = document.createElement('div');
         dayCard.className = 'day-card';
-        dayCard.innerHTML = `<div class="day-header">${DAYS_NAMES[dayIdx] || 'День ' + dayIdx}</div>`;
+        dayCard.innerHTML = `<div class="day-header">${DAYS_NAMES[dayIdx] || 'День ' + dayOfWeek}</div>`;
 
         const content = document.createElement('div');
         content.className = 'day-content';
@@ -99,12 +100,12 @@ function renderMenu() {
 
         TYPE_ORDER.forEach(typeKey => {
             if (!groups[typeKey]) return;
-            renderCategory(typeKey, groups[typeKey], content, dayIdx);
+            renderCategory(typeKey, groups[typeKey], content, dayOfWeek);
             delete groups[typeKey];
         });
 
         Object.keys(groups).forEach(typeKey => {
-            renderCategory(typeKey, groups[typeKey], content, dayIdx);
+            renderCategory(typeKey, groups[typeKey], content, dayOfWeek);
         });
 
         dayCard.appendChild(content);
@@ -112,7 +113,7 @@ function renderMenu() {
     });
 }
 
-function renderCategory(typeKey, dishes, container, dayIdx) {
+function renderCategory(typeKey, dishes, container, dayOfWeek) {
     const catHeader = document.createElement('div');
     catHeader.className = 'dish-category-title';
     catHeader.innerText = DISH_TYPES[typeKey] || typeKey;
@@ -121,7 +122,7 @@ function renderCategory(typeKey, dishes, container, dayIdx) {
     dishes.forEach(dish => {
         const dishEl = document.createElement('div');
         dishEl.className = 'dish-card';
-        if (state.selections[dayIdx] && state.selections[dayIdx][dish.id]) {
+        if (state.selections[dayOfWeek] && state.selections[dayOfWeek][dish.id]) {
             dishEl.classList.add('selected');
         }
 
@@ -137,7 +138,7 @@ function renderCategory(typeKey, dishes, container, dayIdx) {
             </div>
             <div class="dish-price">${dish.price_rub} ₽</div>
         `;
-        dishEl.onclick = () => toggleDish(dayIdx, dish, dishEl);
+        dishEl.onclick = () => toggleDish(dayOfWeek, dish, dishEl);
         container.appendChild(dishEl);
     });
 }
