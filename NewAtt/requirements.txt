@@ -2,31 +2,31 @@
 # Clean and minimal requirements for production
 
 # Core web framework
-fastapi==0.119.0
-uvicorn==0.37.0
+fastapi>=0.119.0
+uvicorn>=0.37.0
 
 # Database ORM
-sqlalchemy==2.0.46
+sqlalchemy>=2.0.46
 
 # Authentication and security
-python-jose[cryptography]==3.5.0
-passlib[bcrypt]==1.7.4
-python-multipart==0.0.21
+python-jose[cryptography]==3.5.0  # JWT tokens
+passlib[bcrypt]>=1.7.4  # Password hashing
+python-multipart>=0.0.21  # File uploads
 
 # Email validation for Pydantic
-email-validator==2.3.0
+email-validator>=2.3.0  # pydantic[email] extra
 
 # Environment variables
-python-dotenv==1.1.1
+python-dotenv>=1.1.1
 
 # Word document generation for reports
-python-docx==1.2.0
+python-docx>=1.2.0
 
 # Pydantic for data validation
-pydantic==2.11.0
+pydantic>=2.11.0
 
 # CORS middleware
-starlette==0.48.0
+starlette>=0.48.0
 
 # Note: The following are Python standard library modules used:
 # - random
