@@ -251,6 +251,7 @@
         let selectedDishes = {}; // { day: [dishIds] }
         let currentFilter = 'ALL';
         const dayNames = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
+        let collapsedSections = {}; // Хранит состояние свёрнутости разделов: ключ = type + '_' + isProvider
 
         // Инициализация
         async function init() {
@@ -379,13 +380,19 @@
             // Добавляем обработчик клика для сворачивания/разворачивания
             typeHeader.addEventListener('click', () => {
                 const isCollapsed = dishesContainer.style.display === 'none';
-                dishesContainer.style.display = isCollapsed ? 'block' : 'none';
-                toggleIcon.style.transform = isCollapsed ? 'rotate(0deg)' : 'rotate(-90deg)';
+                const newIsCollapsed = !isCollapsed;
+                dishesContainer.style.display = newIsCollapsed ? 'none' : 'block';
+                toggleIcon.style.transform = newIsCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
+                // Сохраняем состояние свёрнутости
+                const sectionKey = type + '_' + isProvider;
+                collapsedSections[sectionKey] = newIsCollapsed;
             });
             
-            // Сворачиваем по умолчанию
-            dishesContainer.style.display = 'none';
-            toggleIcon.style.transform = 'rotate(-90deg)';
+            // Проверяем, был ли раздел свёрнут ранее
+            const sectionKey = type + '_' + isProvider;
+            const wasCollapsed = collapsedSections[sectionKey] === true;
+            dishesContainer.style.display = wasCollapsed ? 'none' : 'block';
+            toggleIcon.style.transform = wasCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
             
             typeContainer.appendChild(typeHeader);
             typeContainer.appendChild(dishesContainer);
