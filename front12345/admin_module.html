@@ -555,25 +555,45 @@
             
             if (containers.length === 0) return;
             
+            // Определяем текущее состояние: если текст "Свернуть все", значит все развернуты
             const allMenuSectionsExpanded = toggleAllText.textContent === 'Свернуть все';
             
+            // Определяем новое состояние: если все развернуты, то сворачиваем, и наоборот
+            const newCollapsedState = allMenuSectionsExpanded; // true = свернуть (если все развернуты), false = развернуть (если все свернуты)
+            
+            // Обновляем collapsedSections для всех возможных секций
+            const allSectionKeys = new Set();
+            allDishes.forEach(dish => {
+                const sectionKey = dish.type + '_' + dish.is_provider;
+                allSectionKeys.add(sectionKey);
+            });
+            
+            // Применяем новое состояние ко всем секциям
+            allSectionKeys.forEach(key => {
+                collapsedSections[key] = newCollapsedState;
+            });
+            
+            // Визуально обновляем все контейнеры
             containers.forEach(container => {
                 const header = container.querySelector('.menu-type-header');
                 const dishesContainer = container.querySelector('.menu-dishes-container');
                 const toggleIcon = container.querySelector('.menu-type-header span');
                 
                 if (header && dishesContainer && toggleIcon) {
-                    if (!allMenuSectionsExpanded) {
-                        dishesContainer.style.display = 'block';
-                        toggleIcon.style.transform = 'rotate(0deg)';
-                    } else {
+                    if (newCollapsedState) {
+                        // Сворачиваем
                         dishesContainer.style.display = 'none';
                         toggleIcon.style.transform = 'rotate(-90deg)';
+                    } else {
+                        // Разворачиваем
+                        dishesContainer.style.display = 'block';
+                        toggleIcon.style.transform = 'rotate(0deg)';
                     }
                 }
             });
             
-            toggleAllText.textContent = allMenuSectionsExpanded ? 'Развернуть все' : 'Свернуть все';
+            // Обновляем текст кнопки
+            toggleAllText.textContent = newCollapsedState ? 'Развернуть все' : 'Свернуть все';
         }
         
         // Функция для сворачивания всех разделов меню
