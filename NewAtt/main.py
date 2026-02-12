@@ -143,8 +143,6 @@ def send_verification_email(to_email: str, code: str) -> None:
 
 @app.post("/register", status_code=status.HTTP_201_CREATED)
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
-    if not str(user_data.email).endswith("@students.sch2.ru"):
-        raise HTTPException(status_code=400, detail="Email must be a @students.sch2.ru address")
     existing = db.query(User).filter(User.email == user_data.email).first()
 
 

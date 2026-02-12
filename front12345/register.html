@@ -13,7 +13,7 @@
         <form id="registerForm">
             <input type="text" id="name" placeholder="Имя" required>
             <input type="text" id="secondary_name" placeholder="Фамилия" required>
-            <input type="email" id="email" placeholder="Почта @students.sch2.ru" required>
+            <input type="email" id="email" placeholder="Почта" required>
             <button type="submit" id="regBtn">Зарегистрироваться</button>
         </form>
 
@@ -54,11 +54,6 @@
                 status: document.getElementById('status')?.value.trim() || "active", // Default to "active" if not provided
                 email: document.getElementById('email').value.trim()
             };
-
-            if (!data.email.endsWith("@students.sch2.ru")) {
-                alert("Требуется почта @students.sch2.ru");
-                return;
-            }
 
             btn.disabled = true;
             btn.innerText = "Обработка...";
