@@ -44,26 +44,44 @@ app.add_middleware(
 # Монтируем API приложение под префиксом /api
 app.mount("/api", api_app)
 
-# Маппинг путей к HTML файлам
-HTML_MAPPING = {
-    "": "main.html",
-    "index": "main.html",
-    "main": "main.html",
-    "dashboard": "main.html",
-    "admin": "admin.html",
-    "admin_menu": "admin_menu.html",
-    "admin_orders": "admin_orders.html",
-    "admin_users": "admin_users.html",
-    "register_login": "register.html",
-    "register": "register.html",
-    "login": "login.html",
-    "order_details": "order_details.html",
-    "verify": "verify.html",
-    "404": "404.html",
-    "test_error": "test_error.html",
-    "error": "error.html",
-    "admin_module": "admin_module.html",
+# Старый маппинг путей к HTML файлам
+OLD_HTML_MAPPING: dict[str, str] = {
+    "admin":                    "admin/admin.html",
+    "admin_menu":               "admin/admin_menu.html",
+    "admin_orders":             "admin/admin_orders.html",
+    "admin_users":              "admin/admin_users.html",
+    "admin_module":             "admin/admin_module.html",
+    "register":                 "register_login/register.html",
+    "login":                    "register_login/login.html",
+    "verify":                   "register_login/verify.html",
+    "register_login":           "register.html",
+    "register_login/register_login": "register.html",
+    "dashboard":                "main.html",
 }
+
+# Маппинг путей к HTML файлам для дебага
+DEBUG_HTML_MAPPING: dict[str, str] = {
+    "test_error":               "test_error.html",
+
+}
+
+# Маппинг путей к HTML файлам
+HTML_MAPPING: dict[str, str] = (
+{
+    "":                         "main.html",
+    "index":                    "main.html",
+    "main":                     "main.html",
+    "admin/admin":              "admin/admin.html",
+    "admin/admin_menu":         "admin/admin_menu.html",
+    "admin/admin_orders":       "admin/admin_orders.html",
+    "admin/admin_users":        "admin/admin_users.html",
+    "admin/admin_module":       "admin/admin_module.html",
+    "register_login/register":  "register_login/register.html",
+    "register_login/login":     "register_login/login.html",
+    "register_login/verify":    "register_login/verify.html",
+    "404":                      "404.html",
+    "error":                    "error.html",
+} | OLD_HTML_MAPPING | DEBUG_HTML_MAPPING)
 
 
 @app.get("/{path:path}")
