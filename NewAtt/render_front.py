@@ -54,8 +54,8 @@ OLD_HTML_MAPPING: dict[str, str] = {
     "register":                 "register_login/register.html",
     "login":                    "register_login/login.html",
     "verify":                   "register_login/verify.html",
-    "register_login":           "register.html",
-    "register_login/register_login": "register.html",
+    "register_login":           "register_login/register.html",
+    "register_login/register_login": "register_login/register.html",
     "dashboard":                "main.html",
 }
 
