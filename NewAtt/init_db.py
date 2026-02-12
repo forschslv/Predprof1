@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from sqlalchemy import create_engine
 
-from NewAtt.logger import logger
+from logger import logger
 from models import Base
 
 
@@ -23,7 +23,7 @@ def init_db(database_url: str = "sqlite:///./app.db") -> None:
     session = SessionLocal()
     existing = session.query(User).filter(User.email == admin_email).first()
     if existing:
-        logger.low_debug(f"Admin user already exists: {admin_email}")
+        logger.debug(f"Admin user already exists: {admin_email}")
     else:
         admin_name = os.getenv("ADMIN_NAME", "129Admin")
         admin_secondary = os.getenv("ADMIN_SECONDARY", "1")
@@ -43,7 +43,7 @@ def init_db(database_url: str = "sqlite:///./app.db") -> None:
         logger.info(new_admin.id)
         token = create_access_token({"sub": new_admin.id})
         logger.info(f"Default admin created: {admin_email}")
-        logger.low_debug(f"ADMIN_ACCESS_TOKEN={token}")
+        logger.debug(f"ADMIN_ACCESS_TOKEN={token}")
 
 
 
