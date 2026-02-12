@@ -1,0 +1,3 @@
+NewAtt/logger_logs/*
+NewAtt/__pycache__/*
+app.db
