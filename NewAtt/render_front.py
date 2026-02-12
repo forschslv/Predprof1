@@ -46,17 +46,17 @@ app.mount("/api", api_app)
 
 # Старый маппинг путей к HTML файлам
 OLD_HTML_MAPPING: dict[str, str] = {
-    "admin":                    "admin/admin.html",
-    "admin_menu":               "admin/admin_menu.html",
-    "admin_orders":             "admin/admin_orders.html",
-    "admin_users":              "admin/admin_users.html",
-    "admin_module":             "admin/admin_module.html",
-    "register":                 "register_login/register.html",
-    "login":                    "register_login/login.html",
-    "verify":                   "register_login/verify.html",
-    "register_login":           "register_login/register.html",
-    "register_login/register_login": "register_login/register.html",
-    "dashboard":                "main.html",
+    "admin":                        "admin/admin.html",
+    "admin_menu":                   "admin/admin_menu.html",
+    "admin_orders":                 "admin/admin_orders.html",
+    "admin_users":                  "admin/admin_users.html",
+    "admin_module":                 "admin/admin_module.html",
+    "register":                     "register_login/register.html",
+    "login":                        "register_login/login.html",
+    "verify":                       "register_login/verify.html",
+    "register_login":               "register_login/register.html",
+    "register_login/register_login":"register_login/register.html",
+    "dashboard":                    "main.html",
 }
 
 # Маппинг путей к HTML файлам для дебага
