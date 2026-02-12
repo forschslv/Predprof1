@@ -125,10 +125,21 @@ async def catch_all(path: str):#-> FileResponse | tuple[dict[str, str], int]
             except Exception as e:
                 logger.error(f"Error serving 404.html: {e}")
                 return {"error": "Internal server error: 404.html not found, please try again later."}, 500
+    except HTTPException as e:
+        raise e
     except Exception as e:
         logger.error(repr(e))
-        from starlette.responses import RedirectResponse
+        from starlette.responses import RedirectResponse, Response
         import urllib.parse
+        
+        # Если запрашивается error.html, не делаем редирект, чтобы избежать цикла
+        if path == 'error.html' or path == 'error':
+            logger.error(f"Error occurred while serving error page: {e}")
+            return Response(
+                content=f"Internal Server Error: {e}",
+                status_code=500,
+                media_type="text/plain"
+            )
         
         # Create error details
         error_message = str(e)
@@ -136,9 +147,11 @@ async def catch_all(path: str):#-> FileResponse | tuple[dict[str, str], int]
         error_code = 500
         
         # Create URL with error parameters
-        error_url = f"error.html?code={error_code}&message={urllib.parse.quote(error_message)}&details={urllib.parse.quote(error_details)}&timestamp={urllib.parse.quote(str(datetime.now().isoformat()))}"
+        error_url = f"/error.html?code={error_code}&message={urllib.parse.quote(error_message)}&details={urllib.parse.quote(error_details)}&timestamp={urllib.parse.quote(str(datetime.now().isoformat()))}"
+        logger.debug(f"Redirecting to error page: {error_url}")
         
-        return RedirectResponse(url=error_url, status_code=500)
+        # Use 307 Temporary Redirect to preserve method and body, but we want to show error page
+        return RedirectResponse(url=error_url, status_code=307)
 
 # Статические файлы (CSS, JS, etc.) обслуживаем через StaticFiles
 app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="static_root")
