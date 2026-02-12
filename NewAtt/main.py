@@ -156,7 +156,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     else:
         if not user_data.name or not user_data.secondary_name:
             raise HTTPException(status_code=400, detail="Для новых пользователей требуются имя и отчество")
-        if user_data.status not in {"активен", "неактивен"}:
+        if user_data.status not in {"active", "inactive"}:
             raise HTTPException(status_code=400, detail="Статус должен быть 'активен' или 'неактивен'")
         code = generate_verification_code()
 
