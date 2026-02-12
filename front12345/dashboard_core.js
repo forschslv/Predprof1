@@ -35,7 +35,7 @@ let state = {
 async function request(endpoint, method = 'GET', body = null) {
     const token = localStorage.getItem('token');
     if (!token) {
-        window.location.href = 'register_login.html';
+        window.location.href = 'register.html';
         throw new Error('Нет токена авторизации');
     }
 
@@ -50,7 +50,7 @@ async function request(endpoint, method = 'GET', body = null) {
 
         if (response.status === 401) {
             localStorage.removeItem('token');
-            window.location.href = 'register_login.html';
+            window.location.href = 'register.html';
             return;
         }
 
@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Привязка кнопок
     const btnLogout = document.getElementById('logoutBtn');
-    if(btnLogout) btnLogout.onclick = () => { localStorage.clear(); window.location.href = 'register_login.html'; };
+    if(btnLogout) btnLogout.onclick = () => { localStorage.clear(); window.location.href = 'register.html'; };
 
     const navNew = document.getElementById('nav-newOrder');
     const navHist = document.getElementById('nav-history');

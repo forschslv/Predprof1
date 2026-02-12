@@ -8,57 +8,29 @@
 </head>
 <body>
     <div class="container" style="max-width: 500px; margin-top: 5vh;">
-        <h1>Регистрация и вход</h1>
+        <h1>Вход</h1>
 
         <form id="registerForm">
-            <input type="text" id="name" placeholder="Имя (для регистрации)">
-            <input type="text" id="secondary_name" placeholder="Фамилия (для регистрации)">
-            <input type="email" id="email" placeholder="Почта @students.sch2.ru" required>
-            <button type="submit" id="regBtn">Зарегистрироваться</button>
+            <input type="email" id="email" placeholder="Почта" required>
+            <button type="submit" id="regBtn">Войти</button>
         </form>
 
-        <div id="toggleText" style="color: var(--accent-cyan); text-decoration: none;">
-            Уже есть аккаунт? <br>Войти можно тут, просто игнорируйте поля имени и фамилии!)
-        </div>
+        <a id="toggleText" style="color: var(--accent-cyan); text-decoration: none; align-items: center" href="register.html">
+            Нет аккаунта? <br>Зарегистрироваться можно тут.
+        </a>
     </div>
 
     <script src="script.js"></script>
     <script>
-        // Function to update button text based on input fields
-        function updateButtonText() {
-            const nameInput = document.getElementById('name');
-            const secondaryNameInput = document.getElementById('secondary_name');
-            const regBtn = document.getElementById('regBtn');
-
-            // Check if any of the required fields are empty
-            if (nameInput.value.trim() === '' || secondaryNameInput.value.trim() === '') {
-                regBtn.textContent = 'Войти';
-            } else {
-                regBtn.textContent = 'Зарегистрироваться';
-            }
-        }
-
-        // Add event listeners to input fields to update button text dynamically
-        document.getElementById('name').addEventListener('input', updateButtonText);
-        document.getElementById('secondary_name').addEventListener('input', updateButtonText);
-
-        // Set initial button text based on current field values
-        updateButtonText();
-
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('regBtn');
             const data = {
-                name: document.getElementById('name').value.trim(),
-                secondary_name: document.getElementById('secondary_name').value.trim(),
                 status: document.getElementById('status')?.value.trim() || "active", // Default to "active" if not provided
-                email: document.getElementById('email').value.trim()
+                email: document.getElementById('email').value.trim(),
+                name:'',
+                secondary_name: '',
             };
-
-            if (!data.email.endsWith("@students.sch2.ru")) {
-                alert("Требуется почта @students.sch2.ru");
-                return;
-            }
 
             btn.disabled = true;
             btn.innerText = "Обработка...";
@@ -83,13 +55,11 @@
                     alert("Ошибка регистрации: " + (result.detail || "Проверьте данные"));
                     console.log(result);
                     btn.disabled = false;
-                    btn.innerText = "Создать аккаунт";
                 }
             } catch (err) {
                 alert("Ошибка соединения с сервером.");
                 console.error("Ошибка:", err);
                 btn.disabled = false;
-                btn.innerText = "Создать аккаунт";
             }
         });
     </script>

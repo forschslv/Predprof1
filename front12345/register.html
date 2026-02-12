@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация - Столовая Л2Ш</title>
+    <link rel="stylesheet" href="cafeteria_styles.css">
+</head>
+<body>
+    <div class="container" style="max-width: 500px; margin-top: 5vh;">
+        <h1>Регистрация и вход</h1>
+
+        <form id="registerForm">
+            <input type="text" id="name" placeholder="Имя" required>
+            <input type="text" id="secondary_name" placeholder="Фамилия" required>
+            <input type="email" id="email" placeholder="Почта" required>
+            <button type="submit" id="regBtn">Зарегистрироваться</button>
+        </form>
+
+        <a id="toggleText" style="color: var(--accent-cyan); text-decoration: none;" href="login.html">
+            Уже есть аккаунт? <br>Войти можно тут.
+        </a>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Function to update button text based on input fields
+        function updateButtonText() {
+            const nameInput = document.getElementById('name');
+            const secondaryNameInput = document.getElementById('secondary_name');
+            const regBtn = document.getElementById('regBtn');
+
+            // Check if any of the required fields are empty
+            if (nameInput.value.trim() === '' || secondaryNameInput.value.trim() === '') {
+                regBtn.textContent = 'Войти';
+            } else {
+                regBtn.textContent = 'Зарегистрироваться';
+            }
+        }
+
+        // Add event listeners to input fields to update button text dynamically
+        document.getElementById('name').addEventListener('input', updateButtonText);
+        document.getElementById('secondary_name').addEventListener('input', updateButtonText);
+
+        // Set initial button text based on current field values
+        updateButtonText();
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('regBtn');
+            const data = {
+                name: document.getElementById('name').value.trim(),
+                secondary_name: document.getElementById('secondary_name').value.trim(),
+                status: document.getElementById('status')?.value.trim() || "active", // Default to "active" if not provided
+                email: document.getElementById('email').value.trim()
+            };
+
+            btn.disabled = true;
+            btn.innerText = "Обработка...";
+
+            try {
+                const response = await fetch(`${API_URL}/register`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Успешная регистрация или переотправка кода
+                    localStorage.setItem('pending_email', data.email);
+                    window.location.href = 'verify';
+                } else {
+                    // ОШИБКА: Остаемся на странице
+                    // В main.py при существующем юзере возвращается 201 "Code resent",
+                    // так что сюда попадем только при реальных ошибках (валидация и т.д.)
+                    alert("Ошибка регистрации: " + (result.detail || "Проверьте данные"));
+                    console.log(result);
+                    btn.disabled = false;
+                    btn.innerText = "Создать аккаунт";
+                }
+            } catch (err) {
+                alert("Ошибка соединения с сервером.");
+                console.error("Ошибка:", err);
+                btn.disabled = false;
+                btn.innerText = "Создать аккаунт";
+            }
+        });
+    </script>
+</body>
+</html>
