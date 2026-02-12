@@ -6,6 +6,7 @@ API доступно по тем же путям, что и раньше (без
 from __future__ import annotations
 
 import sys
+from datetime import datetime
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -126,7 +127,18 @@ async def catch_all(path: str):#-> FileResponse | tuple[dict[str, str], int]
                 return {"error": "Internal server error: 404.html not found, please try again later."}, 500
     except Exception as e:
         logger.error(repr(e))
-        return FileResponse(frontend_path / "error.html", status_code=500)
+        from starlette.responses import RedirectResponse
+        import urllib.parse
+        
+        # Create error details
+        error_message = str(e)
+        error_details = f"Exception occurred: {e.__class__.__name__}"
+        error_code = 500
+        
+        # Create URL with error parameters
+        error_url = f"error.html?code={error_code}&message={urllib.parse.quote(error_message)}&details={urllib.parse.quote(error_details)}&timestamp={urllib.parse.quote(str(datetime.now().isoformat()))}"
+        
+        return RedirectResponse(url=error_url, status_code=500)
 
 # Статические файлы (CSS, JS, etc.) обслуживаем через StaticFiles
 app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="static_root")
