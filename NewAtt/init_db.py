@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from sqlalchemy import create_engine
 
-from NewAtt.logger import logger
+from logger import logger
 from models import Base
 
 
