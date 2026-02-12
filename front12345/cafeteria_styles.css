@@ -46,6 +46,8 @@
    --bg-primary: #0a0a0a;
     --bg-secondary: #0f0f23;
     --bg-glass: rgba(20, 20, 40, 0.6);
+    --background-color: rgba(0, 0, 0, 0.4);
+    --surface-color: rgba(0, 0, 0, 0.2);
     --accent-cyan: #00d4ff;
     --accent-purple: #8b5cf6;
     --accent-blue: #3b82f6;
