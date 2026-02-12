@@ -70,6 +70,7 @@ DEBUG_HTML_MAPPING: dict[str, str] = {
 HTML_MAPPING: dict[str, str] = (
 {
     "":                         "hello.html",
+    "hello":                    "hello.html",
     "index":                    "main.html",
     "main":                     "main.html",
     "admin/admin":              "admin/admin.html",
