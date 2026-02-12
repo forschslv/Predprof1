@@ -5,17 +5,281 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Добро пожаловать в систему управления столовой</title>
     <link rel="stylesheet" href="css/cafeteria_styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Дополнительные стили для анимаций и улучшений */
+        .welcome-container {
+            text-align: center;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 1;
+        }
+        .welcome-title {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, #00d4ff, #8b5cf6, #10b981);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 3s ease infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .welcome-subtitle {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.8;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin: 40px 0;
+        }
+        .feature-card {
+            background: rgba(20, 20, 40, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 25px;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+        .feature-card:hover::before {
+            left: 100%;
+        }
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(0, 212, 255, 0.2);
+            border-color: var(--accent-cyan);
+        }
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: var(--accent-cyan);
+        }
+        .feature-title {
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+        .feature-desc {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+        .auth-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 50px;
+            flex-wrap: wrap;
+        }
+        .auth-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 32px;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        .auth-btn i {
+            margin-right: 10px;
+            font-size: 1.3rem;
+        }
+        .auth-btn.login {
+            background: linear-gradient(45deg, var(--accent-blue), var(--accent-purple));
+            color: white;
+            border: 2px solid transparent;
+        }
+        .auth-btn.register {
+            background: transparent;
+            color: var(--accent-cyan);
+            border: 2px solid var(--accent-cyan);
+        }
+        .auth-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+            z-index: -1;
+        }
+        .auth-btn:hover::before {
+            left: 100%;
+        }
+        .auth-btn.login:hover {
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.5);
+            transform: scale(1.05);
+        }
+        .auth-btn.register:hover {
+            background: var(--accent-cyan);
+            color: var(--bg-primary);
+            box-shadow: 0 10px 25px rgba(0, 212, 255, 0.5);
+            transform: scale(1.05);
+        }
+        .floating-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .floating-element {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,212,255,0.2) 0%, transparent 70%);
+            animation: float 15s infinite linear;
+        }
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+            100% { transform: translateY(0) rotate(360deg); }
+        }
+        .floating-element:nth-child(1) { width: 80px; height: 80px; top: 10%; left: 5%; animation-duration: 20s; }
+        .floating-element:nth-child(2) { width: 120px; height: 120px; top: 60%; left: 80%; animation-duration: 25s; }
+        .floating-element:nth-child(3) { width: 60px; height: 60px; top: 80%; left: 15%; animation-duration: 18s; }
+        .floating-element:nth-child(4) { width: 100px; height: 100px; top: 20%; left: 70%; animation-duration: 22s; }
+        .pulse-dot {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            box-shadow: 0 0 20px var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(3); opacity: 0; }
+        }
+        .pulse-dot:nth-child(5) { top: 40%; left: 90%; }
+        .pulse-dot:nth-child(6) { top: 85%; left: 40%; }
+        .footer-note {
+            margin-top: 50px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            .welcome-title { font-size: 2.2rem; }
+            .welcome-subtitle { font-size: 1.2rem; }
+            .features-grid { grid-template-columns: 1fr; }
+            .auth-links { flex-direction: column; align-items: center; }
+            .auth-btn { width: 100%; max-width: 300px; }
+        }
+    </style>
 </head>
 <body>
+    <div class="floating-elements">
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="pulse-dot"></div>
+        <div class="pulse-dot"></div>
+    </div>
     <div class="container">
-        <h1>Система управления столовой</h1>
-        <p>
-            Добро пожаловать в наш проект! Здесь вы можете управлять меню, заказами и пользователями столовой. Система предназначена для удобного взаимодействия между администрацией, сотрудниками и посетителями столовой.
-        </p>
-        <div class="auth-links">
-            <a href="register_login/login.html" class="btn">Вход</a>
-            <a href="register_login/register.html" class="btn">Регистрация</a>
+        <div class="welcome-container">
+            <h1 class="welcome-title">Система управления столовой</h1>
+            <p class="welcome-subtitle">
+                Добро пожаловать в наш проект! Здесь вы можете управлять меню, заказами и пользователями столовой. 
+                Система предназначена для удобного взаимодействия между администрацией, сотрудниками и посетителями столовой.
+                Используйте современный интерфейс с анимациями и интуитивным управлением.
+            </p>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <h3 class="feature-title">Управление меню</h3>
+                    <p class="feature-desc">Создавайте, редактируйте и публикуйте меню с фотографиями и описаниями блюд. Поддержка категорий и сезонных предложений.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h3 class="feature-title">Обработка заказов</h3>
+                    <p class="feature-desc">Принимайте и отслеживайте заказы в реальном времени. Автоматическое уведомление о статусе заказа.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users-cog"></i>
+                    </div>
+                    <h3 class="feature-title">Управление пользователями</h3>
+                    <p class="feature-desc">Регистрация, аутентификация и ролевое управление для администраторов, сотрудников и клиентов.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="feature-title">Аналитика и отчёты</h3>
+                    <p class="feature-desc">Детальная статистика по продажам, популярным блюдам и финансовым показателям с графиками.</p>
+                </div>
+            </div>
+            <div class="auth-links">
+                <a href="register_login/login.html" class="auth-btn login">
+                    <i class="fas fa-sign-in-alt"></i> Вход
+                </a>
+                <a href="register_login/register.html" class="auth-btn register">
+                    <i class="fas fa-user-plus"></i> Регистрация
+                </a>
+            </div>
+            <div class="footer-note">
+                <p><i class="fas fa-info-circle"></i> Для начала работы войдите в систему или зарегистрируйтесь. Техническая поддержка доступна 24/7.</p>
+            </div>
         </div>
     </div>
+    <script>
+        // Добавляем интерактивность при наведении на карточки
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.feature-card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    card.style.transform = 'translateY(-10px) scale(1.02)';
+                });
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+            // Анимация пульсирующих точек
+            const dots = document.querySelectorAll('.pulse-dot');
+            dots.forEach((dot, index) => {
+                dot.style.animationDelay = (index * 0.5) + 's';
+            });
+        });
+    </script>
 </body>
 </html>
