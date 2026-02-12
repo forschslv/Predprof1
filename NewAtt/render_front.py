@@ -68,7 +68,7 @@ DEBUG_HTML_MAPPING: dict[str, str] = {
 # Маппинг путей к HTML файлам
 HTML_MAPPING: dict[str, str] = (
 {
-    "":                         "main.html",
+    "":                         "hello.html",
     "index":                    "main.html",
     "main":                     "main.html",
     "admin/admin":              "admin/admin.html",
