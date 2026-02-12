@@ -100,6 +100,9 @@ async def catch_all(path: str):#-> FileResponse | tuple[dict[str, str], int]
             return FileResponse(file_path)
         else:
             logger.warning(f"Static file not found: {file_path}")
+            file_path = path[path.rfind('.')+1:] / file_path
+            if file_path.is_file():
+                return FileResponse(file_path)
             raise HTTPException(status_code=404, detail="Static file not found")
     if path.endswith(".html"):
         path = path[:-5]
