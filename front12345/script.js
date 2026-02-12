@@ -30,7 +30,7 @@ async function apiRequest(endpoint, method = 'GET', body = null, isFile = false)
         if (response.status === 401) {
             alert("Сессия истекла");
             localStorage.removeItem('token');
-            window.location.href = 'register_login.html';
+            window.location.href = 'register.html';
             return;
         }
 
@@ -95,7 +95,7 @@ async function requireAdmin() {
 async function validateAccess(needAdmin = false) {
     const token = localStorage.getItem('token');
     if (!token) {
-        window.location.href = 'register_login.html';
+        window.location.href = 'register.html';
         return;
     }
     try {

@@ -11,15 +11,15 @@
         <h1>Регистрация и вход</h1>
 
         <form id="registerForm">
-            <input type="text" id="name" placeholder="Имя (для регистрации)">
-            <input type="text" id="secondary_name" placeholder="Фамилия (для регистрации)">
+            <input type="text" id="name" placeholder="Имя" required>
+            <input type="text" id="secondary_name" placeholder="Фамилия" required>
             <input type="email" id="email" placeholder="Почта @students.sch2.ru" required>
             <button type="submit" id="regBtn">Зарегистрироваться</button>
         </form>
 
-        <div id="toggleText" style="color: var(--accent-cyan); text-decoration: none;">
-            Уже есть аккаунт? <br>Войти можно тут, просто игнорируйте поля имени и фамилии!
-        </div>
+        <a id="toggleText" style="color: var(--accent-cyan); text-decoration: none;" href="login.html">
+            Уже есть аккаунт? <br>Войти можно тут.
+        </a>
     </div>
 
     <script src="script.js"></script>
