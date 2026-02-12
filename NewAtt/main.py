@@ -144,7 +144,7 @@ def send_verification_email(to_email: str, code: str) -> None:
 @app.post("/register", status_code=status.HTTP_201_CREATED)
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
     if not str(user_data.email).endswith("@students.sch2.ru"):
-        raise HTTPException(status_code=400, detail="Email must be a @students.sch2.ru address")
+        raise HTTPException(status_code=400, detail="Адрес почты должен заканчиваться на @students.sch2.ru")
     existing = db.query(User).filter(User.email == user_data.email).first()
 
 
@@ -157,9 +157,9 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
         return RegisterResponse(message="Code resent", user=UserResponse.model_validate(existing))
     else:
         if not user_data.name or not user_data.secondary_name:
-            raise HTTPException(status_code=400, detail="Name and secondary name are required for new users")
-        if user_data.status not in {"active", "inactive"}:
-            raise HTTPException(status_code=400, detail="Status must be 'active' or 'inactive'")
+            raise HTTPException(status_code=400, detail="Для новых пользователей требуются имя и отчество")
+        if user_data.status not in {"активен", "неактивен"}:
+            raise HTTPException(status_code=400, detail="Статус должен быть 'активен' или 'неактивен'")
         code = generate_verification_code()
 
         new_user = User(
@@ -184,7 +184,7 @@ def read_users_me(current_user: User = Depends(get_current_user)):
 def verify_code(data: VerifyCodeRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == data.email).first()
     if not user or user.verification_code != data.code:
-        raise HTTPException(status_code=400, detail="Invalid code")
+        raise HTTPException(status_code=400, detail="Неверный код")
 
     user.email_verified = True
     user.verification_code = None
@@ -243,7 +243,7 @@ async def upload_menu_file(
         db.commit()
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+        raise HTTPException(status_code=500, detail=f"Ошибка в базе данных: {e}")
 
     return {
         "message": "Menu updated successfully",
@@ -343,7 +343,7 @@ async def pay_order(
     order = db.query(Order).filter(Order.id == order_id, Order.user_id == user.id).first()
 
     if not order:
-        raise HTTPException(status_code=404, detail="Order not found")
+        raise HTTPException(status_code=404, detail="Заказ не найден")
 
     # Проверка типа файла
     allowed_mime_types = [
@@ -389,15 +389,15 @@ async def download_receipt(
 
     if not order:
         logger.debug(f"Order not found for user {user.id}: {order_id}")
-        raise HTTPException(status_code=404, detail="Order not found")
+        raise HTTPException(status_code=404, detail="Заказ не найден")
     
     if not order.payment_proof_path:
         logger.debug(f"Receipt not found for order {order_id}")
-        raise HTTPException(status_code=404, detail="Receipt not found")
+        raise HTTPException(status_code=404, detail="Квитанция не найдена")
     
     if not os.path.exists(order.payment_proof_path):
         logger.debug(f"Receipt file not found for order {order_id}: {order.payment_proof_path}")
-        raise HTTPException(status_code=404, detail="Receipt file not found")
+        raise HTTPException(status_code=404, detail="Файл квитанции не найден")
     logger.debug(f"Returning receipt file for order {order_id}: {order.payment_proof_path}")
     # Определяем Content-Type по расширению файла
     file_path_lower = order.payment_proof_path.lower()
@@ -433,7 +433,7 @@ def get_order_details(order_id: int, request: Request, db: Session = Depends(get
     order = db.query(Order).filter(Order.id == order_id, Order.user_id == user.id).first()
 
     if not order:
-        raise HTTPException(status_code=404, detail="Order not found")
+        raise HTTPException(status_code=404, detail="Заказ не найден")
 
     return order
 
@@ -446,7 +446,7 @@ def update_order_status(
         admin: User = Depends(get_admin_user)
 ):
     order = db.query(Order).filter(Order.id == order_id).first()
-    if not order: raise HTTPException(404, "Order not found")
+    if not order: raise HTTPException(404, "Заказ не найден")
     order.status = status
     db.commit()
     return {"message": f"Order marked as {status}"}
@@ -557,7 +557,7 @@ def get_summary_report(date_query: date, db: Session = Depends(get_db), admin: U
 def update_admin_status_by_email(data: AdminUpdateByEmailRequest, db: Session = Depends(get_db), admin: User = Depends(get_admin_user)):
     user = db.query(User).filter(User.email == data.email).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
     user.is_admin = data.is_admin
     db.commit()
     db.refresh(user)
