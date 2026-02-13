@@ -5,6 +5,7 @@ API доступно по тем же путям, что и раньше (без
 """
 from __future__ import annotations
 
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -98,12 +99,13 @@ async def catch_all(path: str):#-> FileResponse | tuple[dict[str, str], int]
             path.endswith(".ico")):
             # Если запрашивается статический файл, пробуем его отдать
             logger.debug(f"Request for static file: {path}")
-            file_path = frontend_path / path
+            base_name_of_path = os.path.basename(path)
+            file_path = frontend_path / base_name_of_path
             if file_path.is_file():
                 return FileResponse(file_path)
             else:
                 logger.warning(f"Static file not found: {file_path}")
-                file_path = path[path.rfind('.')+1:] / file_path
+                file_path = frontend_path / base_name_of_path[base_name_of_path.rfind('.')+1:] / base_name_of_path
                 if file_path.is_file():
                     return FileResponse(file_path)
                 raise HTTPException(status_code=404, detail="Static file not found")
