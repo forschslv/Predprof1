@@ -88,6 +88,7 @@ HTML_MAPPING: dict[str, str] = (
     "register_login/verify":    "register_login/verify.html",
     "404":                      "404.html",
     "error":                    "error.html",
+    "profile":                  "profile.html"
 } | OLD_HTML_MAPPING | DEBUG_HTML_MAPPING)
 
 

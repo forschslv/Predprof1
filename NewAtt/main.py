@@ -31,7 +31,7 @@ from models import (
 )
 from schemas import (
     DishCreate, DishResponse, DishUpdate, RegisterResponse, UserCreate,
-    UserResponse, VerifyCodeRequest, VerifyCodeResponse, ResendCodeRequest,
+    UserResponse, UserUpdate, VerifyCodeRequest, VerifyCodeResponse, ResendCodeRequest,
     ResendCodeResponse, AdminUpdateRequest, ModuleMenuRequest,
     OrderCreate, OrderResponse, DishBase, AdminUpdateByEmailRequest,
     ModuleMenuResponse
@@ -176,6 +176,24 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
 @app.get("/users/me", response_model=UserResponse)
 def read_users_me(current_user: User = Depends(get_current_user)):
     logger.debug(f"Current user: {current_user}")
+    return current_user
+
+@app.patch("/users/me", response_model=UserResponse)
+def update_user_me(
+    user_update: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Обновление данных текущего пользователя"""
+    update_data = user_update.model_dump(exclude_unset=True)
+    if not update_data:
+        raise HTTPException(status_code=400, detail="Нет данных для обновления")
+    
+    for field, value in update_data.items():
+        setattr(current_user, field, value)
+    
+    db.commit()
+    db.refresh(current_user)
     return current_user
 
 @app.post("/verify-code", response_model=VerifyCodeResponse)

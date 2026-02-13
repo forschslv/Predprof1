@@ -9,6 +9,11 @@ class UserCreate(BaseModel):
     email: EmailStr
     status: str
 
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    secondary_name: Optional[str] = None
+    status: Optional[str] = None
+
 class UserResponse(BaseModel):
     id: int
     name: str
