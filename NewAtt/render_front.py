@@ -16,6 +16,10 @@ import uvicorn
 from starlette.responses import FileResponse
 
 from logger import logger
+from fastapi import Request, Depends, HTTPException
+from sqlalchemy.orm import Session
+from auth import require_admin
+from main import get_db
 
 # Добавляем путь к модулям бэкенда
 sys.path.insert(0, str(Path(__file__).parent / "NewAtt"))
@@ -88,7 +92,7 @@ HTML_MAPPING: dict[str, str] = (
 
 
 @app.get("/{path:path}")
-async def catch_all(path: str):#-> FileResponse | tuple[dict[str, str], int]
+async def catch_all(path: str, request: Request, db: Session = Depends(get_db)):
     try:
         if (path.endswith(".js") or
             path.endswith(".css") or
@@ -109,6 +113,14 @@ async def catch_all(path: str):#-> FileResponse | tuple[dict[str, str], int]
                 if file_path.is_file():
                     return FileResponse(file_path)
                 raise HTTPException(status_code=404, detail="Static file not found")
+        # Проверка на админские страницы
+        if path.startswith("admin/") or path in ["admin", "admin_menu", "admin_orders", "admin_users", "admin_module"]:
+            try:
+                require_admin(request, db)
+            except HTTPException as e:
+                # Если не авторизован или не админ, возвращаем ошибку 403 или редирект на логин
+                # Для простоты вернем 403 с сообщением
+                raise HTTPException(status_code=403, detail="Admin access required")
         if path.endswith(".html"):
             path = path[:-5]
         elif "." in path:
