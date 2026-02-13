@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Тест страницы ошибок | Столовая</title>
-    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
     <style>
         .test-container {
             max-width: 800px;
@@ -84,7 +84,7 @@
                 <span>Тест страницы ошибок</span>
             </div>
             <div class="header-controls">
-                <a href="main.html" class="btn-secondary">На главную</a>
+                <a href="/main" class="btn-secondary">На главную</a>
             </div>
         </header>
 
@@ -141,12 +141,12 @@
             </div>
             
             <div style="text-align: center; margin-top: 30px;">
-                <a href="error.html" class="btn-secondary" style="display: inline-block;">Перейти на страницу ошибок напрямую</a>
+                <a href="/error" class="btn-secondary" style="display: inline-block;">Перейти на страницу ошибок напрямую</a>
             </div>
         </div>
     </div>
 
-    <script src="js/error_render.js"></script>
+    <script src="/js/error_render.js"></script>
     <script>
         // Функция для тестирования стандартных ошибок
         function testError(code) {
@@ -164,7 +164,7 @@
                 window.showErrorPage(code, config.message, config.details);
             } else {
                 // Fallback если error_render.js не загружен
-                window.location.href = `error.html?code=${code}&message=Тестовая ошибка ${code}&details=Это тестовая ошибка для демонстрации`;
+                window.location.href = `/error?code=${code}&message=Тестовая ошибка ${code}&details=Это тестовая ошибка для демонстрации`;
             }
         }
         
@@ -182,7 +182,7 @@
                     message: message,
                     details: details
                 });
-                window.location.href = `error.html?${params.toString()}`;
+                window.location.href = `/error?${params.toString()}`;
             }
         }
         

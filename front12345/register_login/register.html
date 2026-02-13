@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Регистрация - Столовая Л2Ш</title>
-    <link rel="stylesheet" href="../css/cafeteria_styles.css">
+    <link rel="stylesheet" href="/css/cafeteria_styles.css">
 </head>
 <body>
     <div class="container" style="max-width: 500px; margin-top: 5vh;">
@@ -17,12 +17,12 @@
             <button type="submit" id="regBtn">Зарегистрироваться</button>
         </form>
 
-        <a id="toggleText" style="color: var(--accent-cyan); text-decoration: none;" href="login.html">
+        <a id="toggleText" style="color: var(--accent-cyan); text-decoration: none;" href="/register_login/login">
             Уже есть аккаунт? <br>Войти можно тут.
         </a>
     </div>
 
-    <script src="../js/script.js"></script>
+    <script src="/js/script.js"></script>
     <script>
         // Function to update button text based on input fields
         function updateButtonText() {
@@ -70,7 +70,7 @@
                 if (response.ok) {
                     // Успешная регистрация или переотправка кода
                     localStorage.setItem('pending_email', data.email);
-                    window.location.href = 'verify';
+                    window.location.href = '/register_login/verify';
                 } else {
                     // ОШИБКА: Остаемся на странице
                     // В main.py при существующем юзере возвращается 201 "Code resent",

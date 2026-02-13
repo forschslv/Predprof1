@@ -1,6 +1,6 @@
 /*
  * error_render.js - Универсальный рендерер страницы ошибок
- * Динамически обновляет страницу error.html на основе параметров URL или localStorage
+ * Динамически обновляет страницу error на основе параметров URL или localStorage
  */
 
 const ERROR_CONFIGS = {
@@ -233,7 +233,7 @@ window.showErrorPage = function(code, message, details) {
     localStorage.setItem('last_error', JSON.stringify(errorData));
     
     // Переходим на страницу ошибки
-    window.location.href = 'error.html';
+    window.location.href = '/error';
 };
 
 // Утилита для обработки ошибок API

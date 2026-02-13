@@ -28,9 +28,9 @@
                 localStorage.setItem('user', JSON.stringify(res.user));
 
                 if (res.user.is_admin) {
-                    window.location.href = 'admin.html';
+                    window.location.href = '/admin';
                 } else {
-                    window.location.href = 'dashboard.html';
+                    window.location.href = '/main';
                 }
             } catch (e) {
                 // Ошибка уже показана в apiRequest

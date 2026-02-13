@@ -15,7 +15,7 @@
             <button type="submit" id="regBtn">Войти</button>
         </form>
 
-        <a id="toggleText" style="color: var(--accent-cyan); text-decoration: none; align-items: center" href="register.html">
+        <a id="toggleText" style="color: var(--accent-cyan); text-decoration: none; align-items: center" href="/register_login/register">
             Нет аккаунта? <br>Зарегистрироваться можно тут.
         </a>
     </div>
@@ -47,7 +47,7 @@
                 if (response.ok) {
                     // Успешная регистрация или переотправка кода
                     localStorage.setItem('pending_email', data.email);
-                    window.location.href = 'verify';
+                    window.location.href = '/register_login/verify';
                 } else {
                     // ОШИБКА: Остаемся на странице
                     // В main.py при существующем юзере возвращается 201 "Code resent",

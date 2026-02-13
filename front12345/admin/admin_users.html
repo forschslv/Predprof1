@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Пользователи - Админ</title>
-    <link rel="stylesheet" href="../css/cafeteria_styles.css">
+    <link rel="stylesheet" href="/css/cafeteria_styles.css">
 </head>
 <body>
     <div class="container" style="max-width: 600px;">
@@ -17,9 +17,9 @@
             </select>
             <button onclick="updateRole()">Применить</button>
         </div>
-        <button onclick="window.location.href='admin.html'" class="secondary">Назад</button>
+        <button onclick="window.location.href='/admin/admin'" class="secondary">Назад</button>
     </div>
-    <script src="../js/script.js"></script>
+    <script src="/js/script.js"></script>
     <script>
         checkAuth(); requireAdmin();
         async function updateRole() {
