@@ -197,8 +197,7 @@ def get_admin_user(request: Request, db: Session = Depends(get_db)) -> User:
 
 
 def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
-    a = request.items()
-    print(a)
+    # Получаем user_id, который устанавливает JWTAuthMiddleware через request.state.user_id
     user_id = get_current_user_id(request)
     user = db.query(User).filter(User.id == user_id).first()
     if not user:

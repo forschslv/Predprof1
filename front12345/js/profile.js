@@ -4,7 +4,9 @@ const API_URL = '/api';
 
 async function apiRequest(endpoint, method = 'GET', body = null) {
     const token = localStorage.getItem('token');
+    console.debug(`[apiRequest] ${method} ${API_URL}${endpoint} - token present: ${!!token}`);
     if (!token) {
+        console.warn('[apiRequest] Нет токена авторизации, перенаправление на /register_login/register');
         window.location.href = '/register_login/register';
         throw new Error('Нет токена авторизации');
     }
@@ -17,18 +19,47 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
 
     try {
         const response = await fetch(`${API_URL}${endpoint}`, config);
+        console.debug(`[apiRequest] Response status for ${endpoint}:`, response.status);
 
+        // Если не авторизован — удаляем токен и перенаправляем
         if (response.status === 401) {
+            console.warn('[apiRequest] 401 Unauthorized - удаляю токен и перенаправляю');
             localStorage.removeItem('token');
             window.location.href = '/register_login/register';
             return;
         }
 
-        const data = await response.json();
+        // Попробуем корректно распарсить тело ответа — сначала смотрим Content-Type
+        const contentType = response.headers.get('content-type') || '';
+        let data = null;
+        try {
+            if (contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                // Не JSON — читаем как текст и логируем для отладки
+                const text = await response.text();
+                console.debug(`[apiRequest] Non-JSON response for ${endpoint}:`, text);
+                try {
+                    // На случай, если сервер вернул JSON без заголовка
+                    data = JSON.parse(text);
+                } catch (e) {
+                    data = text;
+                }
+            }
+        } catch (parseErr) {
+            console.error(`[apiRequest] Ошибка парсинга ответа для ${endpoint}:`, parseErr);
+            // Попытаемся прочитать как текст
+            try {
+                data = await response.text();
+                console.debug(`[apiRequest] Fallback text body for ${endpoint}:`, data);
+            } catch (e) {
+                console.error(`[apiRequest] Невозможно прочитать тело ответа:`, e);
+            }
+        }
 
         if (!response.ok) {
-            const errorDetail = data.detail || 'Неизвестная ошибка сервера';
-            const msg = (typeof errorDetail === 'object') ? JSON.stringify(errorDetail, null, 2) : errorDetail;
+            const errorDetail = (data && data.detail) ? data.detail : data;
+            const msg = (typeof errorDetail === 'object') ? JSON.stringify(errorDetail, null, 2) : errorDetail || 'Неизвестная ошибка сервера';
             throw new Error(`Ошибка ${response.status}: ${msg}`);
         }
         return data;
@@ -46,25 +77,59 @@ async function loadUserProfile() {
             apiRequest('/orders')
         ]);
 
-        document.getElementById('welcomeUser').textContent = `Редактирование профиля`;
-        document.getElementById('userEmail').textContent = user.email;
-        
-        // Заполняем форму
-        document.getElementById('name').value = user.name || '';
-        document.getElementById('secondary_name').value = user.secondary_name || '';
-        document.getElementById('email').value = user.email;
-        document.getElementById('status').value = user.status || '';
-        document.getElementById('is_admin').value = user.is_admin ? 'Да' : 'Нет';
-        document.getElementById('email_verified').value = user.email_verified ? 'Да' : 'Нет';
-        
+        console.debug('loadUserProfile -> user:', user);
+        console.debug('loadUserProfile -> orders:', orders);
+
+        // Если API вернул пустой user, попытаемся использовать сохранённый в localStorage (fallback)
+        let effectiveUser = user;
+        if (!effectiveUser) {
+            const stored = localStorage.getItem('user');
+            if (stored) {
+                try {
+                    effectiveUser = JSON.parse(stored);
+                    console.warn('loadUserProfile: Использую локальный user из localStorage как fallback:', effectiveUser);
+                } catch (e) {
+                    console.error('loadUserProfile: Ошибка парсинга localStorage.user:', e);
+                }
+            }
+        }
+
+        if (!effectiveUser) {
+            console.error('loadUserProfile: Получен пустой user от API и в localStorage нет данных');
+            alert('Не удалось получить данные пользователя. Проверьте консоль и сеть.');
+            window.location.href = 'main.html';
+            return { user: null, orders: null };
+        }
+
+        // Защищённый доступ к DOM элементам (если структура HTML изменится)
+        const setText = (id, text) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        };
+        const setValue = (id, value) => {
+            const el = document.getElementById(id);
+            if (el) el.value = value;
+        };
+
+        setText('welcomeUser', 'Редактирование профиля');
+        setText('userEmail', effectiveUser.email || '');
+
+        // Заполняем форму — используем безопасные операции (пустые строки по умолчанию)
+        setValue('name', effectiveUser.name || '');
+        setValue('secondary_name', effectiveUser.secondary_name || '');
+        setValue('email', effectiveUser.email || '');
+        setValue('status', effectiveUser.status || '');
+        setValue('is_admin', (effectiveUser.is_admin) ? 'Да' : 'Нет');
+        setValue('email_verified', (effectiveUser.email_verified) ? 'Да' : 'Нет');
+
         // Логируем данные для отладки
-        console.log('Профиль загружен:', user);
+        console.log('Профиль загружен (effective):', effectiveUser);
         console.log('Заказы загружены:', orders);
 
-        return { user, orders };
+        return { user: effectiveUser, orders };
     } catch (error) {
         console.error('Ошибка загрузки профиля:', error);
-        alert('Не удалось загрузить данные профиля: ' + error.message);
+        alert('Не удалось загрузить данные профиля: ' + (error && error.message ? error.message : error));
         window.location.href = 'main.html';
     }
 }
@@ -200,7 +265,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     const { user, orders } = await loadUserProfile();
-    displayOrders(orders);
+    // Если загрузка провалилась, loadUserProfile уже перенаправит
+    if (orders) displayOrders(orders);
 
     // Привязка кнопок профиля
     document.getElementById('saveBtn').addEventListener('click', saveProfile);
@@ -224,3 +290,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('confirmPassword').value = '';
     });
 });
+
