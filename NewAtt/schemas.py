@@ -120,6 +120,10 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
+class SetPasswordRequest(BaseModel):
+    password: str
+    password_confirm: str
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str

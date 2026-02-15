@@ -63,8 +63,8 @@
             const name = document.getElementById('name').value.trim();
             const secondary_name = document.getElementById('secondary_name').value.trim();
             const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            const passwordConfirm = document.getElementById('password_confirm').value;
+            const password = document.getElementById('password').value.trim();
+            const passwordConfirm = document.getElementById('password_confirm').value.trim();
             const status = document.getElementById('status')?.value.trim() || "active";
 
             // Validate required fields
@@ -97,8 +97,10 @@
                 status
             };
 
-            // Include password only if provided
-            if (password) data.password = password;
+            // Include password only if provided (non-empty)
+            if (password && password.length > 0) {
+                data.password = password;
+            }
 
             try {
                 const resp = await fetch(`${API_URL}/register`, {

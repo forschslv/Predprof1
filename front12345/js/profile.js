@@ -93,6 +93,40 @@ function cancelEdit() {
     }
 }
 
+async function setPassword() {
+    const password = document.getElementById('newPassword').value;
+    const passwordConfirm = document.getElementById('confirmPassword').value;
+
+    if (!password || !passwordConfirm) {
+        alert('Заполните оба поля пароля');
+        return;
+    }
+
+    if (password !== passwordConfirm) {
+        alert('Пароли не совпадают');
+        return;
+    }
+
+    if (password.length < 6) {
+        alert('Пароль должен быть не менее 6 символов');
+        return;
+    }
+
+    try {
+        const result = await apiRequest('/set-password', 'POST', {
+            password: password,
+            password_confirm: passwordConfirm
+        });
+        alert('Пароль успешно установлен!');
+        document.getElementById('passwordSection').style.display = 'none';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+    } catch (error) {
+        console.error('Ошибка установки пароля:', error);
+        alert('Ошибка установки пароля: ' + error.message);
+    }
+}
+
 // Инициализация
 document.addEventListener('DOMContentLoaded', async () => {
     // Проверка авторизации
@@ -103,11 +137,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     await loadUserProfile();
     
-    // Привязка кнопок
+    // Привязка кнопок профиля
     document.getElementById('saveBtn').addEventListener('click', saveProfile);
     document.getElementById('cancelBtn').addEventListener('click', cancelEdit);
     document.getElementById('logoutBtn').addEventListener('click', () => {
         localStorage.clear();
         window.location.href = '/register_login/register';
+    });
+
+    // Привязка кнопок для управления паролем
+    document.getElementById('changePasswordBtn').addEventListener('click', () => {
+        const section = document.getElementById('passwordSection');
+        section.style.display = section.style.display === 'none' ? 'block' : 'none';
+    });
+
+    document.getElementById('savePasswordBtn').addEventListener('click', setPassword);
+
+    document.getElementById('cancelPasswordBtn').addEventListener('click', () => {
+        document.getElementById('passwordSection').style.display = 'none';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
     });
 });

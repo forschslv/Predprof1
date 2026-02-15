@@ -3,19 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <title>Подтверждение - Столовая Л2Ш</title>
-    <link rel="stylesheet" href="/cafeteria_styles.css">
+    <link rel="stylesheet" href="/css/cafeteria_styles.css">
 </head>
 <body>
     <div class="container" style="max-width: 400px; margin-top: 10vh;">
-        <h2>Введите код</h2>
-        <p style="text-align: center; margin-bottom: 20px;">Код отправлен на почту</p>
-        <form id="verifyForm">
-            <input type="text" id="code" placeholder="123456" style="text-align: center; font-size: 1.5rem; letter-spacing: 5px;" required>
-            <button type="submit">Войти</button>
-        </form>
+        <div id="codeVerification">
+            <h2>Введите код</h2>
+            <p style="text-align: center; margin-bottom: 20px;">Код отправлен на почту</p>
+            <form id="verifyForm">
+                <input type="text" id="code" placeholder="123456" style="text-align: center; font-size: 1.5rem; letter-spacing: 5px;" required>
+                <button type="submit">Войти</button>
+            </form>
+        </div>
+
+        <div id="passwordSetup" style="display: none;">
+            <h2>Установить пароль</h2>
+            <p style="text-align: center; margin-bottom: 20px;">Создайте пароль для входа</p>
+            <form id="passwordForm">
+                <input type="password" id="newPassword" placeholder="Пароль (минимум 6 символов)" required>
+                <input type="password" id="confirmPassword" placeholder="Подтвердите пароль" required>
+                <button type="submit">Установить пароль</button>
+            </form>
+            <p style="text-align: center; margin-top: 15px;">
+                <a href="#" id="skipPassword" style="color: var(--accent-cyan); text-decoration: none;">Пропустить на данный момент</a>
+            </p>
+        </div>
+
+        <div id="success" style="display: none;">
+            <h2>Успешно!</h2>
+            <p style="text-align: center; margin-bottom: 20px;">Пароль установлен. Переходим...</p>
+        </div>
     </div>
 
-    <script src="/script.js"></script>
+    <script src="/js/script.js"></script>
     <script>
         document.getElementById('verifyForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -27,14 +47,87 @@
                 localStorage.setItem('token', res.access_token);
                 localStorage.setItem('user', JSON.stringify(res.user));
 
-                if (res.user.is_admin) {
-                    window.location.href = '/admin';
+                // Если пользователь не установил пароль при регистрации, предложить установить
+                if (!res.user.password_hash) {
+                    document.getElementById('codeVerification').style.display = 'none';
+                    document.getElementById('passwordSetup').style.display = 'block';
                 } else {
-                    window.location.href = '/main';
+                    // Пароль уже установлен, переходим на главную
+                    setTimeout(() => {
+                        if (res.user.is_admin) {
+                            window.location.href = '/admin';
+                        } else {
+                            window.location.href = '/main';
+                        }
+                    }, 500);
                 }
             } catch (e) {
                 // Ошибка уже показана в apiRequest
                 console.error("Verification Error:", e);
+            }
+        });
+
+        // Установка пароля
+        document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = document.getElementById('newPassword').value;
+            const passwordConfirm = document.getElementById('confirmPassword').value;
+
+            if (password !== passwordConfirm) {
+                alert('Пароли не совпадают');
+                return;
+            }
+
+            if (password.length < 6) {
+                alert('Пароль должен быть не менее 6 символов');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/set-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        password: password,
+                        password_confirm: passwordConfirm
+                    })
+                });
+
+                if (response.ok) {
+                    const user = await response.json();
+                    localStorage.setItem('user', JSON.stringify(user));
+                    document.getElementById('passwordSetup').style.display = 'none';
+                    document.getElementById('success').style.display = 'block';
+                    setTimeout(() => {
+                        const userData = JSON.parse(localStorage.getItem('user'));
+                        if (userData.is_admin) {
+                            window.location.href = '/admin';
+                        } else {
+                            window.location.href = '/main';
+                        }
+                    }, 1500);
+                } else {
+                    const error = await response.json();
+                    alert('Ошибка при установке пароля: ' + (error.detail || 'Неизвестная ошибка'));
+                }
+            } catch (err) {
+                alert('Ошибка соединения с сервером');
+                console.error('Ошибка:', err);
+            }
+        });
+
+        // Пропуск установки пароля
+        document.getElementById('skipPassword').addEventListener('click', (e) => {
+            e.preventDefault();
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (user.is_admin) {
+                window.location.href = '/admin';
+            } else {
+                window.location.href = '/main';
             }
         });
     </script>

@@ -35,7 +35,7 @@ from schemas import (
     UserResponse, UserUpdate, VerifyCodeRequest, VerifyCodeResponse, ResendCodeRequest,
     ResendCodeResponse, AdminUpdateRequest, ModuleMenuRequest,
     OrderCreate, OrderResponse, DishBase, AdminUpdateByEmailRequest,
-    ModuleMenuResponse, LoginRequest, TokenResponse
+    ModuleMenuResponse, LoginRequest, TokenResponse, SetPasswordRequest
 )
 import docx_utils
 
@@ -64,7 +64,12 @@ def ensure_password_hash_column():
 
 ensure_password_hash_column()
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Инициализация контекста для хеширования паролей
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto",
+    bcrypt__rounds=12
+)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     if not hashed_password:
@@ -136,7 +141,7 @@ SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 
 
 def send_verification_email(to_email: str, code: str) -> None:
-        print(f"--- EMAIL SIMULATION (No Credentials): Code for {to_email} is {code} ---")
+    print(f"--- EMAIL SIMULATION (No Credentials): Code for {to_email} is {code} ---")
     # print(to_email, code)
     # if not SMTP_USER or not SMTP_PASSWORD:
     #     return
@@ -192,12 +197,9 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
 
     # При регистрации допускаем, что клиент может передать пароль в body (необязательно)
     password_hash = None
-    try:
-        provided_password = getattr(user_data, 'password', None)
-        if provided_password and provided_password.strip():
-            password_hash = get_password_hash(provided_password)
-    except Exception:
-        pass
+    if user_data.password:
+        # Пароль передан при регистрации
+        password_hash = get_password_hash(user_data.password)
 
     new_user = User(
         name=user_data.name,
@@ -266,6 +268,28 @@ def login_for_access_token(login_data: LoginRequest, db: Session = Depends(get_d
 
     token = create_access_token(data={"sub": str(user.id)})
     return TokenResponse(access_token=token, token_type="bearer", user=UserResponse.model_validate(user))
+
+
+@app.post("/set-password", response_model=UserResponse)
+def set_password(
+    password_data: SetPasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Установка пароля для текущего пользователя"""
+    # Валидация пароля
+    if password_data.password != password_data.password_confirm:
+        raise HTTPException(status_code=400, detail="Пароли не совпадают")
+
+    if len(password_data.password) < 6:
+        raise HTTPException(status_code=400, detail="Пароль должен быть не менее 6 символов")
+
+    # Установка хеша пароля
+    current_user.password_hash = get_password_hash(password_data.password)
+    db.commit()
+    db.refresh(current_user)
+    return UserResponse.model_validate(current_user)
+
 
 
 @app.get("/menu", response_model=List[DishResponse])
