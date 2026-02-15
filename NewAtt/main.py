@@ -308,6 +308,9 @@ def update_user_me(
     if not update_data:
         raise HTTPException(status_code=400, detail="Нет данных для обновления")
     
+    # Исключаем поле status из обновления - оно управляется только на бэкенде
+    update_data.pop('status', None)
+
     for field, value in update_data.items():
         setattr(current_user, field, value)
     

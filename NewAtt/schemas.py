@@ -13,7 +13,7 @@ class UserCreate(BaseModel):
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     secondary_name: Optional[str] = None
-    status: Optional[str] = None
+    # Статус не включен, так как он управляется только на бэкенде
 
 class UserResponse(BaseModel):
     id: int

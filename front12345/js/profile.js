@@ -63,12 +63,11 @@ async function loadUserProfile() {
 async function saveProfile() {
     const name = document.getElementById('name').value.trim();
     const secondary_name = document.getElementById('secondary_name').value.trim();
-    const status = document.getElementById('status').value.trim();
     
     const updateData = {};
     if (name) updateData.name = name;
     if (secondary_name) updateData.secondary_name = secondary_name;
-    if (status) updateData.status = status;
+    // Статус не включается в updateData, так как он управляется только на бэкенде
     
     if (Object.keys(updateData).length === 0) {
         alert('Нет изменений для сохранения');
