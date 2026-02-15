@@ -1,6 +1,6 @@
 // === Профиль пользователя ===
 
-const API_URL = 'http://localhost:8000';
+const API_URL = '/api';
 
 async function apiRequest(endpoint, method = 'GET', body = null) {
     const token = localStorage.getItem('token');
