@@ -62,6 +62,7 @@ OLD_HTML_MAPPING: dict[str, str] = {
     "verify":                       "register_login/verify.html",
     "register_login":               "register_login/register.html",
     "register_login/register_login":"register_login/register.html",
+    "profile":                      "register_login/profile.html",
     "dashboard":                    "main.html",
 }
 
@@ -88,7 +89,7 @@ HTML_MAPPING: dict[str, str] = (
     "register_login/verify":    "register_login/verify.html",
     "404":                      "404.html",
     "error":                    "error.html",
-    "profile":                  "profile.html"
+    "register_login/profile":   "register_login/profile.html",
 } | OLD_HTML_MAPPING | DEBUG_HTML_MAPPING)
 
 
@@ -162,7 +163,7 @@ async def catch_all(path: str, request: Request, db: Session = Depends(get_db)):
         return RedirectResponse(url=error_url, status_code=307)
 
 # Статические файлы (CSS, JS, etc.) обслуживаем через StaticFiles
-app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="static_root")
+# app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="static_root")
 
 if __name__ == "__main__":
     # Инициализируем базу данных (если нужно)
