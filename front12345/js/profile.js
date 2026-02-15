@@ -40,7 +40,12 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
 
 async function loadUserProfile() {
     try {
-        const user = await apiRequest('/users/me');
+        // Загружаем данные пользователя и его заказы параллельно
+        const [user, orders] = await Promise.all([
+            apiRequest('/users/me'),
+            apiRequest('/orders')
+        ]);
+
         document.getElementById('welcomeUser').textContent = `Редактирование профиля`;
         document.getElementById('userEmail').textContent = user.email;
         
@@ -52,12 +57,72 @@ async function loadUserProfile() {
         document.getElementById('is_admin').value = user.is_admin ? 'Да' : 'Нет';
         document.getElementById('email_verified').value = user.email_verified ? 'Да' : 'Нет';
         
-        return user;
+        // Логируем данные для отладки
+        console.log('Профиль загружен:', user);
+        console.log('Заказы загружены:', orders);
+
+        return { user, orders };
     } catch (error) {
         console.error('Ошибка загрузки профиля:', error);
         alert('Не удалось загрузить данные профиля: ' + error.message);
         window.location.href = 'main.html';
     }
+}
+
+function displayOrders(orders) {
+    const ordersContainer = document.getElementById('ordersHistory');
+
+    if (!orders || orders.length === 0) {
+        ordersContainer.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">Нет заказов</p>';
+        return;
+    }
+
+    // Функция для форматирования статуса
+    const getStatusColor = (status) => {
+        const statusMap = {
+            'pending': '#FFA500',
+            'paid': '#4CAF50',
+            'completed': '#2196F3',
+            'cancelled': '#F44336'
+        };
+        return statusMap[status] || '#FFFFFF';
+    };
+
+    const getStatusText = (status) => {
+        const statusTexts = {
+            'pending': 'Ожидание',
+            'paid': 'Оплачено',
+            'completed': 'Завершено',
+            'cancelled': 'Отменено'
+        };
+        return statusTexts[status] || status;
+    };
+
+    const ordersHTML = orders.map(order => {
+        const date = new Date(order.week_start_date);
+        const formattedDate = date.toLocaleDateString('ru-RU', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        return `
+            <div style="padding: 12px; margin-bottom: 10px; background: rgba(255,255,255,0.08); border-left: 4px solid ${getStatusColor(order.status)}; border-radius: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: bold; color: var(--text-primary);">Заказ #${order.id}</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Неделя с ${formattedDate}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="color: var(--text-primary); font-weight: bold;">${order.total_amount} ₽</div>
+                        <div style="font-size: 0.85rem; color: ${getStatusColor(order.status)}; font-weight: bold;">${getStatusText(order.status)}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    ordersContainer.innerHTML = ordersHTML;
 }
 
 async function saveProfile() {
@@ -134,8 +199,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
     
-    await loadUserProfile();
-    
+    const { user, orders } = await loadUserProfile();
+    displayOrders(orders);
+
     // Привязка кнопок профиля
     document.getElementById('saveBtn').addEventListener('click', saveProfile);
     document.getElementById('cancelBtn').addEventListener('click', cancelEdit);
