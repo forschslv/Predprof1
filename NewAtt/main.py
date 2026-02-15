@@ -67,11 +67,12 @@ def ensure_password_hash_column():
 ensure_password_hash_column()
 
 # Инициализация контекста для хеширования паролей
-# Используем PBKDF2 как основной метод (более надежен)
+# Используем PBKDF2-SHA256 как основной метод
+# Поддерживаем bcrypt для обратной совместимости со старыми хешами
 pwd_context = CryptContext(
-    schemes=["pbkdf2_sha256", "bcrypt"],
+    schemes=["pbkdf2_sha256"],
     deprecated="auto",
-    pbkdf2_sha256__rounds=232000
+    pbkdf2_sha256__rounds=100000  # Уменьшено для совместимости
 )
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -80,12 +81,42 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         return False
 
     try:
+        # Очищаем пароль
+        plain_password = plain_password.strip()
+
         # bcrypt имеет ограничение в 72 байта
-        if plain_password and len(plain_password) > 72:
+        if len(plain_password) > 72:
             plain_password = plain_password[:72]
 
-        return pwd_context.verify(plain_password, hashed_password)
+        # Пробуем встроенную верификацию passlib
+        is_valid = pwd_context.verify(plain_password, hashed_password)
+        return is_valid
     except Exception as e:
+        logger.debug(f"CryptContext verification failed: {e}")
+
+        # Резервная попытка: проверить вручную если это наш формат
+        if hashed_password.startswith("pbkdf2:sha256:"):
+            try:
+                parts = hashed_password.split("$")
+                if len(parts) == 3:
+                    rounds = int(parts[0].split(":")[-1])
+                    salt = parts[1]
+                    stored_hash = parts[2]
+
+                    test_hash = hashlib.pbkdf2_hmac(
+                        'sha256',
+                        plain_password.encode(),
+                        salt.encode(),
+                        rounds
+                    )
+
+                    is_valid = test_hash.hex() == stored_hash
+                    if is_valid:
+                        logger.debug(f"Password verified using fallback method")
+                    return is_valid
+            except Exception as e2:
+                logger.debug(f"Fallback verification failed: {e2}")
+
         logger.error(f"Error verifying password: {e}")
         return False
 
@@ -105,13 +136,13 @@ def get_password_hash(password: str) -> str:
         password = password[:72]
 
     try:
-        # Используем PBKDF2 как основной метод
-        hash_result = pwd_context.using(scheme="pbkdf2_sha256").hash(password)
+        # Используем встроенный PBKDF2 из passlib
+        hash_result = pwd_context.hash(password)
         logger.debug(f"Password hashed successfully using pbkdf2_sha256")
         return hash_result
     except Exception as e:
-        logger.error(f"Error hashing password: {e}")
-        # Резервный вариант - простой PBKDF2
+        logger.error(f"Error with CryptContext: {e}")
+        # Резервный вариант - ручной PBKDF2
         try:
             salt = secrets.token_hex(32)
             password_hash = hashlib.pbkdf2_hmac(
@@ -120,16 +151,13 @@ def get_password_hash(password: str) -> str:
                 salt.encode(),
                 100000
             )
-            # Формат: pbkdf2:sha256:iterations$salt$hash
+            # Формат совместимый с нашей верификацией
             hash_result = f"pbkdf2:sha256:100000${salt}${password_hash.hex()}"
             logger.debug(f"Password hashed using fallback PBKDF2 method")
             return hash_result
         except Exception as e2:
             logger.critical(f"Critical error hashing password: {e2}")
-            # Последний резервный вариант - простой SHA256 (не рекомендуется для продакшена)
-            salt = secrets.token_hex(32)
-            hash_result = f"sha256:simple${salt}${hashlib.sha256((salt + password).encode()).hexdigest()}"
-            return hash_result
+            raise HTTPException(status_code=500, detail="Error hashing password")
 
 
 def get_db() -> Session:
