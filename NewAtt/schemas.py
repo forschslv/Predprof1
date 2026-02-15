@@ -8,6 +8,7 @@ class UserCreate(BaseModel):
     secondary_name: str
     email: EmailStr
     status: str
+    password: Optional[str] = None
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
@@ -113,3 +114,13 @@ class AdminUpdateRequest(BaseModel):
 class AdminUpdateByEmailRequest(BaseModel):
     email: EmailStr
     is_admin: bool
+
+# New schemas for password login
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str
+    user: UserResponse

@@ -21,9 +21,10 @@ import uvicorn
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, text
 
 from auth import JWTAuthMiddleware, create_access_token, require_admin, get_current_user_id
+from passlib.context import CryptContext
 from menu_parser import parse_menu_text
 from models import (
     Dish, DishType, User, ModuleMenu, Order, OrderItem, OrderStatus,
@@ -34,7 +35,7 @@ from schemas import (
     UserResponse, UserUpdate, VerifyCodeRequest, VerifyCodeResponse, ResendCodeRequest,
     ResendCodeResponse, AdminUpdateRequest, ModuleMenuRequest,
     OrderCreate, OrderResponse, DishBase, AdminUpdateByEmailRequest,
-    ModuleMenuResponse
+    ModuleMenuResponse, LoginRequest, TokenResponse
 )
 import docx_utils
 
@@ -49,10 +50,20 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base.metadata.create_all(bind=engine)
 
-
-def get_db() -> Session:
-    db = SessionLocal()
+# Ensure DB has the new column `password_hash` to stay backward compatible
+def ensure_password_hash_column():
     try:
+        with engine.connect() as conn:
+            res = conn.execute(text("PRAGMA table_info('users')")).all()
+            cols = [row[1] for row in res]
+            if 'password_hash' not in cols:
+                conn.execute(text("ALTER TABLE users ADD COLUMN password_hash TEXT"))
+                logger.info('Added column password_hash to users table')
+    except Exception as e:
+        logger.warning(f'Could not ensure password_hash column: {e}')
+
+ensure_password_hash_column()
+
         yield db
     finally:
         db.close()
@@ -145,7 +156,6 @@ def send_verification_email(to_email: str, code: str) -> None:
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
     existing = db.query(User).filter(User.email == user_data.email).first()
 
-
     if existing:
         code = generate_verification_code()
         existing.verification_code = code
@@ -158,15 +168,30 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
             raise HTTPException(status_code=400, detail="Для новых пользователей требуются имя и отчество")
         if user_data.status not in {"active", "inactive"}:
             raise HTTPException(status_code=400, detail="Статус должен быть 'активен' или 'неактивен'")
+
         code = generate_verification_code()
+
+        # При регистрации допускаем, что клиент может передать пароль в body (необязательно)
+        # Если пароль не передан, остаёмся с моделью "временного" пользователя и вход по коду
+        password_hash = None
+        # user_data может быть Pydantic-моделью без поля password, будем проверять безопасно
+        try:
+            provided_password = getattr(user_data, 'password', None)
+        except Exception:
+            provided_password = None
+
+        if provided_password:
+            password_hash = get_password_hash(provided_password)
 
         new_user = User(
             name=user_data.name,
             secondary_name=user_data.secondary_name,
             email=user_data.email,
             status=user_data.status,
-            verification_code=code
+            verification_code=code,
+            password_hash=password_hash
         )
+
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -208,6 +233,23 @@ def verify_code(data: VerifyCodeRequest, db: Session = Depends(get_db)):
     token = create_access_token(data={"sub": str(user.id)})
     return VerifyCodeResponse(access_token=token, token_type="bearer", user=UserResponse.model_validate(user))
 
+
+@app.post("/auth/token", response_model=TokenResponse)
+def login_for_access_token(login_data: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == login_data.email).first()
+    if not user:
+        # Для обратной совместимости можно отправить код подтверждения
+        raise HTTPException(status_code=400, detail="Пользователь не найден или неверные данные")
+
+    if user.password_hash:
+        if not verify_password(login_data.password, user.password_hash):
+            raise HTTPException(status_code=400, detail="Неверный пароль")
+    else:
+        # Пользователь не имеет пароля — отвергаем попытку входа по паролю
+        raise HTTPException(status_code=400, detail="У пользователя не настроен пароль. Войдите через подтверждение по почте.")
+
+    token = create_access_token(data={"sub": str(user.id)})
+    return TokenResponse(access_token=token, token_type="bearer", user=UserResponse.model_validate(user))
 
 
 @app.get("/menu", response_model=List[DishResponse])

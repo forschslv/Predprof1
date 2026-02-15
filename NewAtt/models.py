@@ -35,6 +35,7 @@ class User(Base):
     is_admin = Column(Boolean, default=False)
     email_verified = Column(Boolean, default=False)
     verification_code = Column(String, nullable=True)
+    password_hash = Column(String, nullable=True)  # Добавлено поле для хэша пароля
 
     orders = relationship("Order", back_populates="user")
 

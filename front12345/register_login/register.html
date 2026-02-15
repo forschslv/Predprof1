@@ -14,7 +14,11 @@
             <input type="text" id="name" placeholder="Имя" required>
             <input type="text" id="secondary_name" placeholder="Фамилия" required>
             <input type="email" id="email" placeholder="Почта" required>
-            <button type="submit" id="regBtn">Зарегистрироваться</button>
+            <input type="password" id="password" placeholder="Пароль (необязательно)">
+            <input type="password" id="password_confirm" placeholder="Подтвердите пароль">
+
+            <!-- Добавлена кнопка отправки -->
+            <button type="submit" id="regBtn">Создать аккаунт</button>
         </form>
 
         <a id="toggleText" style="color: var(--accent-cyan); text-decoration: none;" href="/register_login/login">
@@ -29,6 +33,8 @@
             const nameInput = document.getElementById('name');
             const secondaryNameInput = document.getElementById('secondary_name');
             const regBtn = document.getElementById('regBtn');
+
+            if (!regBtn) return;
 
             // Check if any of the required fields are empty
             if (nameInput.value.trim() === '' || secondaryNameInput.value.trim() === '') {
@@ -48,43 +54,73 @@
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('regBtn');
+            btn.disabled = true;
+            const name = document.getElementById('name').value.trim();
+            const secondary_name = document.getElementById('secondary_name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const passwordConfirm = document.getElementById('password_confirm').value;
+            const status = document.getElementById('status')?.value.trim() || "active";
+
+            // Validate required fields
+            if (!name || !secondary_name || !email) {
+                alert('Пожалуйста, заполните имя, фамилию и почту.');
+                btn.disabled = false;
+                return;
+            }
+
+            // If any password field is filled, require confirmation and equality
+            if (password || passwordConfirm) {
+                if (password !== passwordConfirm) {
+                    alert('Пароли не совпадают');
+                    btn.disabled = false;
+                    return;
+                }
+
+                if (password.length < 6) {
+                    // minimal password policy (adjustable)
+                    alert('Пароль должен быть не менее 6 символов.');
+                    btn.disabled = false;
+                    return;
+                }
+            }
+
             const data = {
-                name: document.getElementById('name').value.trim(),
-                secondary_name: document.getElementById('secondary_name').value.trim(),
-                status: document.getElementById('status')?.value.trim() || "active", // Default to "active" if not provided
-                email: document.getElementById('email').value.trim()
+                name,
+                secondary_name,
+                email,
+                status
             };
 
-            btn.disabled = true;
-            btn.innerText = "Обработка...";
+            // Include password only if provided
+            if (password) data.password = password;
 
             try {
-                const response = await fetch(`${API_URL}/register`, {
+                const resp = await fetch('/register', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
 
-                const result = await response.json();
+                const result = await resp.json().catch(() => ({}));
 
-                if (response.ok) {
+                if (resp.ok || resp.status === 201) {
                     // Успешная регистрация или переотправка кода
-                    localStorage.setItem('pending_email', data.email);
+                    localStorage.setItem('pending_email', email);
                     window.location.href = '/register_login/verify';
-                } else {
-                    // ОШИБКА: Остаемся на странице
-                    // В main.py при существующем юзере возвращается 201 "Code resent",
-                    // так что сюда попадем только при реальных ошибках (валидация и т.д.)
-                    alert("Ошибка регистрации: " + (result.detail || "Проверьте данные"));
+                    return;
+                } else if (result.detail) {
+                    alert('Ошибка регистрации: ' + result.detail);
                     console.log(result);
-                    btn.disabled = false;
-                    btn.innerText = "Создать аккаунт";
+                } else {
+                    alert('Ошибка регистрации. Проверьте данные.');
+                    console.log('Registration failed', resp.status, result);
                 }
             } catch (err) {
-                alert("Ошибка соединения с сервером.");
-                console.error("Ошибка:", err);
+                alert('Ошибка соединения с сервером.');
+                console.error('Ошибка:', err);
+            } finally {
                 btn.disabled = false;
-                btn.innerText = "Создать аккаунт";
             }
         });
     </script>
