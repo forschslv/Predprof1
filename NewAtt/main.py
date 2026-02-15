@@ -69,9 +69,13 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     if not hashed_password:
         return False
+    # bcrypt имеет ограничение в 72 байта, поэтому обрезаем
+    plain_password = plain_password[:72]
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password: str) -> str:
+    # bcrypt имеет ограничение в 72 байта, поэтому обрезаем
+    password = password[:72]
     return pwd_context.hash(password)
 
 
@@ -177,34 +181,32 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
         db.refresh(existing)
         send_verification_email(user_data.email, code)
         return RegisterResponse(message="Code resent", user=UserResponse.model_validate(existing))
-    else:
-        if not user_data.name or not user_data.secondary_name:
-            raise HTTPException(status_code=400, detail="Для новых пользователей требуются имя и отчество")
-        if user_data.status not in {"active", "inactive"}:
-            raise HTTPException(status_code=400, detail="Статус должен быть 'активен' или 'неактивен'")
 
-        code = generate_verification_code()
+    # Создание нового пользователя
+    if not user_data.name or not user_data.secondary_name:
+        raise HTTPException(status_code=400, detail="Для новых пользователей требуются имя и отчество")
+    if user_data.status not in {"active", "inactive"}:
+        raise HTTPException(status_code=400, detail="Статус должен быть 'активен' или 'неактивен'")
 
-        # При регистрации допускаем, что клиент может передать пароль в body (необязательно)
-        # Если пароль не передан, остаёмся с моделью "временного" пользователя и вход по коду
-        password_hash = None
-        # user_data может быть Pydantic-моделью без поля password, будем проверять безопасно
-        try:
-            provided_password = getattr(user_data, 'password', None)
-        except Exception:
-            provided_password = None
+    code = generate_verification_code()
 
-        if provided_password:
+    # При регистрации допускаем, что клиент может передать пароль в body (необязательно)
+    password_hash = None
+    try:
+        provided_password = getattr(user_data, 'password', None)
+        if provided_password and provided_password.strip():
             password_hash = get_password_hash(provided_password)
+    except Exception:
+        pass
 
-        new_user = User(
-            name=user_data.name,
-            secondary_name=user_data.secondary_name,
-            email=user_data.email,
-            status=user_data.status,
-            verification_code=code,
-            password_hash=password_hash
-        )
+    new_user = User(
+        name=user_data.name,
+        secondary_name=user_data.secondary_name,
+        email=user_data.email,
+        status=user_data.status,
+        verification_code=code,
+        password_hash=password_hash
+    )
 
     db.add(new_user)
     db.commit()

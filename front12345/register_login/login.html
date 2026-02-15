@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Регистрация - Столовая Л2Ш</title>
-    <link rel="stylesheet" href="/cafeteria_styles.css">
+    <title>Вход - Столовая Л2Ш</title>
+    <link rel="stylesheet" href="/css/cafeteria_styles.css">
 </head>
 <body>
     <div class="container" style="max-width: 500px; margin-top: 5vh;">
         <h1>Вход</h1>
 
-        <form id="registerForm">
+        <form id="loginForm">
             <input type="email" id="email" placeholder="Почта" required>
             <input type="password" id="password" placeholder="Пароль (если есть)">
-            <button type="submit" id="regBtn">Войти</button>
+            <button type="submit" id="loginBtn">Войти</button>
         </form>
 
         <a id="toggleText" style="color: var(--accent-cyan); text-decoration: none; align-items: center" href="/register_login/register">
@@ -21,20 +21,25 @@
         </a>
     </div>
 
-    <script src="/script.js"></script>
+    <script src="/js/script.js"></script>
     <script>
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('regBtn');
+            const btn = document.getElementById('loginBtn');
             const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
+            const password = document.getElementById('password').value.trim();
+
+            if (!email) {
+                alert('Пожалуйста, введите почту');
+                return;
+            }
 
             btn.disabled = true;
             btn.innerText = "Обработка...";
 
             try {
                 if (password && password.length > 0) {
-                    // Попытка входа по паролю
+                    // Вход по паролю
                     const response = await fetch(`${API_URL}/auth/token`, {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
@@ -55,30 +60,26 @@
                         return;
                     }
                 } else {
-                    // Старая логика: запрос на /register чтобы отправить код по почте
-                    const data = {
-                        status: document.getElementById('status')?.value.trim() || "active", // Default to "active" if not provided
-                        email: email,
-                        name:'',
-                        secondary_name: '',
-                    };
-
+                    // Вход по коду подтверждения (отправка кода на почту)
                     const response = await fetch(`${API_URL}/register`, {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify(data)
+                        body: JSON.stringify({
+                            email: email,
+                            name: '',
+                            secondary_name: '',
+                            status: 'active'
+                        })
                     });
 
                     const result = await response.json();
-
-                    if (response.ok) {
-                        // Успешная регистрация или переотправка кода
-                        localStorage.setItem('pending_email', data.email);
+                    if (response.ok || response.status === 201) {
+                        localStorage.setItem('pending_email', email);
                         window.location.href = '/register_login/verify';
                     } else {
-                        alert("Ошибка регистрации: " + (result.detail || "Проверьте данные"));
-                        console.log(result);
+                        alert("Ошибка: " + (result.detail || "Проверьте данные"));
                         btn.disabled = false;
+                        btn.innerText = "Войти";
                     }
                 }
             } catch (err) {
