@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from models import User
 from dotenv import load_dotenv
+from logger import logger
 
 
 load_dotenv()
@@ -59,7 +60,7 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
 
         auth_header = request.headers.get("Authorization")
         request.state.user_id = None
-        print(auth_header, 9999)
+        logger.debug(f"Auth header received: {auth_header}")
 
 
         if auth_header and auth_header.startswith("Bearer "):
@@ -67,7 +68,7 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
             try:
                 payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
                 user_id = payload.get("sub")
-                print(user_id)
+                logger.debug(f"Token decoded, sub={user_id}")
 
                 if user_id:
                     request.state.user_id = int(user_id)

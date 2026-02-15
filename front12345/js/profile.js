@@ -1,7 +1,11 @@
 // === Профиль пользователя ===
-
-const API_URL = '/api';
-
+try {
+    const API_URL = '/api';
+} catch (e) {
+    console.warn('Ошибка определения API_URL:', e);
+    // alert('Ошибка конфигурации приложения. Проверьте консоль для деталей.');
+    // throw e;
+}
 async function apiRequest(endpoint, method = 'GET', body = null) {
     const token = localStorage.getItem('token');
     console.debug(`[apiRequest] ${method} ${API_URL}${endpoint} - token present: ${!!token}`);
@@ -193,17 +197,17 @@ function displayOrders(orders) {
 async function saveProfile() {
     const name = document.getElementById('name').value.trim();
     const secondary_name = document.getElementById('secondary_name').value.trim();
-    
+
     const updateData = {};
     if (name) updateData.name = name;
     if (secondary_name) updateData.secondary_name = secondary_name;
     // Статус не включается в updateData, так как он управляется только на бэкенде
-    
+
     if (Object.keys(updateData).length === 0) {
         alert('Нет изменений для сохранения');
         return;
     }
-    
+
     try {
         const updatedUser = await apiRequest('/users/me', 'PATCH', updateData);
         alert('Профиль успешно обновлён!');
@@ -263,7 +267,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = '/register_login/register';
         return;
     }
-    
+
     const { user, orders } = await loadUserProfile();
     // Если загрузка провалилась, loadUserProfile уже перенаправит
     if (orders) displayOrders(orders);
