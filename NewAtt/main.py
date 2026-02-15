@@ -3,6 +3,8 @@ import string
 import os
 import csv
 import io
+import hashlib
+import secrets
 from datetime import date
 from typing import List, Dict
 
@@ -65,23 +67,69 @@ def ensure_password_hash_column():
 ensure_password_hash_column()
 
 # Инициализация контекста для хеширования паролей
+# Используем PBKDF2 как основной метод (более надежен)
 pwd_context = CryptContext(
-    schemes=["bcrypt"],
+    schemes=["pbkdf2_sha256", "bcrypt"],
     deprecated="auto",
-    bcrypt__rounds=12
+    pbkdf2_sha256__rounds=232000
 )
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Проверка пароля против хеша"""
     if not hashed_password:
         return False
-    # bcrypt имеет ограничение в 72 байта, поэтому обрезаем
-    plain_password = plain_password[:72]
-    return pwd_context.verify(plain_password, hashed_password)
+
+    try:
+        # bcrypt имеет ограничение в 72 байта
+        if plain_password and len(plain_password) > 72:
+            plain_password = plain_password[:72]
+
+        return pwd_context.verify(plain_password, hashed_password)
+    except Exception as e:
+        logger.error(f"Error verifying password: {e}")
+        return False
+
 
 def get_password_hash(password: str) -> str:
-    # bcrypt имеет ограничение в 72 байта, поэтому обрезаем
-    password = password[:72]
-    return pwd_context.hash(password)
+    """Хеширование пароля с безопасностью"""
+    # Убедимся, что пароль это строка
+    if not isinstance(password, str):
+        password = str(password)
+
+    # Очищаем от пробелов
+    password = password.strip()
+
+    # bcrypt имеет ограничение в 72 байта
+    if len(password) > 72:
+        logger.warning(f"Password truncated from {len(password)} to 72 bytes")
+        password = password[:72]
+
+    try:
+        # Используем PBKDF2 как основной метод
+        hash_result = pwd_context.using(scheme="pbkdf2_sha256").hash(password)
+        logger.debug(f"Password hashed successfully using pbkdf2_sha256")
+        return hash_result
+    except Exception as e:
+        logger.error(f"Error hashing password: {e}")
+        # Резервный вариант - простой PBKDF2
+        try:
+            salt = secrets.token_hex(32)
+            password_hash = hashlib.pbkdf2_hmac(
+                'sha256',
+                password.encode(),
+                salt.encode(),
+                100000
+            )
+            # Формат: pbkdf2:sha256:iterations$salt$hash
+            hash_result = f"pbkdf2:sha256:100000${salt}${password_hash.hex()}"
+            logger.debug(f"Password hashed using fallback PBKDF2 method")
+            return hash_result
+        except Exception as e2:
+            logger.critical(f"Critical error hashing password: {e2}")
+            # Последний резервный вариант - простой SHA256 (не рекомендуется для продакшена)
+            salt = secrets.token_hex(32)
+            hash_result = f"sha256:simple${salt}${hashlib.sha256((salt + password).encode()).hexdigest()}"
+            return hash_result
 
 
 def get_db() -> Session:

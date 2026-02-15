@@ -10,7 +10,7 @@ sqlalchemy>=2.0.46
 
 # Authentication and security
 PyJWT  # JWT tokens
-passlib[bcrypt]>=1.7.4  # Password hashing
+passlib[bcrypt,argon2]>=1.7.4  # Password hashing with bcrypt, argon2, and pbkdf2 support
 python-multipart>=0.0.21  # File uploads
 
 # Email validation for Pydantic
