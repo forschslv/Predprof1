@@ -808,34 +808,83 @@ def get_order_ids_by_status(
 
 
 @app.get("/admin/reports/docx")
-def download_table_report(date_query: date, db: Session = Depends(get_db), admin: User = Depends(get_admin_user)):
-    day_idx = date_query.weekday()
+def download_table_report(
+    date_query: Optional[date] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    all_time: Optional[bool] = False,
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_admin_user)
+):
+    """
+    Скачивание DOCX-отчёта (таблицы для столовой).
+    Поддерживает те же режимы, что и summary: date_query, start_date+end_date, all_time.
+    Формат отчёта — список пользователей с их блюдами (каждая позиция по количеству раз).
+    """
+    try:
+        # Подготовляем список OrderItem-ов в зависимости от режима
+        items = []
 
-    items = db.query(OrderItem).join(Order).join(User).join(Dish) \
-        .filter(OrderItem.day_of_week == day_idx) \
-        .filter(Order.status == OrderStatus.PAID) \
-        .all()
+        if all_time:
+            items = db.query(OrderItem).join(Order).join(User).join(Dish).filter(Order.status == OrderStatus.PAID).all()
+            filename_suffix = 'all_time'
+        elif start_date and end_date:
+            if start_date > end_date:
+                start_date, end_date = end_date, start_date
+            # Заберём все оплаченные позиции и отфильтруем в Python по дате
+            candidates = db.query(OrderItem).join(Order).join(User).join(Dish).filter(Order.status == OrderStatus.PAID).all()
+            for it in candidates:
+                if not it.order or not it.order.week_start_date:
+                    continue
+                actual_date = it.order.week_start_date + timedelta(days=(it.day_of_week - 1))
+                actual_date_only = actual_date if isinstance(actual_date, date) else actual_date.date()
+                if start_date <= actual_date_only <= end_date:
+                    items.append(it)
+            filename_suffix = f"{start_date}_to_{end_date}"
+        elif date_query:
+            # single day — use isoweekday to match 1..7
+            day_idx = date_query.isoweekday()
+            items = db.query(OrderItem).join(Order).join(User).join(Dish) \
+                .filter(OrderItem.day_of_week == day_idx) \
+                .filter(Order.status == OrderStatus.PAID) \
+                .all()
+            filename_suffix = f"{date_query}"
+        else:
+            raise HTTPException(status_code=400, detail="Укажите date_query или start_date+end_date или all_time=true")
 
-    user_map = {}
-    for it in items:
-        uid = it.order.user_id
-        if uid not in user_map:
-            user_map[uid] = {
-                "user_name": f"{it.order.user.name} {it.order.user.secondary_name}",
-                "user_class": it.order.user.status,
-                "dishes": []
-            }
+        user_map = {}
+        for it in items:
+            uid = it.order.user_id if it.order else None
+            if uid is None:
+                continue
+            if uid not in user_map:
+                user_map[uid] = {
+                    "user_name": f"{it.order.user.name} {it.order.user.secondary_name}",
+                    "user_class": it.order.user.status,
+                    "dishes": []
+                }
 
-        d_name = it.dish.short_name if it.dish.short_name else it.dish.name
+            d_name = it.dish.short_name if it.dish.short_name else it.dish.name
+            # Добавляем dish столько раз, сколько quantity
+            try:
+                qty = int(it.quantity or 0)
+            except Exception:
+                qty = 0
+            for _ in range(qty):
+                user_map[uid]["dishes"].append(d_name)
 
-        for _ in range(it.quantity):
-            user_map[uid]["dishes"].append(d_name)
+        report_data = list(user_map.values())
 
-    report_data = list(user_map.values())
+        # Генерируем и возвращаем DOCX
+        os.makedirs("reports", exist_ok=True)
+        path = docx_utils.generate_table_setting_report(report_data, filename=f"Report_{filename_suffix}.docx")
+        return FileResponse(path, filename=f"Table_Report_{filename_suffix}.docx")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Error while generating docx report: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-    path = docx_utils.generate_table_setting_report(report_data, filename=f"Report_{date_query}.docx")
-
-    return FileResponse(path, filename=f"Table_Report_{date_query}.docx")
 
 @app.get("/module-menu/export")
 def export_module_menu(db: Session = Depends(get_db), admin: User = Depends(get_cook_or_admin_user)):
