@@ -9,18 +9,6 @@
     <div class="container">
         <h1>Пополнения баланса — просмотр и одобрение</h1>
 
-        <div class="stats-box">
-            <h3>Скачать ведомость для бухгалтерии (DOCX)</h3>
-            <input type="date" id="reportDate">
-            <button onclick="downloadDocx()">Скачать Report.docx</button>
-        </div>
-
-        <div class="inventory-item">
-            <h3>Загрузить список заявок на пополнение</h3>
-            <button onclick="loadTopups()">Загрузить пополнения</button>
-            <div id="topupsList" style="margin-top: 15px;"></div>
-        </div>
-
         <div class="inventory-item">
             <h3>Изменить статус пополнения вручную</h3>
             <input type="number" id="topupIdInp" placeholder="ID пополнения">
@@ -30,7 +18,7 @@
                 <option value="PENDING">Ожидает (PENDING)</option>
                 <option value="REJECTED">Отклонено (REJECTED)</option>
             </select>
-            <input type="number" id="paidAmountInp" placeholder="Списываемая сумма (необязательно)" style="margin-top:8px;">
+            <input type="number" id="paidAmountInp" placeholder="Сумма для начисления (необязательно)" style="margin-top:8px;">
             <button onclick="updateTopupStatus()">Сменить статус</button>
         </div>
 
@@ -103,7 +91,7 @@
                     viewBtn.onclick = () => { document.getElementById('pdfTopupId').value = t.id; viewTopupProof(); };
 
                     const approveBtn = document.createElement('button');
-                    approveBtn.textContent = 'Отметить как PAID';
+                    approveBtn.textContent = 'Зачислить средства (PAID)';
                     approveBtn.style = 'margin-left:8px;';
                     approveBtn.onclick = async () => {
                         if (!confirm(`Пометить пополнение ${t.id} как PAID и начислить ${t.amount}?`)) return;
@@ -217,6 +205,11 @@
             const status = document.getElementById('newTopupStatus').value;
             const amount = document.getElementById('paidAmountInp').value;
             if (!id) return alert('Введите ID пополнения');
+            // Подтверждение: при PAID это начисление баланса пользователю
+            if (status === 'PAID') {
+                const confirmMsg = amount ? `Вы уверены, что хотите перевести пополнение ${id} в PAID и начислить ${amount}?` : `Вы уверены, что хотите перевести пополнение ${id} в PAID и начислить сумму, указанную в заявке?`;
+                if (!confirm(confirmMsg)) return;
+            }
             let url = `/admin/balance/topups/${id}/status?status=${status}`;
             if (status === 'PAID' && amount) url += `&amount=${amount}`;
             await apiRequest(url, 'PATCH');
