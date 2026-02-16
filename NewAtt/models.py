@@ -24,6 +24,13 @@ class OrderStatus(str, enum.Enum):
     ON_REVIEW = "ON_REVIEW"
 
 
+class TopupStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    ON_REVIEW = "ON_REVIEW"
+    PAID = "PAID"
+    REJECTED = "REJECTED"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -38,8 +45,10 @@ class User(Base):
     verification_code = Column(String, nullable=True)
     password_hash = Column(String, nullable=True)  # Добавлено поле для хэша пароля
     password_reset_code = Column(String, nullable=True)  # Код для сброса пароля
+    balance = Column(Float, default=0.0)
 
     orders = relationship("Order", back_populates="user")
+    topups = relationship("BalanceTopup", back_populates="user")
 
 
 class Dish(Base):
@@ -93,3 +102,16 @@ class OrderItem(Base):
 
     order = relationship("Order", back_populates="items")
     dish = relationship("Dish")
+
+
+class BalanceTopup(Base):
+    __tablename__ = "balance_topups"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    amount = Column(Float, default=0.0)
+    status = Column(Enum(TopupStatus), default=TopupStatus.PENDING)
+    payment_proof_path = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="topups")

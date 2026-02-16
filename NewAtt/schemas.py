@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional
-from models import DishType, OrderStatus
+from models import DishType, OrderStatus, TopupStatus
 from datetime import date
 
 class UserCreate(BaseModel):
@@ -24,6 +24,7 @@ class UserResponse(BaseModel):
     is_admin: bool
     is_cook: bool
     email_verified: bool
+    balance: float
 
     class Config:
         from_attributes = True
@@ -142,3 +143,19 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str
     user: UserResponse
+
+# --- Баланс и пополнения ---
+class TopupCreateRequest(BaseModel):
+    amount: float
+
+class TopupResponse(BaseModel):
+    id: int
+    user_id: int
+    amount: float
+    status: TopupStatus
+    payment_proof_path: Optional[str] = None
+    created_at: date
+
+    class Config:
+        from_attributes = True
+

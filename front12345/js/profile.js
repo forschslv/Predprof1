@@ -6,7 +6,7 @@ try {
     // alert('Ошибка конфигурации приложения. Проверьте консоль для деталей.');
     // throw e;
 }
-async function apiRequest(endpoint, method = 'GET', body = null) {
+async function apiRequest(endpoint, method = 'GET', body = null, isForm = false) {
     const token = localStorage.getItem('token');
     console.debug(`[apiRequest] ${method} ${API_URL}${endpoint} - token present: ${!!token}`);
     if (!token) {
@@ -16,10 +16,12 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
     }
 
     const headers = { 'Authorization': `Bearer ${token}` };
-    if (body) headers['Content-Type'] = 'application/json';
-
     const config = { method, headers };
-    if (body) config.body = JSON.stringify(body);
+    if (!isForm && body) {
+        headers['Content-Type'] = 'application/json';
+        config.body = JSON.stringify(body);
+    }
+    if (isForm && body) config.body = body;
 
     try {
         const response = await fetch(`${API_URL}${endpoint}`, config);
@@ -127,6 +129,10 @@ async function loadUserProfile() {
         setValue('is_cook', (effectiveUser.is_cook) ? 'Да' : 'Нет');
         setValue('email_verified', (effectiveUser.email_verified) ? 'Да' : 'Нет');
 
+        // Баланс
+        const balanceEl = document.getElementById('balanceAmount');
+        if (balanceEl) balanceEl.textContent = `${(effectiveUser.balance || 0).toFixed(2)} ₽`;
+
         // Логируем данные для отладки
         console.log('Профиль загружен (effective):', effectiveUser);
         console.log('Заказы загружены:', orders);
@@ -215,6 +221,8 @@ async function saveProfile() {
         // Обновляем поля только для чтения
         document.getElementById('is_admin').value = updatedUser.is_admin ? 'Да' : 'Нет';
         document.getElementById('email_verified').value = updatedUser.email_verified ? 'Да' : 'Нет';
+        // Обновим баланс на странице на случай изменений
+        document.getElementById('balanceAmount').textContent = `${(updatedUser.balance || 0).toFixed(2)} ₽`;
     } catch (error) {
         console.error('Ошибка сохранения:', error);
         alert('Ошибка сохранения: ' + error.message);
@@ -263,6 +271,37 @@ async function setPassword() {
     } catch (error) {
         console.error('Ошибка установки пароля:', error);
         alert('Ошибка установки пароля: ' + error.message);
+    }
+}
+
+// --- Баланс: создание топапа и загрузка чека ---
+async function createTopup() {
+    const amount = parseFloat(document.getElementById('topupAmount').value);
+    if (!amount || amount <= 0) {
+        alert('Введите корректную сумму');
+        return;
+    }
+
+    try {
+        // Создаём запись топапа
+        const topup = await apiRequest('/balance/topups', 'POST', { amount });
+        // Если пользователь загрузил файл — отправим как form-data
+        const fileInput = document.getElementById('topupProof');
+        if (fileInput && fileInput.files && fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const form = new FormData();
+            form.append('file', file, file.name);
+            await apiRequest(`/balance/topups/${topup.id}/proof`, 'POST', form, true);
+        }
+
+        alert('Заявка создана. Чек отправлен на проверку администраторам.');
+        // Скрываем форму и сбросим поля
+        document.getElementById('topupSection').style.display = 'none';
+        document.getElementById('topupAmount').value = '';
+        document.getElementById('topupProof').value = '';
+    } catch (error) {
+        console.error('Ошибка при создании заявки на пополнение:', error);
+        alert('Ошибка создания заявки: ' + (error.message || error));
     }
 }
 
@@ -327,4 +366,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     document.getElementById('requestResetBtn').addEventListener('click', requestPasswordReset);
+
+    // Баланс: открытие формы пополнения
+    document.getElementById('topupBtn').addEventListener('click', () => {
+        const s = document.getElementById('topupSection');
+        s.style.display = s.style.display === 'none' ? 'block' : 'none';
+    });
+    document.getElementById('cancelTopupBtn').addEventListener('click', () => {
+        document.getElementById('topupSection').style.display = 'none';
+        document.getElementById('topupAmount').value = '';
+        document.getElementById('topupProof').value = '';
+    });
+    document.getElementById('createTopupBtn').addEventListener('click', createTopup);
 });
