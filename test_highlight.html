@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест подсветки кнопок</title>
+    <link rel="stylesheet" href="front12345/css/cafeteria_styles.css">
+    <style>
+        body {
+            padding: 20px;
+            background: linear-gradient(135deg, #0a0a0a 0%, #0f0f23 100%);
+            color: #f0f9ff;
+            font-family: 'Inter', sans-serif;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(20, 20, 40, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid rgba(139, 92, 246, 0.1);
+            border-radius: 10px;
+        }
+        .test-section h2 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+        }
+        .test-section p {
+            color: #94a3b8;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Тест подсветки кнопок в админке</h1>
+        
+        <div class="test-section">
+            <h2>Кнопки в flex контейнере</h2>
+            <p>Как в заголовке admin_menu.html</p>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3>Текущие блюда в базе</h3>
+                <button onclick="toggleAllMenuSections()" class="secondary admin-button" style="width:auto; padding:8px 16px;">
+                    <span id="toggleAllText">Развернуть все</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Кнопки в grid контейнере</h2>
+            <p>Как в форме добавления блюда</p>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <input type="text" placeholder="Название блюда" style="padding: 8px; border-radius: 8px; border: 1px solid #ccc;">
+                <select style="padding: 8px; border-radius: 8px; border: 1px solid #ccc;">
+                    <option>Основное блюдо</option>
+                    <option>Гарнир</option>
+                </select>
+                <input type="number" placeholder="Вес (граммы)" style="padding: 8px; border-radius: 8px; border: 1px solid #ccc;">
+                <input type="number" placeholder="Цена (рубли)" style="padding: 8px; border-radius: 8px; border: 1px solid #ccc;">
+            </div>
+            <button onclick="createDishManual()" class="secondary admin-button" style="margin-top: 10px;">Добавить в базу</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>Обычные кнопки</h2>
+            <p>Простые кнопки без специальных контейнеров</p>
+            <button class="admin-button">Короткий текст</button>
+            <button class="admin-button">Очень длинный текст который должен поместиться полностью</button>
+            <button class="secondary admin-button">Назад в панель администратора</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>Кнопки фильтров</h2>
+            <p>Как в admin_module.html</p>
+            <div class="type-filter">
+                <button class="admin-button active">Все</button>
+                <button class="admin-button">Основные</button>
+                <button class="admin-button">Гарниры</button>
+                <button class="admin-button">Салаты</button>
+                <button class="admin-button">Супы</button>
+                <button class="admin-button">Напитки</button>
+                <button class="admin-button">Готовые</button>
+                <button class="admin-button">Хлеб</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
