@@ -293,8 +293,10 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
 
 @app.get("/users/me", response_model=UserResponse)
 def read_users_me(current_user: User = Depends(get_current_user)):
-    logger.debug(f"Current user: {current_user}")
-    return current_user
+    logger.debug(f"Current user id: {getattr(current_user, 'id', None)}")
+    # Явно сериализуем модель пользователя в pydantic-схему — это предотвращает случаи, когда
+    # FastAPI/ResponseModel по каким-то причинам не сериализует ORM-объект правильно.
+    return UserResponse.model_validate(current_user)
 
 @app.patch("/users/me", response_model=UserResponse)
 def update_user_me(
