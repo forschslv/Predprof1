@@ -196,12 +196,17 @@ button {
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
-    overflow: hidden;
-    height: 45px;
-     white-space: nowrap;
-    text-overflow: ellipsis;
+    overflow: visible;
+    height: auto;
+    min-height: 45px;
+    white-space: normal;
+    text-overflow: clip;
     min-width: fit-content;
     padding: 12px 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 button::before {
@@ -327,9 +332,15 @@ button.danger {
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
+    white-space: normal;
+    text-overflow: clip;
+    overflow: visible;
+    height: auto;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 .modal {
@@ -1002,24 +1013,29 @@ tr:hover {
 /* Стили для предотвращения переполнения текста в кнопках */
 button[style*="width:auto"], .secondary[style*="width:auto"] {
     max-width: 100%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
 }
 
 /* Стили для кнопок с длинным текстом */
 button[style*="width:auto"]:hover {
-    overflow: visible;
     z-index: 1000;
     position: relative;
 }
 
 /* Стили для кнопок в админке */
 .admin-button {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 200px;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    max-width: none;
+    min-height: 45px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 12px 16px;
 }
 
 /* Стили для кнопок дней недели */
@@ -1033,12 +1049,35 @@ button[style*="width:auto"]:hover {
     line-height: 1.2;
 }
 
+/* Стили для контейнера фильтров */
+.type-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.type-filter h3 {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
 /* Стили для кнопок фильтров */
 .type-filter button {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 120px;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    max-width: none;
+    min-width: 80px;
+    height: auto;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 8px 12px;
+    margin: 0;
 }
 
 /* Универсальные стили для предотвращения переполнения текста в кнопках */
@@ -1049,9 +1088,9 @@ button {
 
 /* Специальные стили для кнопок с длинным текстом */
 button[onclick*="window.location"], button[onclick*="toggle"], button[onclick*="create"], button[onclick*="download"] {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
 }
 
 /* Стили для кнопок при наведении */
@@ -1076,24 +1115,32 @@ button:hover[title] {
     button {
         font-size: 0.9rem;
         padding: 10px 12px;
-        white-space: normal;
-        overflow: visible;
-        text-overflow: clip;
-        height: auto;
-        min-height: 45px;
-    }
-    
-    .admin-button {
-        max-width: 100%;
-        white-space: normal;
-        overflow: visible;
-        text-overflow: clip;
     }
     
     .day-btn {
         font-size: 0.75rem;
         padding: 3px 6px;
         min-width: 28px;
+    }
+    
+    .type-filter button {
+        font-size: 0.8rem;
+        padding: 6px 10px;
+        min-width: 70px;
+        min-height: 35px;
+    }
+}
+
+/* Стили для средних экранов */
+@media (max-width: 1024px) {
+    .type-filter {
+        gap: 6px;
+    }
+    
+    .type-filter button {
+        font-size: 0.85rem;
+        padding: 7px 11px;
+        min-height: 38px;
     }
 }
 

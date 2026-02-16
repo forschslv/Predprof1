@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест кнопок админки</title>
+    <link rel="stylesheet" href="front12345/css/cafeteria_styles.css">
+    <style>
+        body {
+            padding: 20px;
+            background: linear-gradient(135deg, #0a0a0a 0%, #0f0f23 100%);
+            color: #f0f9ff;
+            font-family: 'Inter', sans-serif;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(20, 20, 40, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        .test-section {
+            margin-bottom: 30px;
+        }
+        .test-section h2 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Тест кнопок админки</h1>
+        
+        <div class="test-section">
+            <h2>Обычные кнопки</h2>
+            <button class="admin-button">Короткий текст</button>
+            <button class="admin-button">Очень длинный текст который должен поместиться полностью</button>
+            <button class="admin-button secondary" style="width:auto;">Назад в панель администратора</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>Кнопки фильтров (как в админке)</h2>
+            <div class="type-filter">
+                <button class="admin-button active">Все</button>
+                <button class="admin-button">Основные блюда</button>
+                <button class="admin-button">Гарниры и дополнения</button>
+                <button class="admin-button">Салаты и закуски</button>
+                <button class="admin-button">Супы и первые блюда</button>
+                <button class="admin-button">Напитки и коктейли</button>
+                <button class="admin-button">Готовые наборы</button>
+                <button class="admin-button">Хлеб и выпечка</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Кнопки в строку</h2>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="admin-button">Коротко</button>
+                <button class="admin-button">Средний по длине текст</button>
+                <button class="admin-button">Очень длинный текст который должен поместиться полностью без обрезания</button>
+                <button class="admin-button">Еще одна кнопка</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
