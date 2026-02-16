@@ -277,6 +277,10 @@ async function requestPasswordReset() {
         }
 
         await apiRequest('/password/reset', 'POST', { email });
+        // Сохраняем флаг, чтобы страница verify поняла контекст
+        localStorage.setItem('pending_email', email);
+        localStorage.setItem('pending_reset', '1');
+
         alert('Код для сброса отправлен на вашу почту (если она зарегистрирована).');
         // Подсказываем пользователю перейти на страницу подтверждения
         if (confirm('Открыть страницу подтверждения кода? (Вы сможете установить пароль на странице подтверждения)')) {

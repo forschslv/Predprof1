@@ -37,12 +37,23 @@
 
     <script src="/js/script.js"></script>
     <script>
+        const pendingReset = localStorage.getItem('pending_reset') === '1';
+
         document.getElementById('verifyForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = localStorage.getItem('pending_email');
-            const code = document.getElementById('code').value;
+            const code = document.getElementById('code').value.trim();
 
             try {
+                if (pendingReset) {
+                    // Если это подтверждение сброса пароля — покажем форму установки пароля
+                    document.getElementById('codeVerification').style.display = 'none';
+                    document.getElementById('passwordSetup').style.display = 'block';
+                    // Сохраним код временно для дальнейшей отправки
+                    localStorage.setItem('password_reset_code_temp', code.trim());
+                    return;
+                }
+
                 const res = await apiRequest('/verify-code', 'POST', { email, code });
                 localStorage.setItem('token', res.access_token);
                 localStorage.setItem('user', JSON.stringify(res.user));
@@ -84,6 +95,41 @@
             }
 
             try {
+                if (pendingReset) {
+                    // При подтверждении сброса используем endpoint /password/reset/confirm
+                    const code = (localStorage.getItem('password_reset_code_temp') || '').trim();
+                    const email = localStorage.getItem('pending_email');
+                    const response = await fetch(`${API_URL}/password/reset/confirm`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code, password, password_confirm: passwordConfirm, email })
+                    });
+
+                    if (response.ok) {
+                        const user = await response.json();
+                        // Очищаем флаги
+                        localStorage.removeItem('password_reset_code_temp');
+                        localStorage.removeItem('pending_reset');
+                        localStorage.setItem('token', localStorage.getItem('token') || '');
+                        localStorage.setItem('user', JSON.stringify(user));
+                        document.getElementById('passwordSetup').style.display = 'none';
+                        document.getElementById('success').style.display = 'block';
+                        setTimeout(() => {
+                            if (user.is_admin) {
+                                window.location.href = '/admin';
+                            } else {
+                                window.location.href = '/main';
+                            }
+                        }, 1500);
+                        return;
+                    } else {
+                        const err = await response.json().catch(() => ({}));
+                        alert('Ошибка при подтверждении кода: ' + (err.detail || JSON.stringify(err)));
+                        return;
+                    }
+                }
+
+                // Обычная установка пароля для вновь верифицированного аккаунта
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_URL}/set-password`, {
                     method: 'POST',

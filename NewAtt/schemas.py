@@ -136,6 +136,7 @@ class PasswordResetConfirmRequest(BaseModel):
     code: str
     password: str
     password_confirm: str
+    email: Optional[EmailStr] = None
 
 class TokenResponse(BaseModel):
     access_token: str

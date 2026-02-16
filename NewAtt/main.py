@@ -334,20 +334,37 @@ def password_reset_request(data: ResendCodeRequest, db: Session = Depends(get_db
     user = db.query(User).filter(User.email == data.email).first()
     if not user:
         # Не раскрываем, что пользователя нет — возвращаем 200
+        logger.info(f'Password reset requested for unknown email: {data.email}')
         return ResendCodeResponse(message='If the email exists, a code has been sent')
 
     code = generate_random_code()
     user.password_reset_code = code
     db.commit()
+    db.refresh(user)
+    logger.info(f'Password reset code generated for {user.email}: {code}')
     # Отправим на почту тот же текст (симуляция)
-    send_verification_email(user.email, code)
+    send_verification_email(str(user.email), code)
     return ResendCodeResponse(message='If the email exists, a code has been sent')
 
 
 @app.post('/password/reset/confirm', response_model=UserResponse)
 def password_reset_confirm(data: PasswordResetConfirmRequest, db: Session = Depends(get_db)):
     """Подтверждение кода сброса и установка нового пароля"""
-    user = db.query(User).filter(User.password_reset_code == data.code).first()
+    # Нормализуем входные данные
+    code = (data.code or '').strip()
+    email = (data.email or '').strip().lower() if getattr(data, 'email', None) else None
+
+    # Ищем пользователя по коду и опционально по email (если передан)
+    if email:
+        user = db.query(User).filter(func.lower(User.email) == email, User.password_reset_code == code).first()
+        if not user:
+            logger.info(f'No user found by email+code, trying by code only (email provided was {email})')
+            user = db.query(User).filter(User.password_reset_code == code).first()
+    else:
+        user = db.query(User).filter(User.password_reset_code == code).first()
+
+    logger.info(f'Password reset confirm attempt - email: {email}, code: {code}, found_user: {bool(user)}')
+
     if not user:
         raise HTTPException(status_code=400, detail='Неверный код')
 
@@ -361,6 +378,7 @@ def password_reset_confirm(data: PasswordResetConfirmRequest, db: Session = Depe
     user.password_reset_code = None
     db.commit()
     db.refresh(user)
+    logger.info(f'Password reset successful for {user.email}')
     return UserResponse.model_validate(user)
 
 
