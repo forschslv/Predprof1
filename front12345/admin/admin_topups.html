@@ -7,8 +7,10 @@
 </head>
 <body>
     <div class="container">
-        <h1>Пополнения баланса — просмотр и одобрение</h1>
-
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h1>Пополнения баланса — просмотр и одобрение</h1>
+            <button onclick="window.location.href='/admin/admin.html'" class="secondary" style="width:auto;">Назад в панель</button>
+        </div>
         <div class="inventory-item">
             <h3>Изменить статус пополнения вручную</h3>
             <input type="number" id="topupIdInp" placeholder="ID пополнения">
@@ -48,7 +50,6 @@
             </div>
         </div>
 
-        <button onclick="window.location.href='/admin/admin'" class="secondary">Назад</button>
     </div>
 
     <script src="/script.js"></script>
