@@ -55,10 +55,16 @@
     <script>
         checkAuth(); requireAdmin();
     </script>
-    <script>        document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
+    <script>
+        // Установим reportDate только если элемент реально присутствует (в старых версиях формы его могло не быть)
+        (function(){
+            const rd = document.getElementById('reportDate');
+            if (rd) rd.value = new Date().toISOString().split('T')[0];
+        })();
 
         async function downloadDocx() {
-            const date = document.getElementById('reportDate').value;
+            const rd = document.getElementById('reportDate');
+            const date = rd ? rd.value : new Date().toISOString().split('T')[0];
             await downloadFile(`/admin/reports/docx?date_query=${date}`, `Topups_Report_${date}.docx`);
         }
 
@@ -125,19 +131,21 @@
             }
         }
 
-        let previousBlobUrl = null;
+        // Делаем previousBlobUrl глобальным через window, чтобы не попадать в TDZ при inline-обработчиках
+        window.previousBlobUrl = window.previousBlobUrl || null;
         async function viewTopupProof() {
-            const topupId = document.getElementById('pdfTopupId').value;
+            const topupIdEl = document.getElementById('pdfTopupId');
+            const topupId = topupIdEl ? topupIdEl.value : null;
             if (!topupId) return alert("Введите ID пополнения");
             const token = localStorage.getItem('token');
             const url = `${API_URL}/balance/topups/${topupId}/proof`;
             const iframe = document.getElementById('pdfViewer');
             const imageViewer = document.getElementById('imageViewer');
             const downloadBtn = document.getElementById('downloadProofBtn');
-            iframe.style.display = 'none';
-            imageViewer.style.display = 'none';
+            if (iframe) iframe.style.display = 'none';
+            if (imageViewer) imageViewer.style.display = 'none';
             if (downloadBtn) downloadBtn.style.display = 'none';
-            if (previousBlobUrl) { window.URL.revokeObjectURL(previousBlobUrl); previousBlobUrl = null; }
+            if (window.previousBlobUrl) { window.URL.revokeObjectURL(window.previousBlobUrl); window.previousBlobUrl = null; }
             try {
                 const response = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
                 if (!response.ok) {
@@ -162,9 +170,11 @@
                 );
                 if (isPdf) {
                     const blobUrl = window.URL.createObjectURL(blob);
-                    previousBlobUrl = blobUrl;
-                    iframe.src = blobUrl;
-                    iframe.style.display = 'block';
+                    window.previousBlobUrl = blobUrl;
+                    if (iframe) {
+                        iframe.src = blobUrl;
+                        iframe.style.display = 'block';
+                    }
                     if (downloadBtn) {
                         downloadBtn.style.display = 'inline-block';
                         downloadBtn.onclick = () => {
@@ -178,9 +188,11 @@
                     }
                 } else if (isImage) {
                     const blobUrl = window.URL.createObjectURL(blob);
-                    previousBlobUrl = blobUrl;
-                    imageViewer.src = blobUrl;
-                    imageViewer.style.display = 'block';
+                    window.previousBlobUrl = blobUrl;
+                    if (imageViewer) {
+                        imageViewer.src = blobUrl;
+                        imageViewer.style.display = 'block';
+                    }
                     if (downloadBtn) {
                         downloadBtn.style.display = 'inline-block';
                         downloadBtn.onclick = () => {
@@ -213,7 +225,7 @@
             let url = `/admin/balance/topups/${id}/status?status=${status}`;
             if (status === 'PAID' && amount) url += `&amount=${amount}`;
             await apiRequest(url, 'PATCH');
-            alert('Статус изменен');
+            alert('Статус измене��');
         }
 
         async function loadTopupIdsByStatus() {
