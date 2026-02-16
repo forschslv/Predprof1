@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Пополнения баланса - Админ</title>
+    <link rel="stylesheet" href="/cafeteria_styles.css">
+</head>
+<body>
+<div class="container">
+    <h1>Пополнения баланса — просмотр и одобрение</h1>
+
+    <div class="inventory-item">
+        <h3>Загрузить список заявок на пополнение</h3>
+        <button onclick="loadTopups()">Загрузить пополнения</button>
+        <div id="topupsList" style="margin-top: 15px;"></div>
+    </div>
+
+    <div class="inventory-item">
+        <h3>Просмотр квитанции (PDF/изображения)</h3>
+        <input type="number" id="viewTopupId" placeholder="ID пополнения">
+        <button onclick="viewTopupProof()">Просмотреть квитанцию</button>
+        <div style="margin-top: 20px;">
+            <iframe id="topupPdfViewer" width="100%" height="600px" style="border: 1px solid #ccc; display: none;"></iframe>
+            <img id="topupImageViewer" style="max-width: 100%; max-height: 600px; border: 1px solid #ccc; display: none;">
+            <button id="downloadTopupBtn" class="btn" style="display: none; margin-top: 10px;">Скачать квитанцию</button>
+        </div>
+    </div>
+
+    <button onclick="window.location.href='/admin/admin'" class="secondary">Назад</button>
+</div>
+
+<script src="/script.js"></script>
+<script>
+    checkAuth(); requireAdmin();
+
+    let lastBlobUrlTopup = null;
+
+    async function loadTopups() {
+        const container = document.getElementById('topupsList');
+        container.innerHTML = '<p>Загрузка...</p>';
+        try {
+            // Получаем последние пополнения — без фильтрации (требует авторизации админа)
+            let resp = await apiRequest('/admin/balance/topups_all', 'GET');
+            // Ожидаем, что API вернет массив объектов {id, user_id, amount, status, payment_proof_path, created_at}
+            if (!Array.isArray(resp)) resp = [];
+            if (resp.length === 0) {
+                container.innerHTML = '<p>Заявок нет</p>';
+                return;
+            }
+
+            const listEl = document.createElement('div');
+            resp.forEach(t => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'topup-item';
+                wrapper.style = 'padding:10px;border:1px solid var(--border-color);margin-bottom:10px;border-radius:6px;background:var(--surface-color);';
+
+                const info = document.createElement('div');
+                info.innerHTML = `<strong>ID:</strong> ${t.id} &nbsp; <strong>Пользователь:</strong> ${t.user_id} &nbsp; <strong>Сумма (заявленная):</strong> <span id="amount_display_${t.id}">${t.amount}</span> ₽ &nbsp; <strong>Статус:</strong> ${t.status} &nbsp; <strong>Создано:</strong> ${t.created_at}`;
+
+                const controls = document.createElement('div');
+                controls.style = 'margin-top:10px;';
+
+                // Поле ввода суммы (по умолчанию — заявленная студентом)
+                const amountInput = document.createElement('input');
+                amountInput.type = 'number';
+                amountInput.step = '0.01';
+                amountInput.min = '0';
+                amountInput.value = t.amount;
+                amountInput.id = `amount_input_${t.id}`;
+                amountInput.style = 'width:120px;margin-right:10px;padding:6px;';
+
+                const btnApprove = document.createElement('button');
+                btnApprove.textContent = 'Одобрить (PAID)';
+                btnApprove.className = 'primary';
+                btnApprove.style = 'margin-right:8px;';
+                btnApprove.onclick = async () => {
+                    const newAmount = parseFloat(document.getElementById(`amount_input_${t.id}`).value) || 0;
+                    // Обновим сумму в интерфейсе и на сервере — сервер принимает параметр amount в админском эндпоинте
+                    try {
+                        await apiRequest(`/admin/balance/topups/${t.id}/status?status=PAID&amount=${encodeURIComponent(newAmount)}`, 'PATCH');
+                        // Обновляем отображение
+                        document.getElementById(`amount_display_${t.id}`).textContent = newAmount.toFixed(2);
+                        alert('Пополнение отмечено как PAID. Баланс пользователя обновлён.');
+                    } catch (e) {
+                        alert('Ошибка при одобрении: ' + e.message);
+                    }
+                };
+
+                const btnReject = document.createElement('button');
+                btnReject.textContent = 'Отклонить (REJECTED)';
+                btnReject.style = 'margin-right:8px;';
+                btnReject.onclick = async () => {
+                    try {
+                        await apiRequest(`/admin/balance/topups/${t.id}/status?status=REJECTED`, 'PATCH');
+                        alert('Пополнение отмечено как REJECTED.');
+                    } catch (e) {
+                        alert('Ошибка при отклонении: ' + e.message);
+                    }
+                };
+
+                const btnView = document.createElement('button');
+                btnView.textContent = 'Просмотреть квитанцию';
+                btnView.onclick = () => {
+                    document.getElementById('viewTopupId').value = t.id;
+                    viewTopupProof();
+                };
+
+                controls.appendChild(amountInput);
+                controls.appendChild(btnApprove);
+                controls.appendChild(btnReject);
+                controls.appendChild(btnView);
+
+                wrapper.appendChild(info);
+                wrapper.appendChild(controls);
+                listEl.appendChild(wrapper);
+            });
+
+            container.innerHTML = '';
+            container.appendChild(listEl);
+        } catch (err) {
+            container.innerHTML = '<p>Ошибка загрузки: ' + (err.message || err) + '</p>';
+        }
+    }
+
+    async function viewTopupProof() {
+        const topupId = document.getElementById('viewTopupId').value;
+        if (!topupId) return alert('Введите ID пополнения');
+
+        const iframe = document.getElementById('topupPdfViewer');
+        const imageViewer = document.getElementById('topupImageViewer');
+        const downloadBtn = document.getElementById('downloadTopupBtn');
+        iframe.style.display = 'none';
+        imageViewer.style.display = 'none';
+        if (downloadBtn) downloadBtn.style.display = 'none';
+        if (lastBlobUrlTopup) { window.URL.revokeObjectURL(lastBlobUrlTopup); lastBlobUrlTopup = null; }
+
+        try {
+            const token = localStorage.getItem('token');
+            const url = `${API_URL}/balance/topups/${topupId}/proof`;
+            const response = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.detail || 'Квитанция не найдена');
+            }
+            const contentType = response.headers.get('content-type') || '';
+            const blob = await response.blob();
+            const isPdf = contentType.includes('application/pdf') || blob.type.includes('pdf');
+            const isImage = contentType.includes('image') || blob.type.startsWith('image/');
+
+            if (isPdf) {
+                const blobUrl = window.URL.createObjectURL(blob);
+                lastBlobUrlTopup = blobUrl;
+                iframe.src = blobUrl;
+                iframe.style.display = 'block';
+                if (downloadBtn) {
+                    downloadBtn.style.display = 'inline-block';
+                    downloadBtn.onclick = () => { const a = document.createElement('a'); a.href = blobUrl; a.download = `topup_${topupId}.pdf`; document.body.appendChild(a); a.click(); a.remove(); };
+                }
+            } else if (isImage) {
+                const blobUrl = window.URL.createObjectURL(blob);
+                lastBlobUrlTopup = blobUrl;
+                imageViewer.src = blobUrl;
+                imageViewer.style.display = 'block';
+                if (downloadBtn) {
+                    downloadBtn.style.display = 'inline-block';
+                    downloadBtn.onclick = () => { const a = document.createElement('a'); a.href = blobUrl; a.download = `topup_${topupId}.${blob.type.split('/')[1] || 'img'}`; document.body.appendChild(a); a.click(); a.remove(); };
+                }
+            } else {
+                throw new Error('Неподдерживаемый тип файла');
+            }
+        } catch (e) {
+            alert('Ошибка: ' + e.message);
+        }
+    }
+</script>
+</body>
+</html>

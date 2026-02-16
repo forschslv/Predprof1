@@ -6,7 +6,7 @@ import io
 import hashlib
 import secrets
 from datetime import date, datetime
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from dotenv import load_dotenv
 
@@ -1000,7 +1000,7 @@ async def download_topup_proof(topup_id: int, request: Request, db: Session = De
 
 
 @app.patch('/admin/balance/topups/{topup_id}/status')
-def admin_update_topup_status(topup_id: int, status: TopupStatus, db: Session = Depends(get_db), admin: User = Depends(get_admin_user)):
+def admin_update_topup_status(topup_id: int, status: TopupStatus, amount: Optional[float] = None, db: Session = Depends(get_db), admin: User = Depends(get_admin_user)):
     topup = db.query(BalanceTopup).filter(BalanceTopup.id == topup_id).first()
     if not topup:
         raise HTTPException(status_code=404, detail='Topup not found')
@@ -1013,12 +1013,28 @@ def admin_update_topup_status(topup_id: int, status: TopupStatus, db: Session = 
         user = db.query(User).filter(User.id == topup.user_id).first()
         if not user:
             raise HTTPException(status_code=404, detail='User not found')
-        user.balance = (user.balance or 0.0) + (topup.amount or 0.0)
+        # Определяем сумму, которую админ хочет зачислить: если передан параметр amount — используем его и запишем в topup.amount;
+        # иначе используем ранее заявленную сумму в topup.amount.
+        used_amount = topup.amount or 0.0
+        if amount is not None:
+            try:
+                used_amount = float(amount)
+            except Exception:
+                raise HTTPException(status_code=400, detail='Invalid amount')
+            topup.amount = used_amount
+
+        user.balance = (user.balance or 0.0) + used_amount
 
     topup.status = status
     db.commit()
 
     return {"message": f"Topup {topup_id} marked as {status.value}"}
+
+@app.get('/admin/balance/topups_all', response_model=List[TopupResponse])
+def admin_list_topups(db: Session = Depends(get_db), admin: User = Depends(get_admin_user)):
+    """Возвращает список всех пополнений для админов (новые вверху)"""
+    topups = db.query(BalanceTopup).order_by(BalanceTopup.id.desc()).all()
+    return topups
 
 if __name__ == "__main__":
     import init_db
