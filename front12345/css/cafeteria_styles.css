@@ -198,7 +198,7 @@ button {
     position: relative;
     overflow: hidden;
     height: 45px;
-    white-space: nowrap;
+     white-space: nowrap;
     text-overflow: ellipsis;
     min-width: fit-content;
     padding: 12px 15px;
@@ -997,6 +997,104 @@ tr:hover {
     font-weight: 700;
     color: var(--accent-cyan);
     font-size: 1.1rem;
+}
+
+/* Стили для предотвращения переполнения текста в кнопках */
+button[style*="width:auto"], .secondary[style*="width:auto"] {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Стили для кнопок с длинным текстом */
+button[style*="width:auto"]:hover {
+    overflow: visible;
+    z-index: 1000;
+    position: relative;
+}
+
+/* Стили для кнопок в админке */
+.admin-button {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+/* Стили для кнопок дней недели */
+.day-btn {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    min-width: 32px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+/* Стили для кнопок фильтров */
+.type-filter button {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+}
+
+/* Универсальные стили для предотвращения переполнения текста в кнопках */
+button {
+    max-width: 100%;
+    position: relative;
+}
+
+/* Специальные стили для кнопок с длинным текстом */
+button[onclick*="window.location"], button[onclick*="toggle"], button[onclick*="create"], button[onclick*="download"] {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Стили для кнопок при наведении */
+button:hover {
+    z-index: 1000;
+    position: relative;
+}
+
+/* Стили для кнопок с длинным текстом при наведении */
+button:hover[title] {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    word-wrap: break-word;
+    min-width: 200px;
+    max-width: 300px;
+    z-index: 1001;
+}
+
+/* Стили для кнопок в мобильной версии */
+@media (max-width: 768px) {
+    button {
+        font-size: 0.9rem;
+        padding: 10px 12px;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        height: auto;
+        min-height: 45px;
+    }
+    
+    .admin-button {
+        max-width: 100%;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+    }
+    
+    .day-btn {
+        font-size: 0.75rem;
+        padding: 3px 6px;
+        min-width: 28px;
+    }
 }
 
 .dish-composition {

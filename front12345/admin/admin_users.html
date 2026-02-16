@@ -9,7 +9,7 @@
     <div class="container" style="max-width: 600px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <h1>Управление правами</h1>
-            <button onclick="window.location.href='/admin/admin.html'" class="secondary" style="width:auto;">Назад в панель</button>
+            <button onclick="window.location.href='/admin/admin.html'" class="secondary admin-button" style="width:auto;">Назад в панель</button>
         </div>
         <div class="inventory-item">
             <p>Назначить/снять права администратора</p>
@@ -25,7 +25,7 @@
                     <option value="false">Убрать роль повара</option>
                 </select>
             </label>
-            <button onclick="updateRole()">Применить</button>
+            <button onclick="updateRole()" class="admin-button">Применить</button>
         </div>
     </div>
     <script src="/js/script.js"></script>

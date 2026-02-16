@@ -196,7 +196,7 @@
     <div class="container">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <h1>Создание модульного меню</h1>
-            <button onclick="window.location.href='/admin/admin'" class="secondary" style="width:auto;">Назад в панель</button>
+            <button onclick="window.location.href='/admin/admin'" class="secondary admin-button" style="width:auto;">Назад в панель</button>
         </div>
 
         <p style="color:var(--text-secondary); margin-bottom:20px;">
@@ -206,20 +206,20 @@
         <!-- Фильтр по типам блюд -->
         <div class="type-filter">
             <h3>Фильтр по типам блюд:</h3>
-            <button onclick="filterByType('ALL')" class="active" id="filter-all">Все</button>
-            <button onclick="filterByType('MAIN')" id="filter-main">Основные</button>
-            <button onclick="filterByType('GARNISH')" id="filter-garnish">Гарниры</button>
-            <button onclick="filterByType('SALAD')" id="filter-salad">Салаты</button>
-            <button onclick="filterByType('SOUP')" id="filter-soup">Супы</button>
-            <button onclick="filterByType('DRINK')" id="filter-drink">Напитки</button>
-            <button onclick="filterByType('PREPARED')" id="filter-prepared">Готовые</button>
-            <button onclick="filterByType('BREAD')" id="filter-bread">Хлеб</button>
+            <button onclick="filterByType('ALL')" class="active admin-button" id="filter-all">Все</button>
+            <button onclick="filterByType('MAIN')" class="admin-button" id="filter-main">Основные</button>
+            <button onclick="filterByType('GARNISH')" class="admin-button" id="filter-garnish">Гарниры</button>
+            <button onclick="filterByType('SALAD')" class="admin-button" id="filter-salad">Салаты</button>
+            <button onclick="filterByType('SOUP')" class="admin-button" id="filter-soup">Супы</button>
+            <button onclick="filterByType('DRINK')" class="admin-button" id="filter-drink">Напитки</button>
+            <button onclick="filterByType('PREPARED')" class="admin-button" id="filter-prepared">Готовые</button>
+            <button onclick="filterByType('BREAD')" class="admin-button" id="filter-bread">Хлеб</button>
         </div>
 
         <!-- Группированное меню -->
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h2 style="margin:0;">Выбор блюд для модульного меню</h2>
-            <button onclick="toggleAllMenuSections()" class="secondary" style="width:auto; padding:8px 16px;">
+            <button onclick="toggleAllMenuSections()" class="secondary admin-button" style="width:auto; padding:8px 16px;">
                 <span id="toggleAllText">Развернуть все</span>
             </button>
         </div>
@@ -236,7 +236,7 @@
         </div>
 
         <!-- Кнопка создания -->
-        <button onclick="createModuleMenu()" class="primary create-btn" id="createBtn">Создать модульное меню</button>
+        <button onclick="createModuleMenu()" class="primary create-btn admin-button" id="createBtn">Создать модульное меню</button>
 
         <!-- Информация о текущем выборе -->
         <div style="margin-top: 30px; padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--surface-color);">

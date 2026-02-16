@@ -9,7 +9,7 @@
     <div class="container">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <h1>Пополнения баланса — просмотр и одобрение</h1>
-            <button onclick="window.location.href='/admin/admin.html'" class="secondary" style="width:auto;">Назад в панель</button>
+            <button onclick="window.location.href='/admin/admin.html'" class="secondary admin-button" style="width:auto;">Назад в панель</button>
         </div>
         <div class="inventory-item">
             <h3>Изменить статус пополнения вручную</h3>
@@ -21,17 +21,17 @@
                 <option value="REJECTED">Отклонено (REJECTED)</option>
             </select>
             <input type="number" id="paidAmountInp" placeholder="Сумма для начисления (необязательно)" style="margin-top:8px;">
-            <button onclick="updateTopupStatus()">Сменить статус</button>
+            <button onclick="updateTopupStatus()" class="admin-button">Сменить статус</button>
         </div>
 
         <div class="inventory-item">
             <h3>Просмотр квитанции (PDF/изображения)</h3>
             <input type="number" id="pdfTopupId" placeholder="ID пополнения">
-            <button onclick="viewTopupProof()">Просмотреть квитанцию</button>
+            <button onclick="viewTopupProof()" class="admin-button">Просмотреть квитанцию</button>
             <div style="margin-top: 20px;">
                 <iframe id="pdfViewer" width="100%" height="600px" style="border: 1px solid #ccc; display: none;"></iframe>
                 <img id="imageViewer" style="max-width: 100%; max-height: 600px; border: 1px solid #ccc; display: none;">
-                <button id="downloadProofBtn" class="btn" style="display: none; margin-top: 10px;">Скачать квитанцию</button>
+                <button id="downloadProofBtn" class="btn admin-button" style="display: none; margin-top: 10px;">Скачать квитанцию</button>
             </div>
         </div>
 
@@ -43,7 +43,7 @@
                 <option value="PENDING">Ожидает (PENDING)</option>
                 <option value="REJECTED">Отклонено (REJECTED)</option>
             </select>
-            <button onclick="loadTopupIdsByStatus()">Загрузить ID</button>
+            <button onclick="loadTopupIdsByStatus()" class="admin-button">Загрузить ID</button>
             <div id="topupIdsResult" class="order-ids-result" style="display: none;">
                 <h4>ID пополнений:</h4>
                 <ul id="topupIdsList"></ul>
@@ -95,10 +95,12 @@
 
                     const viewBtn = document.createElement('button');
                     viewBtn.textContent = 'Просмотреть квитанцию';
+                    viewBtn.className = 'admin-button';
                     viewBtn.onclick = () => { document.getElementById('pdfTopupId').value = t.id; viewTopupProof(); };
 
                     const approveBtn = document.createElement('button');
                     approveBtn.textContent = 'Зачислить средства (PAID)';
+                    approveBtn.className = 'admin-button';
                     approveBtn.style = 'margin-left:8px;';
                     approveBtn.onclick = async () => {
                         if (!confirm(`Пометить пополнение ${t.id} как PAID и начислить ${t.amount}?`)) return;
@@ -109,6 +111,7 @@
 
                     const rejectBtn = document.createElement('button');
                     rejectBtn.textContent = 'Отклонить';
+                    rejectBtn.className = 'admin-button';
                     rejectBtn.style = 'margin-left:8px;';
                     rejectBtn.onclick = async () => {
                         if (!confirm(`Отклонить пополнение ${t.id}?`)) return;

@@ -10,19 +10,19 @@
         <h1>Панель администратора</h1>
         <div class="navigation-hub">
             <div class="button-group">
-                <button onclick="window.location.href='/admin/admin_menu'">🍱 База блюд</button>
-                <button onclick="window.location.href='/admin/admin_module'">📅 Меню на неделю</button>
-                <button onclick="window.location.href='/admin/admin_orders'">💰 Заказы и Статусы</button>
-                <button onclick="window.location.href='/admin/admin_topups'">💳 Пополнения</button>
-                <button onclick="window.location.href='/admin/admin_users'">👥 Пользователи</button>
-                <button onclick="window.location.href='/main'" class="secondary">🏠 В личный кабинет</button>
+                <button onclick="window.location.href='/admin/admin_menu'" class="admin-button">🍱 База блюд</button>
+                <button onclick="window.location.href='/admin/admin_module'" class="admin-button">📅 Меню на неделю</button>
+                <button onclick="window.location.href='/admin/admin_orders'" class="admin-button">💰 Заказы и Статусы</button>
+                <button onclick="window.location.href='/admin/admin_topups'" class="admin-button">💳 Пополнения</button>
+                <button onclick="window.location.href='/admin/admin_users'" class="admin-button">👥 Пользователи</button>
+                <button onclick="window.location.href='/main'" class="secondary admin-button">🏠 В личный кабинет</button>
             </div>
         </div>
 
         <div class="stats-box">
             <h2>Быстрый отчет по выручке</h2>
             <input type="date" id="summaryDate">
-            <button onclick="getSummary()">Получить сводку</button>
+            <button onclick="getSummary()" class="admin-button">Получить сводку</button>
             <div id="summaryResult" style="margin-top:20px;"></div>
         </div>
     </div>
