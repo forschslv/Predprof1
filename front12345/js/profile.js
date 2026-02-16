@@ -124,6 +124,7 @@ async function loadUserProfile() {
         setValue('email', effectiveUser.email || '');
         setValue('status', effectiveUser.status || '');
         setValue('is_admin', (effectiveUser.is_admin) ? 'Да' : 'Нет');
+        setValue('is_cook', (effectiveUser.is_cook) ? 'Да' : 'Нет');
         setValue('email_verified', (effectiveUser.email_verified) ? 'Да' : 'Нет');
 
         // Логируем данные для отладки
@@ -227,6 +228,7 @@ function cancelEdit() {
 }
 
 async function setPassword() {
+    const oldPassword = document.getElementById('oldPassword')?.value;
     const password = document.getElementById('newPassword').value;
     const passwordConfirm = document.getElementById('confirmPassword').value;
 
@@ -246,17 +248,43 @@ async function setPassword() {
     }
 
     try {
-        const result = await apiRequest('/set-password', 'POST', {
+        const body = {
             password: password,
             password_confirm: passwordConfirm
-        });
-        alert('Пароль успешно установлен!');
+        };
+        if (oldPassword && oldPassword.length > 0) body.old_password = oldPassword;
+
+        const result = await apiRequest('/users/me/password', 'PATCH', body);
+        alert('Пароль успешно обновлён!');
         document.getElementById('passwordSection').style.display = 'none';
+        document.getElementById('oldPassword').value = '';
         document.getElementById('newPassword').value = '';
         document.getElementById('confirmPassword').value = '';
     } catch (error) {
         console.error('Ошибка установки пароля:', error);
         alert('Ошибка установки пароля: ' + error.message);
+    }
+}
+
+// Новая функция: запрос кода сброса пароля по почте
+async function requestPasswordReset() {
+    try {
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const email = storedUser.email;
+        if (!email) {
+            alert('Не удалось определить вашу почту. Попробуйте позже.');
+            return;
+        }
+
+        await apiRequest('/password/reset', 'POST', { email });
+        alert('Код для сброса отправлен на вашу почту (если она зарегистрирована).');
+        // Подсказываем пользователю перейти на страницу подтверждения
+        if (confirm('Открыть страницу подтверждения кода? (Вы сможете установить пароль на странице подтверждения)')) {
+            window.location.href = '/register_login/verify';
+        }
+    } catch (error) {
+        console.error('Ошибка запроса сброса пароля:', error);
+        alert('Ошибка запроса сброса пароля: ' + (error.message || error));
     }
 }
 
@@ -293,5 +321,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('newPassword').value = '';
         document.getElementById('confirmPassword').value = '';
     });
-});
 
+    document.getElementById('requestResetBtn').addEventListener('click', requestPasswordReset);
+});

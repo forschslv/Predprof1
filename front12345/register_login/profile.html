@@ -101,6 +101,10 @@
                 <input type="text" id="is_admin" class="readonly-field" readonly>
             </div>
             <div class="form-group">
+                <label for="is_cook">Повар</label>
+                <input type="text" id="is_cook" class="readonly-field" readonly>
+            </div>
+            <div class="form-group">
                 <label for="email_verified">Почта подтверждена</label>
                 <input type="text" id="email_verified" class="readonly-field" readonly>
             </div>
@@ -120,6 +124,11 @@
 
             <div id="passwordSection" style="display: none; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 8px; margin-top: 20px;">
                 <h3 style="margin-top: 0;">Установка пароля</h3>
+                <p style="color: var(--text-secondary);">Вы можете сменить пароль двумя способами: 1) Ввести текущий пароль и указать новый; 2) Получить код на почту через «Сброс пароля» и подтвердить код на соответствующей странице.</p>
+                <div class="form-group">
+                    <label for="oldPassword">Текущий пароль (если установлен)</label>
+                    <input type="password" id="oldPassword" placeholder="Текущий пароль (необязательно)">
+                </div>
                 <div class="form-group">
                     <label for="newPassword">Новый пароль (минимум 6 символов)</label>
                     <input type="password" id="newPassword" placeholder="Введите новый пароль">
@@ -131,6 +140,9 @@
                 <div class="form-actions">
                     <button type="button" id="savePasswordBtn" class="btn-save">Сохранить пароль</button>
                     <button type="button" id="cancelPasswordBtn" class="btn-cancel">Отмена</button>
+                </div>
+                <div style="margin-top:12px;">
+                    <button type="button" id="requestResetBtn" class="btn-cancel" style="width:100%;">Сброс пароля по почте (получить код)</button>
                 </div>
             </div>
 

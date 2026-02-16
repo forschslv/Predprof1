@@ -126,6 +126,17 @@ class SetPasswordRequest(BaseModel):
     password: str
     password_confirm: str
 
+# Новые схемы для смены пароля и подтверждения по почте
+class ChangePasswordRequest(BaseModel):
+    old_password: Optional[str] = None
+    password: str
+    password_confirm: str
+
+class PasswordResetConfirmRequest(BaseModel):
+    code: str
+    password: str
+    password_confirm: str
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str

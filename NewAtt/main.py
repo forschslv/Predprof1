@@ -37,7 +37,8 @@ from schemas import (
     UserResponse, UserUpdate, VerifyCodeRequest, VerifyCodeResponse, ResendCodeRequest,
     ResendCodeResponse, AdminUpdateRequest, ModuleMenuRequest,
     OrderCreate, OrderResponse, DishBase, AdminUpdateByEmailRequest,
-    ModuleMenuResponse, LoginRequest, TokenResponse, SetPasswordRequest
+    ModuleMenuResponse, LoginRequest, TokenResponse, SetPasswordRequest,
+    ChangePasswordRequest, PasswordResetConfirmRequest
 )
 import docx_utils
 
@@ -80,6 +81,20 @@ def ensure_is_cook_column():
         logger.warning(f'Could not ensure is_cook column: {e}')
 
 ensure_is_cook_column()
+
+# Ensure DB has the new column `password_reset_code` for password reset flow
+def ensure_password_reset_code_column():
+    try:
+        with engine.connect() as conn:
+            res = conn.execute(text("PRAGMA table_info('users')")).all()
+            cols = [row[1] for row in res]
+            if 'password_reset_code' not in cols:
+                conn.execute(text("ALTER TABLE users ADD COLUMN password_reset_code TEXT"))
+                logger.info('Added column password_reset_code to users table')
+    except Exception as e:
+        logger.warning(f'Could not ensure password_reset_code column: {e}')
+
+ensure_password_reset_code_column()
 
 # Инициализация контекста для хеширования паролей
 # Используем PBKDF2-SHA256 как основной метод
@@ -227,6 +242,9 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
 def generate_verification_code() -> str:
     return ''.join(random.choices(string.digits, k=6))
 
+def generate_random_code(length: int = 6) -> str:
+    return ''.join(random.choices(string.digits, k=length))
+
 
 SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
@@ -309,6 +327,72 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
     send_verification_email(new_user.email, code)
     return RegisterResponse(message="Registered", user=UserResponse.model_validate(new_user))
+
+@app.post('/password/reset')
+def password_reset_request(data: ResendCodeRequest, db: Session = Depends(get_db)):
+    """Запрос кода сброса пароля по почте"""
+    user = db.query(User).filter(User.email == data.email).first()
+    if not user:
+        # Не раскрываем, что пользователя нет — возвращаем 200
+        return ResendCodeResponse(message='If the email exists, a code has been sent')
+
+    code = generate_random_code()
+    user.password_reset_code = code
+    db.commit()
+    # Отправим на почту тот же текст (симуляция)
+    send_verification_email(user.email, code)
+    return ResendCodeResponse(message='If the email exists, a code has been sent')
+
+
+@app.post('/password/reset/confirm', response_model=UserResponse)
+def password_reset_confirm(data: PasswordResetConfirmRequest, db: Session = Depends(get_db)):
+    """Подтверждение кода сброса и установка нового пароля"""
+    user = db.query(User).filter(User.password_reset_code == data.code).first()
+    if not user:
+        raise HTTPException(status_code=400, detail='Неверный код')
+
+    if data.password != data.password_confirm:
+        raise HTTPException(status_code=400, detail='Пароли не совпадают')
+
+    if len(data.password) < 6:
+        raise HTTPException(status_code=400, detail='Пароль должен быть не менее 6 символов')
+
+    user.password_hash = get_password_hash(data.password)
+    user.password_reset_code = None
+    db.commit()
+    db.refresh(user)
+    return UserResponse.model_validate(user)
+
+
+@app.patch('/users/me/password', response_model=UserResponse)
+def change_password_for_current_user(
+    data: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Сменить пароль: либо указать старый пароль, либо использовать подтверждение по почте (password_reset_code).
+    Если передан old_password — проверяем его и меняем. Если не передан, отправляем код на почту предварительно или ожидаем, что код был подтвержден через /password/reset/confirm.
+    """
+    # Если указан old_password, проверяем
+    if data.old_password:
+        if not current_user.password_hash:
+            raise HTTPException(status_code=400, detail='У вас не настроен старый пароль')
+        if not verify_password(data.old_password, current_user.password_hash):
+            raise HTTPException(status_code=400, detail='Старый пароль неверен')
+
+        # В этом случае просто обновляем пароль
+        if data.password != data.password_confirm:
+            raise HTTPException(status_code=400, detail='Пароли не совпадают')
+        if len(data.password) < 6:
+            raise HTTPException(status_code=400, detail='Пароль должен быть не менее 6 символов')
+
+        current_user.password_hash = get_password_hash(data.password)
+        db.commit()
+        db.refresh(current_user)
+        return UserResponse.model_validate(current_user)
+
+    # Если old_password не передан, пользователь должен сначала запросить код через /password/reset и затем подтвердить через /password/reset/confirm.
+    raise HTTPException(status_code=400, detail='Нужен старый пароль или подтвердите смену через письмо (см. /password/reset)')
 
 @app.get("/users/me", response_model=UserResponse)
 def read_users_me(current_user: User = Depends(get_current_user)):

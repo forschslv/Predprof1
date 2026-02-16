@@ -14,13 +14,7 @@
             <input type="text" id="name" placeholder="Имя" required>
             <input type="text" id="secondary_name" placeholder="Фамилия" required>
             <input type="email" id="email" placeholder="Почта" required>
-<!--            <select id="status" required>-->
-<!--                <option value="">Выберите класс</option>-->
-<!--                <option value="active">Активен</option>-->
-<!--                <option value="inactive">Неактивен</option>-->
-<!--            </select>-->
-            <input type="password" id="password" placeholder="Пароль (необязательно)">
-            <input type="password" id="password_confirm" placeholder="Подтвердите пароль">
+            <!-- Пароль удалён: установка пароля происходит на /verify -->
 
             <!-- Добавлена кнопка отправки -->
             <button type="submit" id="regBtn">Создать аккаунт</button>
@@ -63,8 +57,6 @@
             const name = document.getElementById('name').value.trim();
             const secondary_name = document.getElementById('secondary_name').value.trim();
             const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
-            const passwordConfirm = document.getElementById('password_confirm').value.trim();
             const status = document.getElementById('status')?.value.trim() || "active";
 
             // Validate required fields
@@ -74,22 +66,6 @@
                 return;
             }
 
-            // If any password field is filled, require confirmation and equality
-            if (password || passwordConfirm) {
-                if (password !== passwordConfirm) {
-                    alert('Пароли не совпадают');
-                    btn.disabled = false;
-                    return;
-                }
-
-                if (password.length < 6) {
-                    // minimal password policy (adjustable)
-                    alert('Пароль должен быть не менее 6 символов.');
-                    btn.disabled = false;
-                    return;
-                }
-            }
-
             const data = {
                 name,
                 secondary_name,
@@ -97,10 +73,6 @@
                 status
             };
 
-            // Include password only if provided (non-empty)
-            if (password && password.length > 0) {
-                data.password = password;
-            }
 
             try {
                 const resp = await fetch(`${API_URL}/register`, {
