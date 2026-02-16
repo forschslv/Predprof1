@@ -29,7 +29,7 @@ from auth import JWTAuthMiddleware, create_access_token, require_admin, get_curr
 from passlib.context import CryptContext
 from menu_parser import parse_menu_text
 from models import (
-    Dish, DishType, User, ModuleMenu, Order, OrderItem, OrderStatus, TopupStatus,
+    Dish, DishType, User, ModuleMenu, Order, OrderItem, OrderStatus, TopupStatus, BalanceTopup,
     Base
 )
 from schemas import (
@@ -925,42 +925,22 @@ def create_topup(data: TopupCreateRequest, request: Request, db: Session = Depen
     if data.amount <= 0:
         raise HTTPException(status_code=400, detail='Amount must be positive')
 
-    # Create a balance_topups record using raw SQL to stay compatible with simple migrations
-    now = datetime.utcnow().isoformat()
-    try:
-        with engine.connect() as conn:
-            res = conn.execute(text("INSERT INTO balance_topups (user_id, amount, status, created_at) VALUES (:uid, :amt, :st, :ca)"),
-                               {"uid": user.id, "amt": data.amount, "st": 'PENDING', "ca": now})
-            # Get last inserted id
-            topup_id = conn.execute(text('SELECT last_insert_rowid()')).scalar()
-            logger.info(f'Created topup {topup_id} for user {user.id} amount {data.amount}')
-    except Exception as e:
-        logger.error(f'Error creating topup: {e}')
-        raise HTTPException(status_code=500, detail='DB error')
-
-    # Return a minimal response by querying the row
-    row = db.execute(text('SELECT id, user_id, amount, status, payment_proof_path, created_at FROM balance_topups WHERE id = :id'), {'id': topup_id}).first()
-    return TopupResponse(**{
-        'id': row[0],
-        'user_id': row[1],
-        'amount': row[2],
-        'status': row[3],
-        'payment_proof_path': row[4],
-        'created_at': row[5].split('T')[0] if row[5] else None
-    })
+    topup = BalanceTopup(user_id=user.id, amount=data.amount, status=TopupStatus.PENDING)
+    db.add(topup)
+    db.commit()
+    db.refresh(topup)
+    return topup
 
 
 @app.post('/balance/topups/{topup_id}/proof')
 async def upload_topup_proof(topup_id: int, request: Request, file: UploadFile = File(...), db: Session = Depends(get_db)):
     user = get_current_user(request, db)
-    # Find topup row and ensure ownership
-    row = db.execute(text('SELECT id, user_id, status FROM balance_topups WHERE id = :id'), {'id': topup_id}).first()
-    if not row:
+    topup = db.query(BalanceTopup).filter(BalanceTopup.id == topup_id).first()
+    if not topup:
         raise HTTPException(status_code=404, detail='Topup not found')
-    if row[1] != user.id:
+    if topup.user_id != user.id:
         raise HTTPException(status_code=403, detail='Forbidden')
 
-    # Validate mime type and extension like for orders
     allowed_mime_types = [
         "application/pdf",
         "image/jpeg",
@@ -982,13 +962,9 @@ async def upload_topup_proof(topup_id: int, request: Request, file: UploadFile =
     with open(file_location, "wb+") as file_object:
         file_object.write(await file.read())
 
-    # Update DB
-    try:
-        db.execute(text('UPDATE balance_topups SET payment_proof_path = :pp, status = :st WHERE id = :id'), {'pp': file_location, 'st': 'ON_REVIEW', 'id': topup_id})
-        db.commit()
-    except Exception as e:
-        logger.error(f'Error updating topup proof: {e}')
-        raise HTTPException(status_code=500, detail='DB error')
+    topup.payment_proof_path = file_location
+    topup.status = TopupStatus.ON_REVIEW
+    db.commit()
 
     return {"message": "Topup proof uploaded"}
 
@@ -996,18 +972,17 @@ async def upload_topup_proof(topup_id: int, request: Request, file: UploadFile =
 @app.get('/balance/topups/{topup_id}/proof')
 async def download_topup_proof(topup_id: int, request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
-    row = db.execute(text('SELECT id, user_id, payment_proof_path FROM balance_topups WHERE id = :id'), {'id': topup_id}).first()
-    if not row:
+    topup = db.query(BalanceTopup).filter(BalanceTopup.id == topup_id).first()
+    if not topup:
         raise HTTPException(status_code=404, detail='Topup not found')
-    # Allow owner or admin
-    if row[1] != user.id and not user.is_admin:
+    if topup.user_id != user.id and not user.is_admin:
         raise HTTPException(status_code=403, detail='Forbidden')
-    if not row[2]:
+    if not topup.payment_proof_path:
         raise HTTPException(status_code=404, detail='Proof not uploaded')
-    if not os.path.exists(row[2]):
+    if not os.path.exists(topup.payment_proof_path):
         raise HTTPException(status_code=404, detail='File not found')
 
-    file_path_lower = row[2].lower()
+    file_path_lower = topup.payment_proof_path.lower()
     if file_path_lower.endswith('.pdf'):
         media_type = "application/pdf"
     elif file_path_lower.endswith('.png'):
@@ -1021,30 +996,27 @@ async def download_topup_proof(topup_id: int, request: Request, db: Session = De
     else:
         media_type = "application/octet-stream"
 
-    return FileResponse(row[2], filename=os.path.basename(row[2]), media_type=media_type)
+    return FileResponse(topup.payment_proof_path, filename=os.path.basename(topup.payment_proof_path), media_type=media_type)
 
 
 @app.patch('/admin/balance/topups/{topup_id}/status')
 def admin_update_topup_status(topup_id: int, status: TopupStatus, db: Session = Depends(get_db), admin: User = Depends(get_admin_user)):
-    # Only admins can call this
-    row = db.execute(text('SELECT id, user_id, amount, status FROM balance_topups WHERE id = :id'), {'id': topup_id}).first()
-    if not row:
+    topup = db.query(BalanceTopup).filter(BalanceTopup.id == topup_id).first()
+    if not topup:
         raise HTTPException(status_code=404, detail='Topup not found')
 
-    # If status is same, no-op
-    if row[3] == status.value:
+    if topup.status == status:
         return {"message": f"Status already {status.value}"}
 
-    try:
-        # If marking as PAID, increment user's balance
-        if status == TopupStatus.PAID:
-            db.execute(text('UPDATE users SET balance = IFNULL(balance, 0) + :amt WHERE id = :uid'), {'amt': row[2], 'uid': row[1]})
-        # Update topup status
-        db.execute(text('UPDATE balance_topups SET status = :st WHERE id = :id'), {'st': status.value, 'id': topup_id})
-        db.commit()
-    except Exception as e:
-        logger.error(f'Error updating topup status: {e}')
-        raise HTTPException(status_code=500, detail='DB error')
+    # Если переводим в PAID, прибавляем баланс
+    if status == TopupStatus.PAID:
+        user = db.query(User).filter(User.id == topup.user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail='User not found')
+        user.balance = (user.balance or 0.0) + (topup.amount or 0.0)
+
+    topup.status = status
+    db.commit()
 
     return {"message": f"Topup {topup_id} marked as {status.value}"}
 

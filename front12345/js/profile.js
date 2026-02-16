@@ -148,6 +148,11 @@ async function loadUserProfile() {
 function displayOrders(orders) {
     const ordersContainer = document.getElementById('ordersHistory');
 
+    if (!ordersContainer) {
+        console.warn('displayOrders: ordersHistory element not found in DOM. Skipping render.');
+        return;
+    }
+
     if (!orders || orders.length === 0) {
         ordersContainer.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">Нет заказов</p>';
         return;
@@ -276,7 +281,12 @@ async function setPassword() {
 
 // --- Баланс: создание топапа и загрузка чека ---
 async function createTopup() {
-    const amount = parseFloat(document.getElementById('topupAmount').value);
+    const amountEl = document.getElementById('topupAmount');
+    if (!amountEl) {
+        alert('Элемент ввода суммы не найден');
+        return;
+    }
+    const amount = parseFloat(amountEl.value);
     if (!amount || amount <= 0) {
         alert('Введите корректную сумму');
         return;
@@ -291,17 +301,26 @@ async function createTopup() {
             const file = fileInput.files[0];
             const form = new FormData();
             form.append('file', file, file.name);
-            await apiRequest(`/balance/topups/${topup.id}/proof`, 'POST', form, true);
+            try {
+                await apiRequest(`/balance/topups/${topup.id}/proof`, 'POST', form, true);
+            } catch (err) {
+                console.error('Ошибка загрузки файла чека:', err);
+                alert('Заявка создана, но ошибка загрузки чека: ' + (err.message || err));
+                return;
+            }
         }
 
         alert('Заявка создана. Чек отправлен на проверку администраторам.');
         // Скрываем форму и сбросим поля
-        document.getElementById('topupSection').style.display = 'none';
-        document.getElementById('topupAmount').value = '';
-        document.getElementById('topupProof').value = '';
+        const topupSection = document.getElementById('topupSection');
+        if (topupSection) topupSection.style.display = 'none';
+        amountEl.value = '';
+        const proofEl = document.getElementById('topupProof');
+        if (proofEl) proofEl.value = '';
     } catch (error) {
         console.error('Ошибка при создании заявки на пополнение:', error);
-        alert('Ошибка создания заявки: ' + (error.message || error));
+        // Пытаемся показать более подробную информацию (если тело ответа не JSON)
+        alert('Ошибка создания заявки: ' + (error.message || JSON.stringify(error)));
     }
 }
 
@@ -344,38 +363,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (orders) displayOrders(orders);
 
     // Привязка кнопок профиля
-    document.getElementById('saveBtn').addEventListener('click', saveProfile);
-    document.getElementById('cancelBtn').addEventListener('click', cancelEdit);
-    document.getElementById('logoutBtn').addEventListener('click', () => {
+    const saveBtn = document.getElementById('saveBtn');
+    if (saveBtn) saveBtn.addEventListener('click', saveProfile);
+    const cancelBtn = document.getElementById('cancelBtn');
+    if (cancelBtn) cancelBtn.addEventListener('click', cancelEdit);
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) logoutBtn.addEventListener('click', () => {
         localStorage.clear();
         window.location.href = '/register_login/register';
     });
 
     // Привязка кнопок для управления паролем
-    document.getElementById('changePasswordBtn').addEventListener('click', () => {
+    const changePasswordBtn = document.getElementById('changePasswordBtn');
+    if (changePasswordBtn) changePasswordBtn.addEventListener('click', () => {
         const section = document.getElementById('passwordSection');
-        section.style.display = section.style.display === 'none' ? 'block' : 'none';
+        if (section) section.style.display = section.style.display === 'none' ? 'block' : 'none';
     });
 
-    document.getElementById('savePasswordBtn').addEventListener('click', setPassword);
+    const savePasswordBtn = document.getElementById('savePasswordBtn');
+    if (savePasswordBtn) savePasswordBtn.addEventListener('click', setPassword);
 
-    document.getElementById('cancelPasswordBtn').addEventListener('click', () => {
-        document.getElementById('passwordSection').style.display = 'none';
-        document.getElementById('newPassword').value = '';
-        document.getElementById('confirmPassword').value = '';
+    const cancelPasswordBtn = document.getElementById('cancelPasswordBtn');
+    if (cancelPasswordBtn) cancelPasswordBtn.addEventListener('click', () => {
+        const section = document.getElementById('passwordSection');
+        if (section) section.style.display = 'none';
+        const newP = document.getElementById('newPassword'); if (newP) newP.value = '';
+        const confP = document.getElementById('confirmPassword'); if (confP) confP.value = '';
     });
 
-    document.getElementById('requestResetBtn').addEventListener('click', requestPasswordReset);
+    const requestResetBtn = document.getElementById('requestResetBtn');
+    if (requestResetBtn) requestResetBtn.addEventListener('click', requestPasswordReset);
 
     // Баланс: открытие формы пополнения
-    document.getElementById('topupBtn').addEventListener('click', () => {
+    const topupBtn = document.getElementById('topupBtn');
+    if (topupBtn) topupBtn.addEventListener('click', () => {
         const s = document.getElementById('topupSection');
-        s.style.display = s.style.display === 'none' ? 'block' : 'none';
+        if (s) s.style.display = s.style.display === 'none' ? 'block' : 'none';
     });
-    document.getElementById('cancelTopupBtn').addEventListener('click', () => {
-        document.getElementById('topupSection').style.display = 'none';
-        document.getElementById('topupAmount').value = '';
-        document.getElementById('topupProof').value = '';
+    const cancelTopupBtn = document.getElementById('cancelTopupBtn');
+    if (cancelTopupBtn) cancelTopupBtn.addEventListener('click', () => {
+        const s = document.getElementById('topupSection'); if (s) s.style.display = 'none';
+        const amt = document.getElementById('topupAmount'); if (amt) amt.value = '';
+        const pf = document.getElementById('topupProof'); if (pf) pf.value = '';
     });
-    document.getElementById('createTopupBtn').addEventListener('click', createTopup);
+    const createTopupBtn = document.getElementById('createTopupBtn');
+    if (createTopupBtn) createTopupBtn.addEventListener('click', createTopup);
 });
