@@ -42,6 +42,9 @@
                     // скрыть кнопку Пользователи
                     const usersBtn = Array.from(document.querySelectorAll('.button-group button')).find(b => b.innerText.includes('Пользователи'));
                     if (usersBtn) usersBtn.style.display = 'none';
+                    // скрыть кнопку Заказы и Статусы для поваров
+                    const ordersBtn = Array.from(document.querySelectorAll('.button-group button')).find(b => b.innerText.includes('Заказы'));
+                    if (ordersBtn) ordersBtn.style.display = 'none';
                     // скрыть блок сводки
                     const statsBox = document.querySelector('.stats-box');
                     if (statsBox) statsBox.style.display = 'none';
