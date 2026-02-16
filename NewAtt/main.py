@@ -210,6 +210,10 @@ app.add_middleware(JWTAuthMiddleware)
 def get_admin_user(request: Request, db: Session = Depends(get_db)) -> User:
     return require_admin(request, db)
 
+# Wrapper to use require_cook_or_admin as a dependency (so FastAPI can resolve get_db correctly)
+def get_cook_or_admin_user(request: Request, db: Session = Depends(get_db)) -> User:
+    return require_cook_or_admin(request, db)
+
 
 def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     # Получаем user_id, который устанавливает JWTAuthMiddleware через request.state.user_id
@@ -395,7 +399,7 @@ def get_global_menu(db: Session = Depends(get_db)):
 
 
 @app.post("/menu/dish", response_model=DishResponse)
-def create_dish(dish: DishCreate, db: Session = Depends(get_db), admin: User = Depends(require_cook_or_admin)):
+def create_dish(dish: DishCreate, db: Session = Depends(get_db), admin: User = Depends(get_cook_or_admin_user)):
     new_dish = Dish(**dish.model_dump())
     db.add(new_dish)
     db.commit()
@@ -408,7 +412,7 @@ async def upload_menu_file(
     file: UploadFile = File(...),
     is_provider: bool = True,
     db: Session = Depends(get_db),
-    admin: User = Depends(require_cook_or_admin)
+    admin: User = Depends(get_cook_or_admin_user)
 ):
     content = await file.read()
     content_str = content.decode("utf-8")
@@ -451,7 +455,7 @@ async def upload_menu_file(
 def set_module_menu(
         menu_data: ModuleMenuRequest,
         db: Session = Depends(get_db),
-        admin: User = Depends(require_cook_or_admin)
+        admin: User = Depends(get_cook_or_admin_user)
 ):
     db.query(ModuleMenu).filter(ModuleMenu.week_start_date == menu_data.week_start_date).delete()
 
@@ -689,7 +693,7 @@ def download_table_report(date_query: date, db: Session = Depends(get_db), admin
     return FileResponse(path, filename=f"Table_Report_{date_query}.docx")
 
 @app.get("/module-menu/export")
-def export_module_menu(db: Session = Depends(get_db), admin: User = Depends(require_cook_or_admin)):
+def export_module_menu(db: Session = Depends(get_db), admin: User = Depends(get_cook_or_admin_user)):
     menu_items = db.query(ModuleMenu).join(Dish).order_by(ModuleMenu.day_of_week).all()
 
     output = io.StringIO()
@@ -765,12 +769,12 @@ def update_admin_status_by_email(data: AdminUpdateByEmailRequest, db: Session = 
 
 # Новые эндпоинты для поваров/админов — просмотр заказов и статусов
 @app.get("/staff/orders", response_model=List[OrderResponse])
-def staff_get_orders(db: Session = Depends(get_db), staff: User = Depends(require_cook_or_admin)):
+def staff_get_orders(db: Session = Depends(get_db), staff: User = Depends(get_cook_or_admin_user)):
     orders = db.query(Order).order_by(Order.id.desc()).all()
     return orders
 
 @app.get("/staff/orders/{order_id}", response_model=OrderResponse)
-def staff_get_order(order_id: int, db: Session = Depends(get_db), staff: User = Depends(require_cook_or_admin)):
+def staff_get_order(order_id: int, db: Session = Depends(get_db), staff: User = Depends(get_cook_or_admin_user)):
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Заказ не найден")
