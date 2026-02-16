@@ -69,6 +69,9 @@ async function loadHistory() {
                                onchange="uploadPaymentProof(${o.id}, this)" 
                                hidden>
                     </label>
+                    <button onclick="chargeFromBalance(${o.id})" class="btn-secondary" style="margin-left:8px;">
+                        💳 Списать со счёта
+                    </button>
                 `;
             } else if (o.status === 'PAID' || o.status === 'ON_REVIEW') {
                 // Асинхронная проверка наличия файла
@@ -147,6 +150,31 @@ async function uploadPaymentProof(orderId, inputElement) {
         label.innerText = "📎 Чек";
         label.style.pointerEvents = "auto";
         inputElement.value = '';
+    }
+}
+
+// === НОВАЯ ФУНКЦИЯ: Списание со счёта ===
+async function chargeFromBalance(orderId) {
+    if (!confirm(`Списать оплату заказа #${orderId} с баланса?`)) return;
+    try {
+        const res = await request(`/orders/${orderId}/charge`, 'POST');
+        alert(res.message || 'Оплата успешно проведена');
+        // Обновим историю и профиль (баланс может измениться)
+        if (typeof loadHistory === 'function') loadHistory();
+        // Попробуем обновить профиль-данные в state, чтобы показать новый баланс
+        if (typeof window !== 'undefined' && window.state && window.request) {
+            try {
+                const updatedUser = await request('/users/me', 'GET');
+                window.state.user = updatedUser;
+                const balEl = document.getElementById('balanceAmount');
+                if (balEl) balEl.innerText = `${(updatedUser.balance || 0).toFixed(2)} ₽`;
+            } catch (e) {
+                // Игнорируем ошибку обновления баланса
+                console.warn('Не удалось обновить профиль после списания:', e);
+            }
+        }
+    } catch (e) {
+        alert('Ошибка: ' + e.message);
     }
 }
 

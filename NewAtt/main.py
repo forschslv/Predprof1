@@ -1036,6 +1036,40 @@ def admin_list_topups(db: Session = Depends(get_db), admin: User = Depends(get_a
     topups = db.query(BalanceTopup).order_by(BalanceTopup.id.desc()).all()
     return topups
 
+@app.post("/orders/{order_id}/charge")
+def charge_order_from_balance(order_id: int, request: Request, db: Session = Depends(get_db)):
+    """Списать сумму заказа с баланса пользователя и пометить заказ как PAID, если хватает средств."""
+    user = get_current_user(request, db)
+    order = db.query(Order).filter(Order.id == order_id, Order.user_id == user.id).first()
+
+    if not order:
+        raise HTTPException(status_code=404, detail="Заказ не найден")
+
+    if order.status != OrderStatus.PENDING:
+        raise HTTPException(status_code=400, detail="Списать можно только заказы в статусе PENDING")
+
+    amount = float(order.total_amount or 0.0)
+
+    # Проверка достаточности баланса
+    if (user.balance or 0.0) < amount:
+        raise HTTPException(status_code=400, detail='Недостаточно средств на балансе')
+
+    # Выполняем списание — гарантия, что баланс не станет < 0
+    new_balance = (user.balance or 0.0) - amount
+    if new_balance < 0:
+        # На всякий случай, не допускаем отрицательного баланса
+        new_balance = 0.0
+
+    user.balance = new_balance
+    order.status = OrderStatus.PAID
+    # Не меняем поле payment_proof_path — чеки остаются
+
+    db.commit()
+    db.refresh(user)
+    db.refresh(order)
+
+    return {"message": f"Заказ #{order_id} оплачен со счёта. Остаток: {user.balance:.2f} ₽", "balance": user.balance}
+
 if __name__ == "__main__":
     import init_db
     init_db.init_db()
