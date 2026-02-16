@@ -195,7 +195,7 @@
         </div>
 
         <p style="color:var(--text-secondary); margin-bottom:20px;">
-            Выберите блюда для каждого дня недели. Нажмите на кнопки дней недели (ПН-ВС) для каждого блюда. Для каждого дня можно выбрать несколько блюд, но не более 2 блюд одного типа.
+            Выберите блюда для каждого дня недели. Нажмите на кнопки дней недели (ПН-ВС) для каждого блюда. Для каждого дня можно выбрать несколько блюд, но не более 2 блюда одного типа.
         </p>
 
         <!-- Фильтр по типам блюд -->
@@ -644,6 +644,11 @@
                     weekStartInput.value = formattedDate;
                 }
             }
+
+            // Экспорт некоторых функций в глобальную область видимости, чтобы inline onclick в HTML мог их найти
+            window.filterByType = filterByType;
+            window.toggleAllMenuSections = toggleAllMenuSections;
+            window.createModuleMenu = createModuleMenu;
 
             // Запуск инициализации
             init();
