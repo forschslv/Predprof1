@@ -60,7 +60,35 @@
 
     <script src="/script.js"></script>
     <script>
-        checkAuth(); requireAdmin();
+        checkAuth();
+        (async () => {
+            try {
+                const user = await apiRequest('/users/me');
+                // Разрешаем доступ только админам и поварам
+                if (!(user.is_admin || user.is_cook)) {
+                    window.location.href = '/main';
+                    return;
+                }
+
+                // Скрываем элементы, доступные только админам
+                if (!user.is_admin) {
+                    // Скрыть блок скачивания ведомости
+                    const statsBox = document.querySelector('.stats-box');
+                    if (statsBox) statsBox.style.display = 'none';
+                    // Скрыть блок изменения статуса
+                    const statusBlock = document.querySelectorAll('.inventory-item')[1];
+                    if (statusBlock) statusBlock.style.display = 'none';
+                    // Скрыть блок получения ID заказов
+                    const idBlock = document.querySelectorAll('.inventory-item')[3];
+                    if (idBlock) idBlock.style.display = 'none';
+                }
+
+            } catch (e) {
+                console.error('Ошибка получения профиля', e);
+                localStorage.clear();
+                window.location.href = '/register_login/login';
+            }
+        })();
     </script>
     <script>        document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
 

@@ -92,6 +92,20 @@ async function requireAdmin() {
     }
 }
 
+// New helper: require cook or admin - used by pages that both roles may access
+async function requireCookOrAdmin() {
+    try {
+        const userData = await apiRequest('/users/me', 'GET');
+        if (!(userData.is_admin || userData.is_cook)) {
+            window.location.href = '/main';
+        }
+    } catch (error) {
+        console.error('Error checking cook/admin status:', error);
+        localStorage.clear();
+        window.location.href = '/register_login/login';
+    }
+}
+
 async function validateAccess(needAdmin = false) {
     const token = localStorage.getItem('token');
     if (!token) {

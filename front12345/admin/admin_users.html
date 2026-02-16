@@ -15,6 +15,13 @@
                 <option value="true">Сделать админом</option>
                 <option value="false">Убрать из админов</option>
             </select>
+            <label style="display:block; margin-top:10px;">Роль повара:
+                <select id="isCook">
+                    <option value="">-- без изменений --</option>
+                    <option value="true">Сделать поваром</option>
+                    <option value="false">Убрать роль повара</option>
+                </select>
+            </label>
             <button onclick="updateRole()">Применить</button>
         </div>
         <button onclick="window.location.href='/admin/admin'" class="secondary">Назад</button>
@@ -23,12 +30,15 @@
     <script>
         checkAuth(); requireAdmin();
         async function updateRole() {
-            const data = {
+            const isCookVal = document.getElementById('isCook').value;
+            const payload = {
                 email: document.getElementById('userEmail').value,
                 is_admin: document.getElementById('isAdmin').value === 'true'
             };
+            if (isCookVal === 'true') payload.is_cook = true;
+            if (isCookVal === 'false') payload.is_cook = false;
             try {
-                await apiRequest('/admin/users/by-email', 'PATCH', data);
+                await apiRequest('/admin/users/by-email', 'PATCH', payload);
                 alert("Права обновлены!");
             } catch(e) { alert(e.message); }
         }

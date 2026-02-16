@@ -22,6 +22,7 @@ class UserResponse(BaseModel):
     email: str
     status: str
     is_admin: bool
+    is_cook: bool
     email_verified: bool
 
     class Config:
@@ -114,6 +115,7 @@ class AdminUpdateRequest(BaseModel):
 class AdminUpdateByEmailRequest(BaseModel):
     email: EmailStr
     is_admin: bool
+    is_cook: Optional[bool] = None
 
 # New schemas for password login
 class LoginRequest(BaseModel):

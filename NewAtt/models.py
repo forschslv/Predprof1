@@ -33,6 +33,7 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     status = Column(String)
     is_admin = Column(Boolean, default=False)
+    is_cook = Column(Boolean, default=False)
     email_verified = Column(Boolean, default=False)
     verification_code = Column(String, nullable=True)
     password_hash = Column(String, nullable=True)  # Добавлено поле для хэша пароля

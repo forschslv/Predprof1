@@ -25,7 +25,7 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func, text
 
-from auth import JWTAuthMiddleware, create_access_token, require_admin, get_current_user_id
+from auth import JWTAuthMiddleware, create_access_token, require_admin, get_current_user_id, require_cook_or_admin
 from passlib.context import CryptContext
 from menu_parser import parse_menu_text
 from models import (
@@ -65,6 +65,21 @@ def ensure_password_hash_column():
         logger.warning(f'Could not ensure password_hash column: {e}')
 
 ensure_password_hash_column()
+
+# Ensure DB has the new column `is_cook` for the new role
+def ensure_is_cook_column():
+    try:
+        with engine.connect() as conn:
+            res = conn.execute(text("PRAGMA table_info('users')")).all()
+            cols = [row[1] for row in res]
+            if 'is_cook' not in cols:
+                # SQLite uses INTEGER for booleans
+                conn.execute(text("ALTER TABLE users ADD COLUMN is_cook BOOLEAN DEFAULT 0"))
+                logger.info('Added column is_cook to users table')
+    except Exception as e:
+        logger.warning(f'Could not ensure is_cook column: {e}')
+
+ensure_is_cook_column()
 
 # Инициализация контекста для хеширования паролей
 # Используем PBKDF2-SHA256 как основной метод
@@ -380,7 +395,7 @@ def get_global_menu(db: Session = Depends(get_db)):
 
 
 @app.post("/menu/dish", response_model=DishResponse)
-def create_dish(dish: DishCreate, db: Session = Depends(get_db), admin: User = Depends(get_admin_user)):
+def create_dish(dish: DishCreate, db: Session = Depends(get_db), admin: User = Depends(require_cook_or_admin)):
     new_dish = Dish(**dish.model_dump())
     db.add(new_dish)
     db.commit()
@@ -393,7 +408,7 @@ async def upload_menu_file(
     file: UploadFile = File(...),
     is_provider: bool = True,
     db: Session = Depends(get_db),
-    admin: User = Depends(get_admin_user)
+    admin: User = Depends(require_cook_or_admin)
 ):
     content = await file.read()
     content_str = content.decode("utf-8")
@@ -436,7 +451,7 @@ async def upload_menu_file(
 def set_module_menu(
         menu_data: ModuleMenuRequest,
         db: Session = Depends(get_db),
-        admin: User = Depends(get_admin_user)
+        admin: User = Depends(require_cook_or_admin)
 ):
     db.query(ModuleMenu).filter(ModuleMenu.week_start_date == menu_data.week_start_date).delete()
 
@@ -674,7 +689,7 @@ def download_table_report(date_query: date, db: Session = Depends(get_db), admin
     return FileResponse(path, filename=f"Table_Report_{date_query}.docx")
 
 @app.get("/module-menu/export")
-def export_module_menu(db: Session = Depends(get_db), admin: User = Depends(get_admin_user)):
+def export_module_menu(db: Session = Depends(get_db), admin: User = Depends(require_cook_or_admin)):
     menu_items = db.query(ModuleMenu).join(Dish).order_by(ModuleMenu.day_of_week).all()
 
     output = io.StringIO()
@@ -736,10 +751,30 @@ def update_admin_status_by_email(data: AdminUpdateByEmailRequest, db: Session = 
     user = db.query(User).filter(User.email == data.email).first()
     if not user:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
+    # Админские права нельзя снимать у существующего админа
+    if user.is_admin and not data.is_admin:
+        raise HTTPException(status_code=403, detail="Права администратора нельзя менять")
     user.is_admin = data.is_admin
+    # Если в запросе передан is_cook, админ может установить/снять роль повара
+    if hasattr(data, 'is_cook') and data.is_cook is not None:
+        user.is_cook = data.is_cook
     db.commit()
     db.refresh(user)
     return UserResponse.model_validate(user)
+
+
+# Новые эндпоинты для поваров/админов — просмотр заказов и статусов
+@app.get("/staff/orders", response_model=List[OrderResponse])
+def staff_get_orders(db: Session = Depends(get_db), staff: User = Depends(require_cook_or_admin)):
+    orders = db.query(Order).order_by(Order.id.desc()).all()
+    return orders
+
+@app.get("/staff/orders/{order_id}", response_model=OrderResponse)
+def staff_get_order(order_id: int, db: Session = Depends(get_db), staff: User = Depends(require_cook_or_admin)):
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Заказ не найден")
+    return order
 
 if __name__ == "__main__":
     import init_db

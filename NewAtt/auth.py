@@ -51,40 +51,33 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 class JWTAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+        # Пропускаем публичные пути
         for path in PUBLIC_PATHS:
             if request.url.path.startswith(path):
                 return await call_next(request)
 
-        if request.method == "OPTIONS":
-            return await call_next(request)
+        token = None
+        try:
+            auth_header = request.headers.get("authorization")
+            if auth_header:
+                scheme, _, param = auth_header.partition(" ")
+                if scheme.lower() == "bearer":
+                    token = param
 
-        auth_header = request.headers.get("Authorization")
-        request.state.user_id = None
-        logger.debug(f"Auth header received: {auth_header}")
+            if not token:
+                return await call_next(request)
 
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            user_id = payload.get("sub")
+            if not user_id:
+                return await call_next(request)
 
-        if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header.split(" ")[1]
-            try:
-                payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-                user_id = payload.get("sub")
-                logger.debug(f"Token decoded, sub={user_id}")
+            request.state.user_id = int(user_id)
+        except Exception as e:
+            logger.debug(f"JWT decode error: {e}")
+            # Не шлём 401 здесь, чтобы публичные страницы работали корректно
 
-                if user_id:
-                    request.state.user_id = int(user_id)
-
-            except jwt.ExpiredSignatureError:
-                print("Token expired")
-                pass
-            except jwt.InvalidTokenError as e:
-                print(f"Invalid token: {e}")
-                pass
-            except Exception as e:
-                print(f"Auth error: {e}")
-                pass
-
-        response = await call_next(request)
-        return response
+        return await call_next(request)
 
 
 def get_current_user_id(
@@ -117,6 +110,26 @@ def require_admin(request: Request, db: Session) -> User:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough privileges (Admin required)"
+        )
+
+    return user
+
+
+def require_cook_or_admin(request: Request, db: Session) -> User:
+    user_id = get_current_user_id(request)
+
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found"
+        )
+
+    if not (user.is_admin or user.is_cook):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough privileges (Cook or Admin required)"
         )
 
     return user
