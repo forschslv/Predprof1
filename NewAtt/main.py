@@ -861,17 +861,20 @@ def download_table_report(
                 user_map[uid] = {
                     "user_name": f"{it.order.user.name} {it.order.user.secondary_name}",
                     "user_class": it.order.user.status,
-                    "dishes": []
+                    "dishes": [],
+                    "total": 0.0
                 }
 
             d_name = it.dish.short_name if it.dish.short_name else it.dish.name
-            # Добавляем dish столько раз, сколько quantity
+            # Добавляем dish столько раз, сколько quantity и аккумулируем сумму
             try:
                 qty = int(it.quantity or 0)
             except Exception:
                 qty = 0
+            price = float(it.dish.price_rub or 0.0)
             for _ in range(qty):
                 user_map[uid]["dishes"].append(d_name)
+            user_map[uid]["total"] += qty * price
 
         report_data = list(user_map.values())
 
