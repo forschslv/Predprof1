@@ -28,8 +28,32 @@
 
     <script src="/script.js"></script>
     <script>
-        checkAuth(); requireAdmin();
-        document.getElementById('summaryDate').value = new Date().toISOString().split('T')[0];
+        checkAuth();
+        (async () => {
+            try {
+                const user = await apiRequest('/users/me');
+                if (!(user.is_admin || user.is_cook)) {
+                    window.location.href = '/main';
+                    return;
+                }
+
+                // Если пользователь не админ, скрываем элементы админской панели
+                if (!user.is_admin) {
+                    // скрыть кнопку Пользователи
+                    const usersBtn = Array.from(document.querySelectorAll('.button-group button')).find(b => b.innerText.includes('Пользователи'));
+                    if (usersBtn) usersBtn.style.display = 'none';
+                    // скрыть блок сводки
+                    const statsBox = document.querySelector('.stats-box');
+                    if (statsBox) statsBox.style.display = 'none';
+                }
+
+                document.getElementById('summaryDate').value = new Date().toISOString().split('T')[0];
+            } catch (e) {
+                console.error('Ошибка проверки прав', e);
+                localStorage.clear();
+                window.location.href = '/register_login/login';
+            }
+        })();
 
         async function getSummary() {
             const date = document.getElementById('summaryDate').value;

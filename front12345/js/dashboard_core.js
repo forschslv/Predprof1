@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const welcome = document.getElementById('welcomeUser');
         if(welcome) welcome.innerText = `Привет, ${state.user.full_name || 'Студент'}`;
 
-        if (state.user.is_admin) {
+        if (state.user.is_admin || state.user.is_cook) {
             const adminBtn = document.getElementById('adminBtn');
             if(adminBtn) {
                 adminBtn.classList.remove('hidden');
