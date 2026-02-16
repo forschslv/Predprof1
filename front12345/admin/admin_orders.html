@@ -7,8 +7,10 @@
 </head>
 <body>
     <div class="container">
-        <h1>Проверка оплат и отчеты</h1>
-
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h1>Проверка оплат и отчеты</h1>
+            <button onclick="window.location.href='/admin/admin.html'" class="secondary" style="width:auto;">Назад в панель</button>
+        </div>
         <div class="stats-box">
             <h3>Скачать ведомость для столовой (DOCX)</h3>
             <input type="date" id="reportDate">
@@ -54,8 +56,6 @@
                 <ul id="orderIdsList"></ul>
             </div>
         </div>
-
-        <button onclick="window.location.href='/admin/admin'" class="secondary">Назад</button>
     </div>
 
     <script src="/script.js"></script>

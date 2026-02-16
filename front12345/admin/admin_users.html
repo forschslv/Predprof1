@@ -7,7 +7,10 @@
 </head>
 <body>
     <div class="container" style="max-width: 600px;">
-        <h1>Управление правами</h1>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h1>Управление правами</h1>
+            <button onclick="window.location.href='/admin/admin.html'" class="secondary" style="width:auto;">Назад в панель</button>
+        </div>
         <div class="inventory-item">
             <p>Назначить/снять права администратора</p>
             <input type="email" id="userEmail" placeholder="Загрузка почты...">
@@ -24,7 +27,6 @@
             </label>
             <button onclick="updateRole()">Применить</button>
         </div>
-        <button onclick="window.location.href='/admin/admin'" class="secondary">Назад</button>
     </div>
     <script src="/js/script.js"></script>
     <script>
