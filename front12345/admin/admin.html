@@ -13,6 +13,7 @@
                 <button onclick="window.location.href='/admin/admin_menu'">🍱 База блюд</button>
                 <button onclick="window.location.href='/admin/admin_module'">📅 Меню на неделю</button>
                 <button onclick="window.location.href='/admin/admin_orders'">💰 Заказы и Статусы</button>
+                <button onclick="window.location.href='/admin/admin_topups'">💳 Пополнения</button>
                 <button onclick="window.location.href='/admin/admin_users'">👥 Пользователи</button>
                 <button onclick="window.location.href='/main'" class="secondary">🏠 В личный кабинет</button>
             </div>
@@ -45,6 +46,9 @@
                     // скрыть кнопку Заказы и Статусы для поваров
                     const ordersBtn = Array.from(document.querySelectorAll('.button-group button')).find(b => b.innerText.includes('Заказы'));
                     if (ordersBtn) ordersBtn.style.display = 'none';
+                    // скрыть кнопку Пополнения для не-админов
+                    const topupsBtn = Array.from(document.querySelectorAll('.button-group button')).find(b => b.innerText.includes('Пополнения'));
+                    if (topupsBtn) topupsBtn.style.display = 'none';
                     // скрыть блок сводки
                     const statsBox = document.querySelector('.stats-box');
                     if (statsBox) statsBox.style.display = 'none';

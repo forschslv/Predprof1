@@ -225,7 +225,7 @@
             let url = `/admin/balance/topups/${id}/status?status=${status}`;
             if (status === 'PAID' && amount) url += `&amount=${amount}`;
             await apiRequest(url, 'PATCH');
-            alert('Статус измене��');
+            alert('Статус изменён');
         }
 
         async function loadTopupIdsByStatus() {
