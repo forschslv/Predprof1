@@ -3,7 +3,7 @@ from docx.shared import Cm, Pt
 import os
 
 
-def generate_table_setting_report(orders_data, filename="table_report.docx"):
+def generate_table_setting_report(orders_data, filename="table_report.docx", period: str = None, grand_total: float = None):
     document = Document()
 
     sections = document.sections
@@ -17,6 +17,14 @@ def generate_table_setting_report(orders_data, filename="table_report.docx"):
     font = style.font
     font.name = 'Times New Roman'
     font.size = Pt(11)
+
+    # Заголовок периода, если передан
+    if period:
+        p_header = document.add_paragraph()
+        run_h = p_header.add_run(period)
+        run_h.bold = True
+        run_h.font.size = Pt(12)
+        p_header.paragraph_format.space_after = Pt(6)
 
     for order in orders_data:
         # Ожидаем структуру: { 'user_name': 'Имя Фамилия', 'dishes': [...], 'total': float }
@@ -48,5 +56,13 @@ def generate_table_setting_report(orders_data, filename="table_report.docx"):
 
     os.makedirs("reports", exist_ok=True)
     file_path = os.path.join("reports", filename)
+    document.save(file_path)
+    # Итог по всем пользователям
+    if grand_total is not None:
+        p_final = document.add_paragraph()
+        run_f = p_final.add_run(f"Итого по всем: {grand_total:.2f} ₽")
+        run_f.bold = True
+        run_f.font.size = Pt(12)
+
     document.save(file_path)
     return file_path

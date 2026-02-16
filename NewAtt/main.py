@@ -878,9 +878,22 @@ def download_table_report(
 
         report_data = list(user_map.values())
 
-        # Генерируем и возвращаем DOCX
+        # Рассчитываем общий итог по всем пользователям
+        grand_total = sum(u.get('total', 0.0) for u in report_data)
+
+        # Формируем удобочитаемый заголовок периода
+        if all_time:
+            period_text = 'За всё время'
+        elif start_date and end_date:
+            period_text = f"За период: {start_date} — {end_date}"
+        elif date_query:
+            period_text = f"За день: {date_query}"
+        else:
+            period_text = ''
+
+        # Генерируем и возвращаем DOCX (передаём period и общий итог)
         os.makedirs("reports", exist_ok=True)
-        path = docx_utils.generate_table_setting_report(report_data, filename=f"Report_{filename_suffix}.docx")
+        path = docx_utils.generate_table_setting_report(report_data, filename=f"Report_{filename_suffix}.docx", period=period_text, grand_total=grand_total)
         return FileResponse(path, filename=f"Table_Report_{filename_suffix}.docx")
     except HTTPException:
         raise
