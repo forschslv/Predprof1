@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 from models import DishType, OrderStatus, TopupStatus
-from datetime import date
+from datetime import date, datetime
 
 class UserCreate(BaseModel):
     name: str
@@ -154,7 +154,7 @@ class TopupResponse(BaseModel):
     amount: float
     status: TopupStatus
     payment_proof_path: Optional[str] = None
-    created_at: date
+    created_at: datetime
 
     class Config:
         from_attributes = True
