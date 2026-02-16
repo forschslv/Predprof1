@@ -56,23 +56,36 @@
     <script>
         checkAuth(); requireAdmin();
     </script>
-    <script>        document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
+    <script>
+        // Устанавливаем дату отчёта, если элемент присутствует на странице
+        const reportDateEl = document.getElementById('reportDate');
+        if (reportDateEl) {
+            reportDateEl.value = new Date().toISOString().split('T')[0];
+        }
 
         async function downloadDocx() {
-            const date = document.getElementById('reportDate').value;
+            const dateEl = document.getElementById('reportDate');
+            const date = dateEl ? dateEl.value : '';
             await downloadFile(`/admin/reports/docx?date_query=${date}`, `Table_Report_${date}.docx`);
         }
 
         async function updateStatus() {
-            const id = document.getElementById('orderIdInp').value;
-            const status = document.getElementById('newStatus').value;
+            const idEl = document.getElementById('orderIdInp');
+            const statusEl = document.getElementById('newStatus');
+            const id = idEl ? idEl.value : null;
+            const status = statusEl ? statusEl.value : null;
+            if (!id) return alert('Введите ID заказа');
+            if (!status) return alert('Выберите статус');
             await apiRequest(`/admin/orders/${id}/status?status=${status}`, 'PATCH');
             alert("Статус изменен");
         }
 
-        let previousBlobUrl = null;
+        // Глобальная переменная хранит предыдущий blob URL, используем window.* чтобы избежать TDZ при вызовах из inline onclick
+        if (typeof window.previousBlobUrl === 'undefined') window.previousBlobUrl = null;
+
         async function viewReceipt() {
-            const orderId = document.getElementById('pdfOrderId').value;
+            const orderIdEl = document.getElementById('pdfOrderId');
+            const orderId = orderIdEl ? orderIdEl.value : null;
             if (!orderId) return alert("Введите ID заказа");
             const token = localStorage.getItem('token');
             const url = `${API_URL}/orders/${orderId}/receipt`;
@@ -80,13 +93,13 @@
             const imageViewer = document.getElementById('imageViewer');
             const downloadBtn = document.getElementById('downloadReceiptBtn');
             // Скрыть все элементы просмотра перед новым запросом
-            iframe.style.display = 'none';
-            imageViewer.style.display = 'none';
+            if (iframe) iframe.style.display = 'none';
+            if (imageViewer) imageViewer.style.display = 'none';
             if (downloadBtn) downloadBtn.style.display = 'none';
             // Освободить предыдущий blob URL, если есть
-            if (previousBlobUrl) {
-                window.URL.revokeObjectURL(previousBlobUrl);
-                previousBlobUrl = null;
+            if (window.previousBlobUrl) {
+                try { window.URL.revokeObjectURL(window.previousBlobUrl); } catch (e) { /* ignore */ }
+                window.previousBlobUrl = null;
             }
             try {
                 // Загружаем файл с заголовком Authorization
@@ -116,10 +129,12 @@
                 );
                 if (isPdf) {
                     const blobUrl = window.URL.createObjectURL(blob);
-                    previousBlobUrl = blobUrl;
+                    window.previousBlobUrl = blobUrl;
                     // Устанавливаем blob URL в iframe для PDF
-                    iframe.src = blobUrl;
-                    iframe.style.display = 'block';
+                    if (iframe) {
+                        iframe.src = blobUrl;
+                        iframe.style.display = 'block';
+                    }
                     // Показать кнопку скачивания
                     if (downloadBtn) {
                         downloadBtn.style.display = 'inline-block';
@@ -134,10 +149,12 @@
                     }
                 } else if (isImage) {
                     const blobUrl = window.URL.createObjectURL(blob);
-                    previousBlobUrl = blobUrl;
+                    window.previousBlobUrl = blobUrl;
                     // Устанавливаем blob URL в img для изображений
-                    imageViewer.src = blobUrl;
-                    imageViewer.style.display = 'block';
+                    if (imageViewer) {
+                        imageViewer.src = blobUrl;
+                        imageViewer.style.display = 'block';
+                    }
                     // Показать кнопку скачивания
                     if (downloadBtn) {
                         downloadBtn.style.display = 'inline-block';
@@ -161,7 +178,8 @@
         }
 
         async function loadOrderIdsByStatus() {
-            const status = document.getElementById('statusFilter').value;
+            const statusEl = document.getElementById('statusFilter');
+            const status = statusEl ? statusEl.value : null;
             try {
                 const response = await apiRequest(`/admin/orders/ids?status=${status}`, 'GET');
                 const orderIds = response.order_ids;
@@ -185,3 +203,4 @@
 </script>
 </body>
 </html>
+
