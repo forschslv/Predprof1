@@ -21,8 +21,25 @@
 
         <div class="stats-box">
             <h2>Быстрый отчет по выручке</h2>
-            <input type="date" id="summaryDate">
-            <button onclick="getSummary()" class="admin-button">Получить сводку</button>
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+                <label style="font-size:0.9rem;">За день:</label>
+                <input type="date" id="summaryDate">
+                <button onclick="getSummary()" class="admin-button">По дате</button>
+            </div>
+
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+                <label style="font-size:0.9rem;">За период:</label>
+                <input type="date" id="summaryStart">
+                <span>→</span>
+                <input type="date" id="summaryEnd">
+                <button onclick="getSummary()" class="admin-button">За период</button>
+            </div>
+
+            <div style="display:flex; gap:8px; align-items:center;">
+                <label><input type="checkbox" id="summaryAllTime"> За всё время</label>
+                <button onclick="getSummary()" class="admin-button">За всё время</button>
+            </div>
+
             <div id="summaryResult" style="margin-top:20px;"></div>
         </div>
     </div>
@@ -64,9 +81,36 @@
 
         async function getSummary() {
             const date = document.getElementById('summaryDate').value;
-            const res = await apiRequest(`/admin/reports/summary?date_query=${date}`);
-            let html = `<h3>Всего за день: ${res.total_revenue} ₽</h3><table><tr><th>Блюдо</th><th>Кол-во</th><th>Сумма</th></tr>`;
-            res.items.forEach(i => {
+            const start = document.getElementById('summaryStart').value;
+            const end = document.getElementById('summaryEnd').value;
+            const allTime = document.getElementById('summaryAllTime').checked;
+
+            let url = '/admin/reports/summary';
+            if (allTime) {
+                url += '?all_time=true';
+            } else if (start && end) {
+                url += `?start_date=${start}&end_date=${end}`;
+            } else if (date) {
+                url += `?date_query=${date}`;
+            } else {
+                alert('Выберите дату, диапазон или отметьте "За всё время"');
+                return;
+            }
+
+            const res = await apiRequest(url);
+
+            // Поддерживаем разные форматы date в ответе
+            const total = res.total_revenue || 0;
+            let title = 'Отчёт';
+            if (res.date === 'all_time' || (res.date && res.date.start && res.date.end)) {
+                if (res.date === 'all_time') title = 'Всего за всё время';
+                else title = `Всего за период: ${res.date.start} — ${res.date.end}`;
+            } else if (res.date) {
+                title = `Всего за день: ${res.date}`;
+            }
+
+            let html = `<h3>${title}: ${total} ₽</h3><table><tr><th>Блюдо</th><th>Кол-во</th><th>Сумма</th></tr>`;
+            (res.items || []).forEach(i => {
                 html += `<tr><td>${i.dish}</td><td>${i.count}</td><td>${i.revenue} ₽</td></tr>`;
             });
             document.getElementById('summaryResult').innerHTML = html + `</table>`;

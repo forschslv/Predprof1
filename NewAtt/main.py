@@ -5,7 +5,7 @@ import csv
 import io
 import hashlib
 import secrets
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import List, Dict, Optional
 
 from dotenv import load_dotenv
@@ -865,37 +865,114 @@ def export_module_menu(db: Session = Depends(get_db), admin: User = Depends(get_
 
 
 @app.get("/admin/reports/summary")
-def get_summary_report(date_query: date, db: Session = Depends(get_db), admin: User = Depends(get_admin_user)):
+def get_summary_report(
+    date_query: Optional[date] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    all_time: Optional[bool] = False,
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_admin_user)
+):
+    """
+    Возвращает сводку по выручке/количеству блюд.
+
+    Поддерживаем три режима:
+    - date_query (существующее поведение): сводка за день недели, соответствующий переданной дате (weekday).
+    - start_date + end_date: сводка по календарному диапазону (мы вычисляем фактическую дату позиции как order.week_start_date + (day_of_week-1)).
+    - all_time=true: суммируем по всему доступному датасету (все оплаченные позиции).
+
+    Если несколько режимов переданы одновременно — приоритет: all_time -> (start_date+end_date) -> date_query.
+    """
     try:
-        day_idx = date_query.weekday()
+        # Приоритет: all_time
+        if all_time:
+            items = db.query(OrderItem).join(Order).join(Dish).filter(Order.status == OrderStatus.PAID).all()
 
-        stats = db.query(
-            Dish.name,
-            func.sum(OrderItem.quantity).label("total_qty"),
-            func.sum(OrderItem.quantity * Dish.price_rub).label("total_revenue")
-        ).join(OrderItem, OrderItem.dish_id == Dish.id) \
-            .join(Order, OrderItem.order_id == Order.id) \
-            .filter(OrderItem.day_of_week == day_idx) \
-            .filter(Order.status == OrderStatus.PAID) \
-            .group_by(Dish.id).all()
+            stats_map = {}
+            for it in items:
+                d_id = it.dish.id
+                if d_id not in stats_map:
+                    stats_map[d_id] = {"name": it.dish.name, "qty": 0, "revenue": 0.0}
+                stats_map[d_id]["qty"] += (it.quantity or 0)
+                stats_map[d_id]["revenue"] += (it.quantity or 0) * (it.dish.price_rub or 0.0)
 
-        total_day_revenue = sum(s.total_revenue for s in stats) if stats else 0
-
-        return {
-            "date": date_query,
-            "total_revenue": total_day_revenue,
-            "items": [
-                {
-                    "dish": s.name,
-                    "count": s.total_qty,
-                    "revenue": s.total_revenue
-                }
-                for s in stats
+            items_list = [
+                {"dish": v["name"], "count": v["qty"], "revenue": v["revenue"]}
+                for v in stats_map.values()
             ]
-        }
+            total_revenue = sum(v["revenue"] for v in stats_map.values())
+
+            return {"date": "all_time", "total_revenue": total_revenue, "items": items_list}
+
+        # Диапазон дат
+        if start_date and end_date:
+            if start_date > end_date:
+                # поменяем местами для удобства
+                start_date, end_date = end_date, start_date
+
+            items = db.query(OrderItem).join(Order).join(Dish).filter(Order.status == OrderStatus.PAID).all()
+
+            stats_map = {}
+            for it in items:
+                # Вычисляем фактическую дату позиции
+                if not it.order or not it.order.week_start_date:
+                    continue
+                actual_date = it.order.week_start_date + timedelta(days=(it.day_of_week - 1))
+                # Сравниваем как date
+                actual_date_only = actual_date if isinstance(actual_date, date) else actual_date.date()
+                if actual_date_only < start_date or actual_date_only > end_date:
+                    continue
+
+                d_id = it.dish.id
+                if d_id not in stats_map:
+                    stats_map[d_id] = {"name": it.dish.name, "qty": 0, "revenue": 0.0}
+                stats_map[d_id]["qty"] += (it.quantity or 0)
+                stats_map[d_id]["revenue"] += (it.quantity or 0) * (it.dish.price_rub or 0.0)
+
+            items_list = [
+                {"dish": v["name"], "count": v["qty"], "revenue": v["revenue"]}
+                for v in stats_map.values()
+            ]
+            total_revenue = sum(v["revenue"] for v in stats_map.values())
+
+            return {"date": {"start": start_date, "end": end_date}, "total_revenue": total_revenue, "items": items_list}
+
+        # Совместимость: одиночная дата (weekday)
+        if date_query:
+            # Используем isoweekday: 1 = Monday, ..., 7 = Sunday — это соответствует значениям day_of_week в OrderItem
+            day_idx = date_query.isoweekday()
+
+            stats = db.query(
+                Dish.name,
+                func.sum(OrderItem.quantity).label("total_qty"),
+                func.sum(OrderItem.quantity * Dish.price_rub).label("total_revenue")
+            ).join(OrderItem, OrderItem.dish_id == Dish.id) \
+                .join(Order, OrderItem.order_id == Order.id) \
+                .filter(OrderItem.day_of_week == day_idx) \
+                .filter(Order.status == OrderStatus.PAID) \
+                .group_by(Dish.id).all()
+
+            total_day_revenue = sum(s.total_revenue for s in stats) if stats else 0
+
+            return {
+                "date": date_query,
+                "total_revenue": total_day_revenue,
+                "items": [
+                    {
+                        "dish": s.name,
+                        "count": s.total_qty,
+                        "revenue": s.total_revenue
+                    }
+                    for s in stats
+                ]
+            }
+
+        # Если ничего явно не указано — просим клиента передать параметры
+        raise HTTPException(status_code=400, detail="Укажите date_query или start_date+end_date или all_time=true")
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.exception(f"Error while building summary report for {date_query}: {e}")
-        # Возвращаем JSON-ошибку — фронтенд ожидает JSON, это уменьшит случаи парсинга HTML
+        logger.exception(f"Error while building summary report: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -1085,3 +1162,4 @@ if __name__ == "__main__":
     import init_db
     init_db.init_db()
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
