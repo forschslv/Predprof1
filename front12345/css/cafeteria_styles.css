@@ -198,6 +198,10 @@ button {
     position: relative;
     overflow: hidden;
     height: 45px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    min-width: fit-content;
+    padding: 12px 15px;
 }
 
 button::before {
@@ -323,6 +327,9 @@ button.danger {
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 
 .modal {
