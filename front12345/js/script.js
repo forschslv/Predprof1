@@ -35,11 +35,30 @@ async function apiRequest(endpoint, method = 'GET', body = null, isFile = false)
         }
 
         if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.detail || 'Ошибка запроса');
+            // Попробуем распарсить JSON-ошибку, но если сервер вернул HTML/text — вернём осмысленную ошибку
+            let errText = 'Ошибка запроса';
+            try {
+                const errJson = await response.json();
+                errText = errJson.detail || JSON.stringify(errJson);
+            } catch (e) {
+                // Нативный response.json() может выбросить, если тело не JSON (например HTML страницы ошибки)
+                try {
+                    errText = await response.text();
+                } catch (e2) {
+                    // Не удалось прочитать тело — оставим базовое сообщение
+                }
+            }
+            throw new Error(errText || 'Ошибка запроса');
         }
 
-        return await response.json();
+        // Успешный ответ — попробуем распарсить JSON, но некоторые эндпоинты (файлы) не возвращают JSON
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+            return await response.json();
+        }
+
+        // Если это не JSON — вернём текст (или пустую строку), вызывающий код должен знать, как это обработать
+        return await response.text();
     } catch (error) {
         console.error(error);
         alert(error.message);

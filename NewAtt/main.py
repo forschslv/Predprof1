@@ -226,10 +226,17 @@ def get_password_hash(password: str) -> str:
             raise HTTPException(status_code=500, detail="Error hashing password")
 
 
-def get_db() -> Session:
+def get_db():
+    """Dependency generator that yields a DB session and ensures it's closed after use.
+
+    Previously this function returned a session and closed it immediately in a finally block,
+    which resulted in closed sessions being used by request handlers and eventually exhausted
+    the connection pool. FastAPI expects database dependencies to be generator functions that
+    yield the session so the framework can manage lifecycle correctly.
+    """
     db = SessionLocal()
     try:
-        return db
+        yield db
     finally:
         db.close()
 
@@ -859,34 +866,38 @@ def export_module_menu(db: Session = Depends(get_db), admin: User = Depends(get_
 
 @app.get("/admin/reports/summary")
 def get_summary_report(date_query: date, db: Session = Depends(get_db), admin: User = Depends(get_admin_user)):
+    try:
+        day_idx = date_query.weekday()
 
-    day_idx = date_query.weekday()
+        stats = db.query(
+            Dish.name,
+            func.sum(OrderItem.quantity).label("total_qty"),
+            func.sum(OrderItem.quantity * Dish.price_rub).label("total_revenue")
+        ).join(OrderItem, OrderItem.dish_id == Dish.id) \
+            .join(Order, OrderItem.order_id == Order.id) \
+            .filter(OrderItem.day_of_week == day_idx) \
+            .filter(Order.status == OrderStatus.PAID) \
+            .group_by(Dish.id).all()
 
+        total_day_revenue = sum(s.total_revenue for s in stats) if stats else 0
 
-    stats = db.query(
-        Dish.name,
-        func.sum(OrderItem.quantity).label("total_qty"),
-        func.sum(OrderItem.quantity * Dish.price_rub).label("total_revenue")
-    ).join(OrderItem, OrderItem.dish_id == Dish.id) \
-        .join(Order, OrderItem.order_id == Order.id) \
-        .filter(OrderItem.day_of_week == day_idx) \
-        .filter(Order.status == OrderStatus.PAID) \
-        .group_by(Dish.id).all()
+        return {
+            "date": date_query,
+            "total_revenue": total_day_revenue,
+            "items": [
+                {
+                    "dish": s.name,
+                    "count": s.total_qty,
+                    "revenue": s.total_revenue
+                }
+                for s in stats
+            ]
+        }
+    except Exception as e:
+        logger.exception(f"Error while building summary report for {date_query}: {e}")
+        # Возвращаем JSON-ошибку — фронтенд ожидает JSON, это уменьшит случаи парсинга HTML
+        raise HTTPException(status_code=500, detail=str(e))
 
-    total_day_revenue = sum(s.total_revenue for s in stats) if stats else 0
-
-    return {
-        "date": date_query,
-        "total_revenue": total_day_revenue,
-        "items": [
-            {
-                "dish": s.name,
-                "count": s.total_qty,
-                "revenue": s.total_revenue
-            }
-            for s in stats
-        ]
-    }
 
 @app.patch("/admin/users/by-email", response_model=UserResponse)
 def update_admin_status_by_email(data: AdminUpdateByEmailRequest, db: Session = Depends(get_db), admin: User = Depends(get_admin_user)):
