@@ -373,6 +373,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = '/register_login/register';
     });
 
+    // Button to go back to dashboard (was previously an <a> link)
+    const backToDashboardBtn = document.getElementById('backToDashboard');
+    if (backToDashboardBtn) backToDashboardBtn.addEventListener('click', () => {
+        // Use relative path to parent main.html (keeps behavior consistent with older layout)
+        window.location.href = '../main.html';
+    });
+
     // Привязка кнопок для управления паролем
     const changePasswordBtn = document.getElementById('changePasswordBtn');
     if (changePasswordBtn) changePasswordBtn.addEventListener('click', () => {

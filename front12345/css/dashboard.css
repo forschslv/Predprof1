@@ -54,9 +54,30 @@ button {
     transition: all 0.2s;
 }
 
+/* Ensure anchors with button classes look like buttons */
+a.btn-secondary, a.btn-danger, a.btn-save, a.btn-cancel, a.btn-order, a.btn-upload {
+    display: inline-block;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+a.btn-secondary { background: rgba(255,255,255,0.1); color: white; }
+a.btn-secondary:hover { filter: brightness(1.05); }
+
+a.btn-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+a.btn-danger:hover { background: var(--danger); color: white; }
+
 .btn-secondary { background: rgba(255,255,255,0.1); color: white; }
 .btn-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
 .btn-danger:hover { background: var(--danger); color: white; }
+
+/* Focus outlines for accessibility */
+button:focus, a:focus { outline: 2px solid rgba(0,212,255,0.12); outline-offset: 2px; }
 
 /* Navigation */
 .navigation-links {
