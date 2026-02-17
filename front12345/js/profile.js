@@ -267,7 +267,7 @@ async function setPassword() {
         };
         if (oldPassword && oldPassword.length > 0) body.old_password = oldPassword;
 
-        const result = await apiRequest('/users/me/password', 'PATCH', body);
+        await apiRequest('/users/me/password', 'PATCH', body);
         alert('Пароль успешно обновлён!');
         document.getElementById('passwordSection').style.display = 'none';
         document.getElementById('oldPassword').value = '';
@@ -358,7 +358,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    const { user, orders } = await loadUserProfile();
+    const loadRes = await loadUserProfile();
+    const orders = loadRes ? loadRes.orders : null;
     // Если загрузка провалилась, loadUserProfile уже перенаправит
     if (orders) displayOrders(orders);
 
