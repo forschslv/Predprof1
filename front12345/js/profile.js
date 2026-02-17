@@ -128,6 +128,10 @@ async function loadUserProfile() {
         setValue('is_admin', (effectiveUser.is_admin) ? 'Да' : 'Нет');
         setValue('is_cook', (effectiveUser.is_cook) ? 'Да' : 'Нет');
         setValue('email_verified', (effectiveUser.email_verified) ? 'Да' : 'Нет');
+        // allergies field (may be null)
+        setValue('allergies', effectiveUser.allergies || '');
+        // сохраняем первоначальное значение для сравнения при сохранении
+        window.__initialAllergies = effectiveUser.allergies || '';
 
         // Баланс
         const balanceEl = document.getElementById('balanceAmount');
@@ -209,10 +213,18 @@ function displayOrders(orders) {
 async function saveProfile() {
     const name = document.getElementById('name').value.trim();
     const secondary_name = document.getElementById('secondary_name').value.trim();
+    const allergies = document.getElementById('allergies') ? document.getElementById('allergies').value.trim() : null;
 
     const updateData = {};
     if (name) updateData.name = name;
     if (secondary_name) updateData.secondary_name = secondary_name;
+    // Если аллергии изменились (включая очистку), отправляем поле. Сравниваем с первоначальным значением.
+    if (typeof allergies === 'string') {
+        const initial = window.__initialAllergies || '';
+        if (allergies !== initial) {
+            updateData.allergies = allergies; // может быть пустой строк — это допустимо
+        }
+    }
     // Статус не включается в updateData, так как он управляется только на бэкенде
 
     if (Object.keys(updateData).length === 0) {
@@ -228,6 +240,11 @@ async function saveProfile() {
         document.getElementById('email_verified').value = updatedUser.email_verified ? 'Да' : 'Нет';
         // Обновим баланс на странице на случай изменений
         document.getElementById('balanceAmount').textContent = `${(updatedUser.balance || 0).toFixed(2)} ₽`;
+        // Обновим поле аллергий и первоначальное значение
+        if (document.getElementById('allergies')) {
+            document.getElementById('allergies').value = updatedUser.allergies || '';
+            window.__initialAllergies = updatedUser.allergies || '';
+        }
     } catch (error) {
         console.error('Ошибка сохранения:', error);
         alert('Ошибка сохранения: ' + error.message);
@@ -316,104 +333,4 @@ async function createTopup() {
         if (topupSection) topupSection.style.display = 'none';
         amountEl.value = '';
         const proofEl = document.getElementById('topupProof');
-        if (proofEl) proofEl.value = '';
-    } catch (error) {
-        console.error('Ошибка при создании заявки на пополнение:', error);
-        // Пытаемся показать более подробную информацию (если тело ответа не JSON)
-        alert('Ошибка создания заявки: ' + (error.message || JSON.stringify(error)));
-    }
-}
-
-// Новая функция: запрос кода сброса пароля по почте
-async function requestPasswordReset() {
-    try {
-        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-        const email = storedUser.email;
-        if (!email) {
-            alert('Не удалось определить вашу почту. Попробуйте позже.');
-            return;
-        }
-
-        await apiRequest('/password/reset', 'POST', { email });
-        // Сохраняем флаг, чтобы страница verify поняла контекст
-        localStorage.setItem('pending_email', email);
-        localStorage.setItem('pending_reset', '1');
-
-        alert('Код для сброса отправлен на вашу почту (если она зарегистрирована).');
-        // Подсказываем пользователю перейти на страницу подтверждения
-        if (confirm('Открыть страницу подтверждения кода? (Вы сможете установить пароль на странице подтверждения)')) {
-            window.location.href = '/register_login/verify';
-        }
-    } catch (error) {
-        console.error('Ошибка запроса сброса пароля:', error);
-        alert('Ошибка запроса сброса пароля: ' + (error.message || error));
-    }
-}
-
-// Инициализация
-document.addEventListener('DOMContentLoaded', async () => {
-    // Проверка авторизации
-    if (!localStorage.getItem('token')) {
-        window.location.href = '/register_login/register';
-        return;
-    }
-
-    const loadRes = await loadUserProfile();
-    const orders = loadRes ? loadRes.orders : null;
-    // Если загрузка провалилась, loadUserProfile уже перенаправит
-    if (orders) displayOrders(orders);
-
-    // Привязка кнопок профиля
-    const saveBtn = document.getElementById('saveBtn');
-    if (saveBtn) saveBtn.addEventListener('click', saveProfile);
-    const cancelBtn = document.getElementById('cancelBtn');
-    if (cancelBtn) cancelBtn.addEventListener('click', cancelEdit);
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) logoutBtn.addEventListener('click', () => {
-        localStorage.clear();
-        window.location.href = '/register_login/register';
-    });
-
-    // Button to go back to dashboard (was previously an <a> link)
-    const backToDashboardBtn = document.getElementById('backToDashboard');
-    if (backToDashboardBtn) backToDashboardBtn.addEventListener('click', () => {
-        // Use relative path to parent main.html (keeps behavior consistent with older layout)
-        window.location.href = '../main.html';
-    });
-
-    // Привязка кнопок для управления паролем
-    const changePasswordBtn = document.getElementById('changePasswordBtn');
-    if (changePasswordBtn) changePasswordBtn.addEventListener('click', () => {
-        const section = document.getElementById('passwordSection');
-        if (section) section.style.display = section.style.display === 'none' ? 'block' : 'none';
-    });
-
-    const savePasswordBtn = document.getElementById('savePasswordBtn');
-    if (savePasswordBtn) savePasswordBtn.addEventListener('click', setPassword);
-
-    const cancelPasswordBtn = document.getElementById('cancelPasswordBtn');
-    if (cancelPasswordBtn) cancelPasswordBtn.addEventListener('click', () => {
-        const section = document.getElementById('passwordSection');
-        if (section) section.style.display = 'none';
-        const newP = document.getElementById('newPassword'); if (newP) newP.value = '';
-        const confP = document.getElementById('confirmPassword'); if (confP) confP.value = '';
-    });
-
-    const requestResetBtn = document.getElementById('requestResetBtn');
-    if (requestResetBtn) requestResetBtn.addEventListener('click', requestPasswordReset);
-
-    // Баланс: открытие формы пополнения
-    const topupBtn = document.getElementById('topupBtn');
-    if (topupBtn) topupBtn.addEventListener('click', () => {
-        const s = document.getElementById('topupSection');
-        if (s) s.style.display = s.style.display === 'none' ? 'block' : 'none';
-    });
-    const cancelTopupBtn = document.getElementById('cancelTopupBtn');
-    if (cancelTopupBtn) cancelTopupBtn.addEventListener('click', () => {
-        const s = document.getElementById('topupSection'); if (s) s.style.display = 'none';
-        const amt = document.getElementById('topupAmount'); if (amt) amt.value = '';
-        const pf = document.getElementById('topupProof'); if (pf) pf.value = '';
-    });
-    const createTopupBtn = document.getElementById('createTopupBtn');
-    if (createTopupBtn) createTopupBtn.addEventListener('click', createTopup);
-});
+        if

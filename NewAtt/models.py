@@ -46,6 +46,7 @@ class User(Base):
     password_hash = Column(String, nullable=True)  # Добавлено поле для хэша пароля
     password_reset_code = Column(String, nullable=True)  # Код для сброса пароля
     balance = Column(Float, default=0.0)
+    allergies = Column(Text, nullable=True)  # Текстовое поле для записи аллергий
 
     orders = relationship("Order", back_populates="user")
     topups = relationship("BalanceTopup", back_populates="user")

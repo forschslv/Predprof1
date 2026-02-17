@@ -13,6 +13,7 @@ class UserCreate(BaseModel):
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     secondary_name: Optional[str] = None
+    allergies: Optional[str] = None
     # Статус не включен, так как он управляется только на бэкенде
 
 class UserResponse(BaseModel):
@@ -25,6 +26,7 @@ class UserResponse(BaseModel):
     is_cook: bool
     email_verified: bool
     balance: float
+    allergies: Optional[str] = None
 
     class Config:
         from_attributes = True

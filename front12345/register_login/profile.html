@@ -23,7 +23,7 @@
             color: var(--text-primary);
             font-weight: 500;
         }
-        .form-group input, .form-group select {
+        .form-group input, .form-group select, .form-group textarea {
             width: 100%;
             padding: 12px;
             background: var(--bg-primary);
@@ -32,7 +32,7 @@
             color: var(--text-primary);
             font-size: 1rem;
         }
-        .form-group input:focus, .form-group select:focus {
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
             outline: none;
             border-color: var(--accent-cyan);
         }
@@ -110,6 +110,12 @@
             <div class="form-group">
                 <label for="email_verified">Почта подтверждена</label>
                 <input type="text" id="email_verified" class="readonly-field" readonly>
+            </div>
+
+            <div class="form-group">
+                <label for="allergies">Аллергии / Пищевые ограничения</label>
+                <textarea id="allergies" name="allergies" rows="4" placeholder="Опишите ваши аллергии или пищевые ограничения (необязательно)"></textarea>
+                <div class="status-hint">Это поле только для информации; изменений в функционале не предусмотрено</div>
             </div>
 
             <!-- История заказов (контейнер для JS) -->

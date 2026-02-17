@@ -132,6 +132,20 @@ def ensure_balance_topups_table():
 
 ensure_balance_topups_table()
 
+# Ensure DB has the new column `allergies` for storing user allergies text
+def ensure_allergies_column():
+    try:
+        with engine.connect() as conn:
+            res = conn.execute(text("PRAGMA table_info('users')")).all()
+            cols = [row[1] for row in res]
+            if 'allergies' not in cols:
+                conn.execute(text("ALTER TABLE users ADD COLUMN allergies TEXT"))
+                logger.info('Added column allergies to users table')
+    except Exception as e:
+        logger.warning(f'Could not ensure allergies column: {e}')
+
+ensure_allergies_column()
+
 # Инициализация контекста для хеширования паролей
 # Используем PBKDF2-SHA256 как основной метод
 # Поддерживаем bcrypt для обратной совместимости со старыми хешами
@@ -481,7 +495,8 @@ def update_user_me(
     
     db.commit()
     db.refresh(current_user)
-    return current_user
+    # Явно возвращаем Pydantic-сериализованный ответ (включая новое поле allergies)
+    return UserResponse.model_validate(current_user)
 
 @app.post("/verify-code", response_model=VerifyCodeResponse)
 def verify_code(data: VerifyCodeRequest, db: Session = Depends(get_db)):
