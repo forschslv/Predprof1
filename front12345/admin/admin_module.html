@@ -161,13 +161,19 @@
             display: flex;
             gap: 2px;
             margin-top: 8px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap; /* Чтобы все кнопки были в одну строку */
+            align-items: center;
+            overflow-x: auto; /* Позволяет прокручивать по горизонтали при нехватке места */
+            -webkit-overflow-scrolling: touch;
         }
         
         .day-buttons-label {
+            display: inline-block;
             font-size: 0.8rem;
             color: var(--text-secondary);
-            margin-bottom: 4px;
+            margin-bottom: 0; /* убираем перенос под кнопки */
+            margin-right: 8px; /* небольшой отступ перед кнопками */
+            vertical-align: middle;
         }
         
         .dish-composition {
